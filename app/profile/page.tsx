@@ -1,0 +1,464 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Button } from "@components/ui/button"
+import { Card, CardContent } from "@components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@components/ui/avatar"
+import { Badge } from "@components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui/tabs"
+import { Switch } from "@components/ui/switch"
+import { Label } from "@components/ui/label"
+import { Input } from "@components/ui/input"
+import { Separator } from "@components/ui/separator"
+import {
+  ArrowLeft,
+  MapPin,
+  Star,
+  MessageCircle,
+  Edit,
+  Package,
+  Heart,
+  Moon,
+  Sun,
+  Bell,
+  Shield,
+  LogOut,
+} from "lucide-react"
+import Link from "next/link"
+import { useTheme } from "next-themes"
+import { useRouter } from "next/navigation"
+
+export default function ProfilePage() {
+  const [userName, setUserName] = useState("")
+  const [userEmail, setUserEmail] = useState("")
+  const [notifications, setNotifications] = useState({
+    messages: true,
+    newListings: false,
+    priceDrops: true,
+    marketing: false,
+  })
+  const [location, setLocation] = useState("Downtown Area")
+  const { theme, setTheme } = useTheme()
+  const router = useRouter()
+
+  useEffect(() => {
+    setUserName(localStorage.getItem("userName") || "John Doe")
+    setUserEmail(localStorage.getItem("userEmail") || "john@example.com")
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn")
+    localStorage.removeItem("userEmail")
+    localStorage.removeItem("userName")
+    router.push("/auth/login")
+  }
+
+  const myListings = [
+    {
+      id: 1,
+      title: "Vintage Camera",
+      price: 250,
+      image: "/placeholder.svg?height=150&width=150",
+      status: "active",
+      views: 45,
+      messages: 3,
+    },
+    {
+      id: 2,
+      title: "Office Chair",
+      price: 120,
+      image: "/placeholder.svg?height=150&width=150",
+      status: "sold",
+      views: 32,
+      messages: 8,
+    },
+  ]
+
+  const savedItems = [
+    {
+      id: 3,
+      title: "MacBook Pro",
+      price: 1200,
+      image: "/placeholder.svg?height=150&width=150",
+      seller: "Tech Store",
+    },
+    {
+      id: 4,
+      title: "Dining Set",
+      price: 400,
+      image: "/placeholder.svg?height=150&width=150",
+      seller: "Home Decor",
+    },
+  ]
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+        <div className="container flex h-14 sm:h-16 items-center px-2 sm:px-4">
+          <Link href="/">
+            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <h1 className="ml-2 sm:ml-4 text-lg sm:text-xl font-semibold">Profile</h1>
+        </div>
+      </header>
+
+      <div className="container py-4 sm:py-6 px-2 sm:px-4">
+        {/* Profile Header */}
+        <Card className="mb-4 sm:mb-6">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
+              <Avatar className="h-16 w-16 sm:h-20 sm:w-20 mx-auto sm:mx-0">
+                <AvatarImage src="/placeholder.svg?height=80&width=80" />
+                <AvatarFallback className="text-lg">
+                  {userName
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
+                </AvatarFallback>
+              </Avatar>
+
+              <div className="flex-1 text-center sm:text-left">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                  <div className="mb-4 sm:mb-0">
+                    <h2 className="text-xl sm:text-2xl font-bold">{userName}</h2>
+                    <p className="text-muted-foreground text-sm sm:text-base">{userEmail}</p>
+                    <div className="flex items-center justify-center sm:justify-start mt-2 text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4 mr-1" />
+                      {location}
+                    </div>
+                  </div>
+                  <div className="flex flex-col xs:flex-row gap-2">
+                    <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={handleLogout} className="text-xs sm:text-sm">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      <span className="hidden xs:inline">Sign Out</span>
+                      <span className="xs:hidden">Logout</span>
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center sm:justify-start space-x-4 mt-4">
+                  <div className="flex items-center">
+                    <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                    <span className="font-medium text-sm sm:text-base">4.8</span>
+                    <span className="text-muted-foreground ml-1 text-xs sm:text-sm">(24 reviews)</span>
+                  </div>
+                  <Badge variant="secondary" className="text-xs">
+                    Verified Seller
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Profile Tabs */}
+        <Tabs defaultValue="listings" className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+            <TabsTrigger value="listings" className="text-xs sm:text-sm py-2">
+              My Listings
+            </TabsTrigger>
+            <TabsTrigger value="saved" className="text-xs sm:text-sm py-2">
+              Saved Items
+            </TabsTrigger>
+            <TabsTrigger value="reviews" className="text-xs sm:text-sm py-2">
+              Reviews
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="text-xs sm:text-sm py-2">
+              Settings
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="listings" className="space-y-4">
+            <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-3">
+              <h3 className="text-base sm:text-lg font-semibold">My Listings ({myListings.length})</h3>
+              <Link href="/sell">
+                <Button size="sm" className="w-full xs:w-auto">
+                  <Package className="h-4 w-4 mr-2" />
+                  Create Listing
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {myListings.map((item) => (
+                <Card key={item.id}>
+                  <div className="relative">
+                    <img
+                      src={item.image || "/placeholder.svg"}
+                      alt={item.title}
+                      className="w-full h-32 sm:h-40 object-cover rounded-t-lg"
+                    />
+                    <Badge
+                      className={`absolute top-2 right-2 text-xs ${item.status === "sold" ? "bg-green-500" : "bg-blue-500"}`}
+                    >
+                      {item.status === "sold" ? "Sold" : "Active"}
+                    </Badge>
+                  </div>
+                  <CardContent className="p-3 sm:p-4">
+                    <h4 className="font-semibold text-sm sm:text-base">{item.title}</h4>
+                    <p className="text-base sm:text-lg font-bold text-green-600">${item.price}</p>
+                    <div className="flex justify-between text-xs sm:text-sm text-muted-foreground mt-2">
+                      <span>{item.views} views</span>
+                      <span>{item.messages} messages</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="saved" className="space-y-4">
+            <h3 className="text-base sm:text-lg font-semibold">Saved Items ({savedItems.length})</h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {savedItems.map((item) => (
+                <Card key={item.id}>
+                  <img
+                    src={item.image || "/placeholder.svg"}
+                    alt={item.title}
+                    className="w-full h-32 sm:h-40 object-cover rounded-t-lg"
+                  />
+                  <CardContent className="p-3 sm:p-4">
+                    <h4 className="font-semibold text-sm sm:text-base">{item.title}</h4>
+                    <p className="text-base sm:text-lg font-bold text-green-600">${item.price}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">by {item.seller}</p>
+                    <div className="flex space-x-2 mt-3">
+                      <Button size="sm" className="flex-1 text-xs">
+                        <MessageCircle className="h-4 w-4 mr-1" />
+                        Message
+                      </Button>
+                      <Button variant="outline" size="sm" className="px-2">
+                        <Heart className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="reviews" className="space-y-4">
+            <h3 className="text-base sm:text-lg font-semibold">Reviews (24)</h3>
+
+            <div className="space-y-4">
+              {[1, 2, 3].map((review) => (
+                <Card key={review}>
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex items-start space-x-3">
+                      <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+                        <AvatarFallback className="text-xs sm:text-sm">U{review}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium text-sm sm:text-base">User {review}</span>
+                          <div className="flex">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star key={star} className="h-3 w-3 sm:h-4 sm:w-4 fill-yellow-400 text-yellow-400" />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                          Great seller! Item was exactly as described and shipping was fast.
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">2 weeks ago</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-4 sm:space-y-6">
+            <h3 className="text-base sm:text-lg font-semibold">Settings</h3>
+
+            {/* Appearance */}
+            <Card>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center mb-4">
+                  {theme === "dark" ? <Moon className="h-5 w-5 mr-2" /> : <Sun className="h-5 w-5 mr-2" />}
+                  <h4 className="text-base sm:text-lg font-semibold">Appearance</h4>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="dark-mode" className="text-sm sm:text-base">
+                      Dark Mode
+                    </Label>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Switch between light and dark themes</p>
+                  </div>
+                  <Switch
+                    id="dark-mode"
+                    checked={theme === "dark"}
+                    onCheckedChange={(checked) => {
+                      setTheme(checked ? "dark" : "light")
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Notifications */}
+            <Card>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center mb-4">
+                  <Bell className="h-5 w-5 mr-2" />
+                  <h4 className="text-base sm:text-lg font-semibold">Notifications</h4>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="messages" className="text-sm sm:text-base">
+                        New Messages
+                      </Label>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Get notified when someone messages you</p>
+                    </div>
+                    <Switch
+                      id="messages"
+                      checked={notifications.messages}
+                      onCheckedChange={(checked) => setNotifications({ ...notifications, messages: checked })}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="new-listings" className="text-sm sm:text-base">
+                        New Listings
+                      </Label>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        Get notified about new items in your area
+                      </p>
+                    </div>
+                    <Switch
+                      id="new-listings"
+                      checked={notifications.newListings}
+                      onCheckedChange={(checked) => setNotifications({ ...notifications, newListings: checked })}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="price-drops" className="text-sm sm:text-base">
+                        Price Drops
+                      </Label>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        Get notified when saved items drop in price
+                      </p>
+                    </div>
+                    <Switch
+                      id="price-drops"
+                      checked={notifications.priceDrops}
+                      onCheckedChange={(checked) => setNotifications({ ...notifications, priceDrops: checked })}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="marketing" className="text-sm sm:text-base">
+                        Marketing
+                      </Label>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Receive promotional emails and updates</p>
+                    </div>
+                    <Switch
+                      id="marketing"
+                      checked={notifications.marketing}
+                      onCheckedChange={(checked) => setNotifications({ ...notifications, marketing: checked })}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Location */}
+            <Card>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center mb-4">
+                  <MapPin className="h-5 w-5 mr-2" />
+                  <h4 className="text-base sm:text-lg font-semibold">Location</h4>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="location" className="text-sm sm:text-base">
+                      Your Location
+                    </Label>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-2">
+                      This helps us show you relevant listings nearby
+                    </p>
+                    <Input
+                      id="location"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder="Enter your location"
+                      className="text-sm sm:text-base"
+                    />
+                  </div>
+                  <Button variant="outline" className="w-full text-sm">
+                    Use Current Location
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Privacy & Security */}
+            <Card>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center mb-4">
+                  <Shield className="h-5 w-5 mr-2" />
+                  <h4 className="text-base sm:text-lg font-semibold">Privacy & Security</h4>
+                </div>
+                <div className="space-y-3 sm:space-y-4">
+                  <Button variant="outline" className="w-full justify-start text-sm">
+                    Change Password
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start text-sm">
+                    Privacy Settings
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start text-sm">
+                    Blocked Users
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start text-sm">
+                    Download My Data
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Account Actions */}
+            <Card>
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-3 sm:space-y-4">
+                  <Button variant="outline" className="w-full justify-start text-sm">
+                    Help & Support
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start text-sm">
+                    Terms of Service
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start text-sm">
+                    Privacy Policy
+                  </Button>
+                  <Separator />
+                  <Button variant="destructive" className="w-full justify-start text-sm" onClick={handleLogout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  )
+}
