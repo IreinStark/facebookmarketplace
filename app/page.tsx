@@ -119,14 +119,12 @@ export default function MarketplacePage() {
 	// Enhanced auth state management
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-			console.log("Auth state changed:", firebaseUser?.uid)
 			try {
 				if (firebaseUser) {
 					setUser(firebaseUser)
 					setIsLoggedIn(true)
-					// Optionally: fetch user profile and favorites here
 					setUserProfile({ displayName: firebaseUser.displayName || firebaseUser.email })
-					setFavorites([]) // Replace with real favorites if available
+					setFavorites([])
 					setError(null)
 				} else {
 					setUser(null)
@@ -256,7 +254,7 @@ export default function MarketplacePage() {
 						</div>
 					</div>
 
-					{/* User info and logout */}
+					{/* User info, theme toggle, and logout */}
 					<div className="flex items-center space-x-2">
 						{userProfile && (
 							<span className="text-sm text-white mr-2 hidden sm:block">
@@ -379,7 +377,7 @@ export default function MarketplacePage() {
 										<Button
 											size="sm"
 											className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
-											onClick={() => handleProductMessage(product)}
+											onClick={() => {/* handleProductMessage(product) */}}
 										>
 											<MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
 											<span className="hidden sm:inline">Message</span>
