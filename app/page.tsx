@@ -1,8 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import type React from "react"
+import { useState, useEffect, useRef } from "react"
 import { onAuthStateChanged, signOut } from "firebase/auth"
 import { auth } from "@/firebase"
+import { addDoc, collection, serverTimestamp } from "firebase/firestore"
+import { db } from "@/firebase"
 import { Button } from "@components/ui/button"
 import { Input } from "@components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card"
@@ -11,11 +14,32 @@ import { Avatar, AvatarFallback } from "@components/ui/avatar"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@components/ui/sheet"
 import { ScrollArea } from "@components/ui/scroll-area"
 import { Textarea } from "@components/ui/textarea"
+import { Slider } from "@components/ui/slider"
+import { Label } from "@components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select"
+import { Popover, PopoverContent, PopoverTrigger } from "@components/ui/popover"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog"
 import { Search, MapPin, MessageCircle, Heart, User, Plus, Moon, Sun, MessageSquare, Menu, Send, LogOut, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@components/ui/alert"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
+
+// Location data with coordinates (lat, lng)
+const locationData = [
+	{ name: "Lefkosa", lat: 35.1856, lng: 33.3823, region: "Central" },
+	{ name: "Girne", lat: 35.3414, lng: 33.3152, region: "Northern" },
+	{ name: "Famagusta", lat: 35.1264, lng: 33.9378, region: "Eastern" },
+	{ name: "Iskele", lat: 35.2833, lng: 33.9167, region: "Eastern" },
+	{ name: "Guzelyurt", lat: 35.2042, lng: 33.0292, region: "Western" },
+	{ name: "Lapta", lat: 35.3333, lng: 33.1833, region: "Northern" },
+	{ name: "Alsancak", lat: 35.3167, lng: 33.2167, region: "Northern" },
+	{ name: "Catalkoy", lat: 35.35, lng: 33.3833, region: "Northern" },
+	{ name: "Esentepe", lat: 35.3667, lng: 33.5167, region: "Northern" },
+	{ name: "Bogaz", lat: 35.3833, lng: 33.6167, region: "Northern" },
+	{ name: "Dipkarpaz", lat: 35.6, lng: 34.3833, region: "Karpaz" },
+	{ name: "Yeni Iskele", lat: 35.2667, lng: 33.9333, region: "Eastern" },
+]
 
 // Mock data (replace with real data/service in production)
 const products = [
@@ -116,14 +140,23 @@ export default function MarketplacePage() {
 	const [favorites, setFavorites] = useState<number[]>([])
 	const { theme, setTheme } = useTheme()
 
+	const [title, setTitle] = useState("");
+	const [price, setPrice] = useState("");
+	const [description, setDescription] = useState("");
+	const [submitError, setSubmitError] = useState("");
+
 	// Enhanced auth state management
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
 			try {
 				if (firebaseUser) {
+					const name =
+						firebaseUser.displayName && firebaseUser.displayName.trim() !== ""
+							? firebaseUser.displayName
+							: firebaseUser.email?.split("@")[0]; // fallback: part before @ of email
 					setUser(firebaseUser)
 					setIsLoggedIn(true)
-					setUserProfile({ displayName: firebaseUser.displayName || firebaseUser.email })
+					setUserProfile({ displayName: name })
 					setFavorites([])
 					setError(null)
 				} else {
@@ -161,6 +194,27 @@ export default function MarketplacePage() {
 				? prev.filter((id) => id !== productId)
 				: [...prev, productId]
 		)
+	}
+
+	const handleProductMessage = (product: (typeof products)[0]) => {
+		let conversation = conversations.find((conv) => conv.id === product.sellerId)
+
+		if (!conversation) {
+			conversation = {
+				id: product.sellerId,
+				name: product.seller,
+				lastMessage: "",
+				time: "now",
+				unread: false,
+				productTitle: product.title,
+				productPrice: product.price,
+				messages: [],
+			}
+			setConversations((prev) => [conversation, ...prev])
+		}
+
+		setSelectedConversation(product.sellerId)
+		setIsMessagesOpen(true)
 	}
 
 	const filteredProducts = products.filter((product) => {
@@ -224,6 +278,21 @@ export default function MarketplacePage() {
 		)
 	}
 
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		// Add your validation and submission logic here
+		if (!title || !price) {
+			setSubmitError("Title and price are required.");
+			return;
+		}
+		setSubmitError("");
+		// Submit the listing (e.g., send to Firestore)
+		// Reset form if needed
+		setTitle("");
+		setPrice("");
+		setDescription("");
+	};
+
 	return (
 		<div className="min-h-screen bg-background">
 			{/* Header */}
@@ -256,32 +325,62 @@ export default function MarketplacePage() {
 
 					{/* User info, theme toggle, and logout */}
 					<div className="flex items-center space-x-2">
-						{userProfile && (
-							<span className="text-sm text-white mr-2 hidden sm:block">
-								{userProfile.displayName}
-							</span>
-						)}
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-							className="h-8 w-8 lg:h-9 lg:w-9"
-							title="Toggle Theme"
-						>
-							{theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-						</Button>
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={handleLogout}
-							className="h-8 w-8 lg:h-9 lg:w-9"
-							title="Logout"
-						>
-							<LogOut className="h-4 w-4" />
-						</Button>
-					</div>
-				</div>
-			</header>
+                        {userProfile && (
+                            <span className="text-sm text-white mr-2 hidden sm:block">
+                                {userProfile.displayName}
+                            </span>
+                        )}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                            className="h-8 w-8 lg:h-9 lg:w-9"
+                            title="Toggle Theme"
+                        >
+                            {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                        </Button>
+                        <Link href="/sell">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-transparent text-xs flex items-center"
+                                title="Sell an item"
+                            >
+                                <Plus className="h-4 w-4 mr-1" />
+                                Sell
+                            </Button>
+                        </Link>
+                        <Link href="/profile">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 lg:h-9 lg:w-9"
+                                title="Profile"
+                            >
+                                <User className="h-4 w-4" />
+                            </Button>
+                        </Link>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setIsMessagesOpen(true)}
+                            className="h-8 w-8 lg:h-9 lg:w-9"
+                            title="Messages"
+                        >
+                            <MessageSquare className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleLogout}
+                            className="h-8 w-8 lg:h-9 lg:w-9"
+                            title="Logout"
+                        >
+                            <LogOut className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            </header>
 
 			{/* Welcome Banner */}
 			<div className="container px-2 sm:px-4 py-4">
@@ -377,7 +476,7 @@ export default function MarketplacePage() {
 										<Button
 											size="sm"
 											className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
-											onClick={() => {/* handleProductMessage(product) */}}
+											onClick={() => handleProductMessage(product)}
 										>
 											<MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
 											<span className="hidden sm:inline">Message</span>
@@ -410,6 +509,38 @@ export default function MarketplacePage() {
 					</div>
 				)}
 			</div>
+
+			{/* Sell Page - Post a Listing */}
+			<div className="container max-w-md mx-auto py-6">
+				<h1 className="text-2xl font-bold mb-4">Post a Listing</h1>
+				{submitError && <p className="text-red-600 mb-4">{submitError}</p>}
+				<form onSubmit={handleSubmit} className="space-y-4">
+					<Input
+						type="text"
+						placeholder="Product Title"
+						value={title}
+						onChange={(e) => setTitle(e.target.value)}
+						required
+					/>
+					<Input
+						type="number"
+						placeholder="Price"
+						value={price}
+						onChange={(e) => setPrice(e.target.value)}
+						required
+					/>
+					<Textarea
+						placeholder="Description (optional)"
+						value={description}
+						onChange={(e) => setDescription(e.target.value)}
+						rows={4}
+					/>
+					<Button type="submit" disabled={loading}>
+						{loading ? "Posting..." : "Post Listing"}
+					</Button>
+				</form>
+			</div>
+
 			{/* ...rest of your Sheets (Messages, Mobile Menu, etc.) */}
 		</div>
 	)

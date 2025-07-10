@@ -28,9 +28,92 @@ import Link from "next/link"
 import { useTheme } from "next-themes"
 import { useRouter } from "next/navigation"
 
+// Mock products data (same as in main page)
+const allProducts = [
+  {
+    id: 1,
+    title: "iPhone 14 Pro Max",
+    price: 899,
+    location: "Lefkosa",
+    image: "/placeholder.svg?height=200&width=200",
+    category: "Electronics",
+    seller: "John Doe",
+    sellerId: "john-doe",
+    isNegotiable: true,
+    underNegotiation: false,
+    postedDate: "2 days ago",
+  },
+  {
+    id: 2,
+    title: "Vintage Leather Sofa",
+    price: 450,
+    location: "Girne",
+    image: "/placeholder.svg?height=200&width=200",
+    category: "Furniture",
+    seller: "Sarah Wilson",
+    sellerId: "sarah-wilson",
+    isNegotiable: true,
+    underNegotiation: true,
+    postedDate: "1 week ago",
+  },
+  {
+    id: 3,
+    title: "Mountain Bike",
+    price: 320,
+    location: "Lefkosa",
+    image: "/placeholder.svg?height=200&width=200",
+    category: "Sports",
+    seller: "Mike Johnson",
+    sellerId: "mike-johnson",
+    isNegotiable: false,
+    underNegotiation: false,
+    postedDate: "3 days ago",
+  },
+  {
+    id: 4,
+    title: "Gaming Laptop",
+    price: 1200,
+    location: "Famagusta",
+    image: "/placeholder.svg?height=200&width=200",
+    category: "Electronics",
+    seller: "Alex Chen",
+    sellerId: "alex-chen",
+    isNegotiable: true,
+    underNegotiation: true,
+    postedDate: "5 days ago",
+  },
+  {
+    id: 5,
+    title: "Dining Table Set",
+    price: 280,
+    location: "Lefkosa",
+    image: "/placeholder.svg?height=200&width=200",
+    category: "Furniture",
+    seller: "Emma Davis",
+    sellerId: "emma-davis",
+    isNegotiable: true,
+    underNegotiation: false,
+    postedDate: "1 day ago",
+  },
+  {
+    id: 6,
+    title: "Tennis Racket",
+    price: 85,
+    location: "Girne",
+    image: "/placeholder.svg?height=200&width=200",
+    category: "Sports",
+    seller: "David Brown",
+    sellerId: "david-brown",
+    isNegotiable: false,
+    underNegotiation: false,
+    postedDate: "4 days ago",
+  },
+]
+
 export default function ProfilePage() {
   const [userName, setUserName] = useState("")
   const [userEmail, setUserEmail] = useState("")
+  const [favorites, setFavorites] = useState<number[]>([])
   const [notifications, setNotifications] = useState({
     messages: true,
     newListings: false,
@@ -44,13 +127,26 @@ export default function ProfilePage() {
   useEffect(() => {
     setUserName(localStorage.getItem("userName") || "John Doe")
     setUserEmail(localStorage.getItem("userEmail") || "john@example.com")
+
+    // Load favorites from localStorage
+    const savedFavorites = localStorage.getItem("favorites")
+    if (savedFavorites) {
+      setFavorites(JSON.parse(savedFavorites))
+    }
   }, [])
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn")
     localStorage.removeItem("userEmail")
     localStorage.removeItem("userName")
+    localStorage.removeItem("favorites")
     router.push("/auth/login")
+  }
+
+  const removeFavorite = (productId: number) => {
+    const updatedFavorites = favorites.filter((id) => id !== productId)
+    setFavorites(updatedFavorites)
+    localStorage.setItem("favorites", JSON.stringify(updatedFavorites))
   }
 
   const myListings = [
@@ -74,22 +170,8 @@ export default function ProfilePage() {
     },
   ]
 
-  const savedItems = [
-    {
-      id: 3,
-      title: "MacBook Pro",
-      price: 1200,
-      image: "/placeholder.svg?height=150&width=150",
-      seller: "Tech Store",
-    },
-    {
-      id: 4,
-      title: "Dining Set",
-      price: 400,
-      image: "/placeholder.svg?height=150&width=150",
-      seller: "Home Decor",
-    },
-  ]
+  // Get favorite products from the main products list
+  const favoriteItems = allProducts.filter((product) => favorites.includes(product.id))
 
   return (
     <div className="min-h-screen bg-background">
@@ -131,7 +213,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   <div className="flex flex-col xs:flex-row gap-2">
-                    <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+                    <Button variant="outline" size="sm" className="text-xs sm:text-sm bg-transparent">
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Profile
                     </Button>
@@ -165,7 +247,7 @@ export default function ProfilePage() {
               My Listings
             </TabsTrigger>
             <TabsTrigger value="saved" className="text-xs sm:text-sm py-2">
-              Saved Items
+              Favorites ({favorites.length})
             </TabsTrigger>
             <TabsTrigger value="reviews" className="text-xs sm:text-sm py-2">
               Reviews
@@ -215,33 +297,62 @@ export default function ProfilePage() {
           </TabsContent>
 
           <TabsContent value="saved" className="space-y-4">
-            <h3 className="text-base sm:text-lg font-semibold">Saved Items ({savedItems.length})</h3>
+            <h3 className="text-base sm:text-lg font-semibold">Favorite Items ({favorites.length})</h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {savedItems.map((item) => (
-                <Card key={item.id}>
-                  <img
-                    src={item.image || "/placeholder.svg"}
-                    alt={item.title}
-                    className="w-full h-32 sm:h-40 object-cover rounded-t-lg"
-                  />
-                  <CardContent className="p-3 sm:p-4">
-                    <h4 className="font-semibold text-sm sm:text-base">{item.title}</h4>
-                    <p className="text-base sm:text-lg font-bold text-green-600">${item.price}</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">by {item.seller}</p>
-                    <div className="flex space-x-2 mt-3">
-                      <Button size="sm" className="flex-1 text-xs">
-                        <MessageCircle className="h-4 w-4 mr-1" />
-                        Message
-                      </Button>
-                      <Button variant="outline" size="sm" className="px-2">
-                        <Heart className="h-4 w-4" />
+            {favoriteItems.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {favoriteItems.map((item) => (
+                  <Card key={item.id}>
+                    <div className="relative">
+                      <img
+                        src={item.image || "/placeholder.svg"}
+                        alt={item.title}
+                        className="w-full h-32 sm:h-40 object-cover rounded-t-lg"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2 h-6 w-6 p-0"
+                        onClick={() => removeFavorite(item.id)}
+                      >
+                        ×
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    <CardContent className="p-3 sm:p-4">
+                      <h4 className="font-semibold text-sm sm:text-base">{item.title}</h4>
+                      <p className="text-base sm:text-lg font-bold text-green-600">${item.price}</p>
+                      <div className="flex items-center text-xs sm:text-sm text-muted-foreground mb-2">
+                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                        <span>{item.location}</span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-muted-foreground">by {item.seller}</p>
+                      <div className="flex space-x-2 mt-3">
+                        <Button size="sm" className="flex-1 text-xs">
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          Message
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="px-2 bg-transparent"
+                          onClick={() => removeFavorite(item.id)}
+                        >
+                          <Heart className="h-4 w-4 fill-current" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Heart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No favorite items yet</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Start adding items to your favorites by clicking the heart icon
+                </p>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="reviews" className="space-y-4">
@@ -404,7 +515,7 @@ export default function ProfilePage() {
                       className="text-sm sm:text-base"
                     />
                   </div>
-                  <Button variant="outline" className="w-full text-sm">
+                  <Button variant="outline" className="w-full text-sm bg-transparent">
                     Use Current Location
                   </Button>
                 </div>
@@ -419,16 +530,16 @@ export default function ProfilePage() {
                   <h4 className="text-base sm:text-lg font-semibold">Privacy & Security</h4>
                 </div>
                 <div className="space-y-3 sm:space-y-4">
-                  <Button variant="outline" className="w-full justify-start text-sm">
+                  <Button variant="outline" className="w-full justify-start text-sm bg-transparent">
                     Change Password
                   </Button>
-                  <Button variant="outline" className="w-full justify-start text-sm">
+                  <Button variant="outline" className="w-full justify-start text-sm bg-transparent">
                     Privacy Settings
                   </Button>
-                  <Button variant="outline" className="w-full justify-start text-sm">
+                  <Button variant="outline" className="w-full justify-start text-sm bg-transparent">
                     Blocked Users
                   </Button>
-                  <Button variant="outline" className="w-full justify-start text-sm">
+                  <Button variant="outline" className="w-full justify-start text-sm bg-transparent">
                     Download My Data
                   </Button>
                 </div>
@@ -439,13 +550,13 @@ export default function ProfilePage() {
             <Card>
               <CardContent className="p-4 sm:p-6">
                 <div className="space-y-3 sm:space-y-4">
-                  <Button variant="outline" className="w-full justify-start text-sm">
+                  <Button variant="outline" className="w-full justify-start text-sm bg-transparent">
                     Help & Support
                   </Button>
-                  <Button variant="outline" className="w-full justify-start text-sm">
+                  <Button variant="outline" className="w-full justify-start text-sm bg-transparent">
                     Terms of Service
                   </Button>
-                  <Button variant="outline" className="w-full justify-start text-sm">
+                  <Button variant="outline" className="w-full justify-start text-sm bg-transparent">
                     Privacy Policy
                   </Button>
                   <Separator />
