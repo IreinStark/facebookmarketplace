@@ -24,6 +24,9 @@ import { Alert, AlertDescription } from "@components/ui/alert"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
+import { ChatInterface } from "../components/chat-interface"
+import { PhotoUpload } from "../components/photo-upload"
+import { useSocket } from "../hooks/use-socket"
 
 // Location data with coordinates (lat, lng)
 const locationData = [
@@ -132,13 +135,19 @@ export default function MarketplacePage() {
 	const [userProfile, setUserProfile] = useState<any>(null)
 	const [isMessagesOpen, setIsMessagesOpen] = useState(false)
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-	const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
-	const [conversations, setConversations] = useState<any[]>([])
-	const [newMessage, setNewMessage] = useState("")
+	const [selectedRecipient, setSelectedRecipient] = useState<{id: string, name: string} | null>(null)
+	const [selectedProduct, setSelectedProduct] = useState<{id: string, title: string} | null>(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 	const [favorites, setFavorites] = useState<number[]>([])
 	const { theme, setTheme } = useTheme()
+
+	// Initialize Socket.io for real-time chat
+	const socket = useSocket({
+		userId: user?.uid,
+		userName: userProfile?.displayName,
+		enabled: isLoggedIn === true
+	})
 
 	const [title, setTitle] = useState("");
 	const [price, setPrice] = useState("");
@@ -197,23 +206,14 @@ export default function MarketplacePage() {
 	}
 
 	const handleProductMessage = (product: (typeof products)[0]) => {
-		let conversation = conversations.find((conv) => conv.id === product.sellerId)
-
-		if (!conversation) {
-			conversation = {
-				id: product.sellerId,
-				name: product.seller,
-				lastMessage: "",
-				time: "now",
-				unread: false,
-				productTitle: product.title,
-				productPrice: product.price,
-				messages: [],
-			}
-			setConversations((prev) => [conversation, ...prev])
-		}
-
-		setSelectedConversation(product.sellerId)
+		setSelectedRecipient({
+			id: product.sellerId,
+			name: product.seller
+		})
+		setSelectedProduct({
+			id: product.id.toString(),
+			title: product.title
+		})
 		setIsMessagesOpen(true)
 	}
 
@@ -541,7 +541,21 @@ export default function MarketplacePage() {
 				</form>
 			</div>
 
-			{/* ...rest of your Sheets (Messages, Mobile Menu, etc.) */}
+			{/* Chat Interface */}
+			<ChatInterface
+				currentUserId={user?.uid || ''}
+				currentUserName={userProfile?.displayName || ''}
+				isOpen={isMessagesOpen}
+				onClose={() => {
+					setIsMessagesOpen(false)
+					setSelectedRecipient(null)
+					setSelectedProduct(null)
+				}}
+				initialRecipientId={selectedRecipient?.id}
+				initialRecipientName={selectedRecipient?.name}
+				productId={selectedProduct?.id}
+				productTitle={selectedProduct?.title}
+			/>
 		</div>
 	)
 }
