@@ -15,6 +15,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { PhotoUpload } from "../../components/photo-upload";
+import { type Photo } from "../../lib/firebase-utils";
 
 const categories = ["Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"];
 const conditions = ["New", "Like New", "Good", "Fair", "Poor"];
@@ -29,7 +31,7 @@ export default function SellPage() {
     location: "",
     isNegotiable: false,
   });
-  const [images, setImages] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -40,32 +42,8 @@ export default function SellPage() {
     }));
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      Array.from(files).forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          if (e.target?.result) {
-            setImages((prev) => [...prev, e.target!.result as string]);
-          }
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-  };
-
-  const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const moveImage = (fromIndex: number, toIndex: number) => {
-    setImages((prev) => {
-      const newImages = [...prev];
-      const [movedImage] = newImages.splice(fromIndex, 1);
-      newImages.splice(toIndex, 0, movedImage);
-      return newImages;
-    });
+  const handlePhotosUploaded = (newPhotos: Photo[]) => {
+    setPhotos((prev) => [...prev, ...newPhotos]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,7 +61,16 @@ export default function SellPage() {
         title: formData.title,
         price: parseFloat(formData.price),
         description: formData.description,
-        image: images[0] || "/placeholder.svg",
+        category: formData.category,
+        condition: formData.condition,
+        location: formData.location,
+        isNegotiable: formData.isNegotiable,
+        image: photos[0]?.url || "/placeholder.svg",
+        photos: photos.map((photo: Photo) => ({
+          id: photo.id,
+          url: photo.url,
+          filename: photo.filename
+        })),
         userId: user.uid,
         createdAt: serverTimestamp(),
       });
@@ -91,7 +78,7 @@ export default function SellPage() {
       // Simulate API call
       setTimeout(() => {
         // In a real app, you would send this data to your backend
-        console.log("Product data:", { ...formData, images });
+        console.log("Product data:", { ...formData, photos });
 
         // Show success message and redirect
         alert("Product listed successfully!");
@@ -139,7 +126,7 @@ export default function SellPage() {
 
           <CardContent className="p-4 sm:p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Enhanced Images Section */}
+              {/* Photo Upload Section */}
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Camera className="h-4 w-4" />
@@ -147,76 +134,19 @@ export default function SellPage() {
                   <Badge variant="secondary" className="text-xs">
                     Up to 10 photos
                   </Badge>
-                  {images.length > 0 && (
+                  {photos.length > 0 && (
                     <Badge variant="outline" className="text-xs">
-                      {images.length}/10
+                      {photos.length}/10
                     </Badge>
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                  {images.map((image, index) => (
-                    <div key={index} className="relative group">
-                      <div className="relative">
-                        <img
-                          src={image || "/placeholder.svg"}
-                          alt={`Upload ${index + 1}`}
-                          className="w-full h-24 sm:h-32 object-cover rounded-lg border"
-                        />
-                        {index === 0 && <Badge className="absolute bottom-1 left-1 text-xs bg-blue-500">Cover</Badge>}
-                      </div>
-
-                      {/* Image Controls */}
-                      <div className="absolute top-1 right-1 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => removeImage(index)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-
-                      {/* Move Controls */}
-                      {images.length > 1 && (
-                        <div className="absolute bottom-1 right-1 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {index > 0 && (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="icon"
-                              className="h-5 w-5 text-xs"
-                              onClick={() => moveImage(index, index - 1)}
-                            >
-                              ←
-                            </Button>
-                          )}
-                          {index < images.length - 1 && (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="icon"
-                              className="h-5 w-5 text-xs"
-                              onClick={() => moveImage(index, index + 1)}
-                            >
-                              →
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-
-                  {images.length < 10 && (
-                    <label className="flex flex-col items-center justify-center h-24 sm:h-32 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:border-muted-foreground/50 transition-colors">
-                      <Upload className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground mb-1 sm:mb-2" />
-                      <span className="text-xs sm:text-sm text-muted-foreground text-center px-2">Add Photo</span>
-                      <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
-                    </label>
-                  )}
-                </div>
+                <PhotoUpload
+                  onPhotosUploaded={handlePhotosUploaded}
+                  userId={auth.currentUser?.uid || ''}
+                  maxFiles={10}
+                  className="w-full"
+                />
 
                 <div className="space-y-2 text-xs text-muted-foreground">
                   <div className="flex items-center space-x-2">
@@ -228,7 +158,6 @@ export default function SellPage() {
                     <li>• Take photos from multiple angles</li>
                     <li>• Show any defects or wear clearly</li>
                     <li>• First photo will be used as the cover image</li>
-                    <li>• You can reorder photos by using the arrow buttons</li>
                   </ul>
                 </div>
               </div>
