@@ -4,8 +4,6 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { onAuthStateChanged, signOut } from "firebase/auth"
 import { auth } from "@/firebase"
-import { addDoc, collection, serverTimestamp } from "firebase/firestore"
-import { db } from "@/firebase"
 import { Button } from "@components/ui/button"
 import { Input } from "@components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card"
@@ -27,6 +25,8 @@ import { useTheme } from "next-themes"
 import { ChatInterface } from "../components/chat-interface"
 import { PhotoUpload } from "../components/photo-upload"
 import { useSocket } from "../hooks/use-socket"
+import { subscribeToProducts, getAllProducts, type Product } from "../lib/firebase-utils"
+import { formatDistanceToNow } from "date-fns"
 
 // Location data with coordinates (lat, lng)
 const locationData = [
@@ -44,88 +44,8 @@ const locationData = [
 	{ name: "Yeni Iskele", lat: 35.2667, lng: 33.9333, region: "Eastern" },
 ]
 
-// Mock data (replace with real data/service in production)
-const products = [
-	{
-		id: 1,
-		title: "iPhone 14 Pro Max",
-		price: 899,
-		location: "Downtown",
-		image: "/placeholder.svg?height=200&width=200",
-		category: "Electronics",
-		seller: "John Doe",
-		sellerId: "john-doe",
-		isNegotiable: true,
-		underNegotiation: false,
-		postedDate: "2 days ago",
-	},
-	{
-		id: 2,
-		title: "Vintage Leather Sofa",
-		price: 450,
-		location: "Suburbs",
-		image: "/placeholder.svg?height=200&width=200",
-		category: "Furniture",
-		seller: "Sarah Wilson",
-		sellerId: "sarah-wilson",
-		isNegotiable: true,
-		underNegotiation: true,
-		postedDate: "1 week ago",
-	},
-	{
-		id: 3,
-		title: "Mountain Bike",
-		price: 320,
-		location: "City Center",
-		image: "/placeholder.svg?height=200&width=200",
-		category: "Sports",
-		seller: "Mike Johnson",
-		sellerId: "mike-johnson",
-		isNegotiable: false,
-		underNegotiation: false,
-		postedDate: "3 days ago",
-	},
-	{
-		id: 4,
-		title: "Gaming Laptop",
-		price: 1200,
-		location: "Tech District",
-		image: "/placeholder.svg?height=200&width=200",
-		category: "Electronics",
-		seller: "Alex Chen",
-		sellerId: "alex-chen",
-		isNegotiable: true,
-		underNegotiation: true,
-		postedDate: "5 days ago",
-	},
-	{
-		id: 5,
-		title: "Dining Table Set",
-		price: 280,
-		location: "Residential Area",
-		image: "/placeholder.svg?height=200&width=200",
-		category: "Furniture",
-		seller: "Emma Davis",
-		sellerId: "emma-davis",
-		isNegotiable: true,
-		underNegotiation: false,
-		postedDate: "1 day ago",
-	},
-	{
-		id: 6,
-		title: "Tennis Racket",
-		price: 85,
-		location: "Sports Complex",
-		image: "/placeholder.svg?height=200&width=200",
-		category: "Sports",
-		seller: "David Brown",
-		sellerId: "david-brown",
-		isNegotiable: false,
-		underNegotiation: false,
-		postedDate: "4 days ago",
-	},
-]
-const categories = ["All", "Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden"]
+// Categories for filtering (matching the sell page categories)
+const categories = ["All", "Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"]
 
 export default function MarketplacePage() {
 	const [selectedCategory, setSelectedCategory] = useState("All")
@@ -134,13 +54,16 @@ export default function MarketplacePage() {
 	const [user, setUser] = useState<any>(null)
 	const [userProfile, setUserProfile] = useState<any>(null)
 	const [isMessagesOpen, setIsMessagesOpen] = useState(false)
-	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 	const [selectedRecipient, setSelectedRecipient] = useState<{id: string, name: string} | null>(null)
 	const [selectedProduct, setSelectedProduct] = useState<{id: string, title: string} | null>(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
-	const [favorites, setFavorites] = useState<number[]>([])
+	const [favorites, setFavorites] = useState<string[]>([])
 	const { theme, setTheme } = useTheme()
+
+	// Products state
+	const [products, setProducts] = useState<Product[]>([])
+	const [productsLoading, setProductsLoading] = useState(true)
 
 	// Initialize Socket.io for real-time chat
 	const socket = useSocket({
@@ -148,11 +71,6 @@ export default function MarketplacePage() {
 		userName: userProfile?.displayName,
 		enabled: isLoggedIn === true
 	})
-
-	const [title, setTitle] = useState("");
-	const [price, setPrice] = useState("");
-	const [description, setDescription] = useState("");
-	const [submitError, setSubmitError] = useState("");
 
 	// Enhanced auth state management
 	useEffect(() => {
@@ -183,6 +101,19 @@ export default function MarketplacePage() {
 		return () => unsubscribe()
 	}, [])
 
+	// Fetch products from Firestore
+	useEffect(() => {
+		if (!isLoggedIn) return
+
+		setProductsLoading(true)
+		const unsubscribe = subscribeToProducts((newProducts) => {
+			setProducts(newProducts)
+			setProductsLoading(false)
+		})
+
+		return () => unsubscribe()
+	}, [isLoggedIn])
+
 	const handleLogout = async () => {
 		try {
 			await signOut(auth)
@@ -196,28 +127,28 @@ export default function MarketplacePage() {
 		}
 	}
 
-	const handleToggleFavorite = (productId: number) => {
+	const handleToggleFavorite = (productId: string) => {
 		if (!user) return
 		setFavorites((prev) =>
 			prev.includes(productId)
-				? prev.filter((id) => id !== productId)
+				? prev.filter((id: string) => id !== productId)
 				: [...prev, productId]
 		)
 	}
 
-	const handleProductMessage = (product: (typeof products)[0]) => {
+	const handleProductMessage = (product: Product) => {
 		setSelectedRecipient({
-			id: product.sellerId,
-			name: product.seller
+			id: product.userId,
+			name: 'Seller' // We'll show this as placeholder since we don't have user names
 		})
 		setSelectedProduct({
-			id: product.id.toString(),
+			id: product.id,
 			title: product.title
 		})
 		setIsMessagesOpen(true)
 	}
 
-	const filteredProducts = products.filter((product) => {
+	const filteredProducts = products.filter((product: Product) => {
 		const matchesCategory = selectedCategory === "All" || product.category === selectedCategory
 		const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase())
 		return matchesCategory && matchesSearch
@@ -277,21 +208,6 @@ export default function MarketplacePage() {
 			</div>
 		)
 	}
-
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		// Add your validation and submission logic here
-		if (!title || !price) {
-			setSubmitError("Title and price are required.");
-			return;
-		}
-		setSubmitError("");
-		// Submit the listing (e.g., send to Firestore)
-		// Reset form if needed
-		setTitle("");
-		setPrice("");
-		setDescription("");
-	};
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -426,120 +342,106 @@ export default function MarketplacePage() {
 				</div>
 
 				{/* Products Grid */}
-				<div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
-					{filteredProducts.map((product) => (
-						<Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-							<div className="relative">
-								<img
-									src={product.image || "/placeholder.svg"}
-									alt={`Image of ${product.title}`}
-									className="w-full h-32 sm:h-40 lg:h-48 object-cover"
-								/>
-								{product.underNegotiation && (
-									<Badge className="absolute top-2 right-2 bg-orange-500 hover:bg-orange-600 text-xs">
-										Under Negotiation
-									</Badge>
-								)}
-								{product.isNegotiable && !product.underNegotiation && (
-									<Badge variant="secondary" className="absolute top-2 right-2 text-xs">
-										Negotiable
-									</Badge>
-								)}
-							</div>
-
-							<CardContent className="p-2 sm:p-3 lg:p-4">
-								<div className="space-y-2">
-									<h3 className="font-semibold text-sm sm:text-base lg:text-lg line-clamp-2">{product.title}</h3>
-									<p className="text-base sm:text-lg lg:text-2xl font-bold text-green-600">${product.price}</p>
-
-									<div className="flex items-center text-xs sm:text-sm text-muted-foreground">
-										<MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
-										<span className="truncate">{product.location}</span>
+				{productsLoading ? (
+					<div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
+						{[...Array(6)].map((_, i) => (
+							<Card key={i} className="overflow-hidden">
+								<div className="w-full h-32 sm:h-40 lg:h-48 bg-gray-200 animate-pulse"></div>
+								<CardContent className="p-2 sm:p-3 lg:p-4">
+									<div className="space-y-2">
+										<div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+										<div className="h-6 bg-gray-200 rounded animate-pulse w-20"></div>
+										<div className="h-3 bg-gray-200 rounded animate-pulse w-24"></div>
 									</div>
-
-									<div className="flex items-center justify-between pt-1 sm:pt-2">
-										<div className="flex items-center space-x-1 sm:space-x-2 min-w-0 flex-1">
-											<Avatar className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 flex-shrink-0">
-												<AvatarFallback className="text-xs">
-													{product.seller
-														.split(" ")
-														.map((n) => n[0])
-														.join("")}
-												</AvatarFallback>
-											</Avatar>
-											<span className="text-xs sm:text-sm text-muted-foreground truncate">{product.seller}</span>
-										</div>
-										<span className="text-xs text-muted-foreground whitespace-nowrap ml-2">{product.postedDate}</span>
-									</div>
-
-									<div className="flex space-x-1 sm:space-x-2 pt-2">
-										<Button
-											size="sm"
-											className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
-											onClick={() => handleProductMessage(product)}
-										>
-											<MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-											<span className="hidden sm:inline">Message</span>
-											<span className="sm:hidden">Msg</span>
-										</Button>
-										<Button
-											variant="outline"
-											size="sm"
-											className="px-2 sm:px-3 h-8 sm:h-9"
-											onClick={() => handleToggleFavorite(product.id)}
-											aria-label={favorites.includes(product.id) ? "Remove from favorites" : "Add to favorites"}
-										>
-											<Heart
-												className="h-3 w-3 sm:h-4 sm:w-4"
-												fill={favorites.includes(product.id) ? "red" : "none"}
-												stroke={favorites.includes(product.id) ? "red" : "currentColor"}
-												aria-label={favorites.includes(product.id) ? "Remove from favorites" : "Add to favorites"}
-											/>
-										</Button>
-									</div>
+								</CardContent>
+							</Card>
+						))}
+					</div>
+				) : (
+					<div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
+						{filteredProducts.map((product: Product) => (
+							<Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+								<div className="relative">
+									<img
+										src={product.image || "/placeholder.svg"}
+										alt={`Image of ${product.title}`}
+										className="w-full h-32 sm:h-40 lg:h-48 object-cover"
+									/>
+									{product.isNegotiable && (
+										<Badge variant="secondary" className="absolute top-2 right-2 text-xs">
+											Negotiable
+										</Badge>
+									)}
 								</div>
-							</CardContent>
-						</Card>
-					))}
-				</div>
 
-				{filteredProducts.length === 0 && (
+								<CardContent className="p-2 sm:p-3 lg:p-4">
+									<div className="space-y-2">
+										<h3 className="font-semibold text-sm sm:text-base lg:text-lg line-clamp-2">{product.title}</h3>
+										<p className="text-base sm:text-lg lg:text-2xl font-bold text-green-600">${product.price}</p>
+
+										<div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+											<MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+											<span className="truncate">{product.location}</span>
+										</div>
+
+										<div className="flex items-center justify-between pt-1 sm:pt-2">
+											<div className="flex items-center space-x-1 sm:space-x-2 min-w-0 flex-1">
+												<Avatar className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 flex-shrink-0">
+													<AvatarFallback className="text-xs">
+														S
+													</AvatarFallback>
+												</Avatar>
+												<span className="text-xs sm:text-sm text-muted-foreground truncate">Seller</span>
+											</div>
+											<span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+												{product.createdAt && formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true })}
+											</span>
+										</div>
+
+										<div className="flex space-x-1 sm:space-x-2 pt-2">
+											<Button
+												size="sm"
+												className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
+												onClick={() => handleProductMessage(product)}
+											>
+												<MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+												<span className="hidden sm:inline">Message</span>
+												<span className="sm:hidden">Msg</span>
+											</Button>
+											<Button
+												variant="outline"
+												size="sm"
+												className="px-2 sm:px-3 h-8 sm:h-9"
+												onClick={() => handleToggleFavorite(product.id)}
+												aria-label={favorites.includes(product.id) ? "Remove from favorites" : "Add to favorites"}
+											>
+												<Heart
+													className="h-3 w-3 sm:h-4 sm:w-4"
+													fill={favorites.includes(product.id) ? "red" : "none"}
+													stroke={favorites.includes(product.id) ? "red" : "currentColor"}
+												/>
+											</Button>
+										</div>
+									</div>
+								</CardContent>
+							</Card>
+						))}
+					</div>
+				)}
+
+				{!productsLoading && filteredProducts.length === 0 && (
 					<div className="text-center py-12">
-						<p className="text-muted-foreground">No products found matching your criteria.</p>
+						<p className="text-muted-foreground">
+							{products.length === 0 
+								? "No products have been listed yet. Be the first to post something!" 
+								: "No products found matching your criteria."
+							}
+						</p>
 					</div>
 				)}
 			</div>
 
-			{/* Sell Page - Post a Listing */}
-			<div className="container max-w-md mx-auto py-6">
-				<h1 className="text-2xl font-bold mb-4">Post a Listing</h1>
-				{submitError && <p className="text-red-600 mb-4">{submitError}</p>}
-				<form onSubmit={handleSubmit} className="space-y-4">
-					<Input
-						type="text"
-						placeholder="Product Title"
-						value={title}
-						onChange={(e) => setTitle(e.target.value)}
-						required
-					/>
-					<Input
-						type="number"
-						placeholder="Price"
-						value={price}
-						onChange={(e) => setPrice(e.target.value)}
-						required
-					/>
-					<Textarea
-						placeholder="Description (optional)"
-						value={description}
-						onChange={(e) => setDescription(e.target.value)}
-						rows={4}
-					/>
-					<Button type="submit" disabled={loading}>
-						{loading ? "Posting..." : "Post Listing"}
-					</Button>
-				</form>
-			</div>
+
 
 			{/* Chat Interface */}
 			<ChatInterface

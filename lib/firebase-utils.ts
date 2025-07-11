@@ -344,3 +344,66 @@ export async function markMessagesAsRead(
     console.error('Error marking messages as read:', error);
   }
 }
+
+// Product Management Functions
+export interface Product {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  condition: string;
+  location: string;
+  isNegotiable: boolean;
+  image: string;
+  photos?: {
+    id: string;
+    url: string;
+    filename: string;
+  }[];
+  userId: string;
+  createdAt: Timestamp;
+}
+
+export async function getAllProducts(): Promise<Product[]> {
+  try {
+    const q = query(
+      collection(db, 'products'),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
+      id: doc.id,
+      ...doc.data()
+    } as Product));
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+}
+
+export function subscribeToProducts(callback: (products: Product[]) => void): () => void {
+  const q = query(
+    collection(db, 'products'),
+    orderBy('createdAt', 'desc')
+  );
+  
+  return onSnapshot(q, (snapshot) => {
+    const products = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
+      id: doc.id,
+      ...doc.data()
+    } as Product));
+    callback(products);
+  });
+}
+
+export async function getUserById(userId: string): Promise<{displayName: string} | null> {
+  try {
+    // For now, return a placeholder since we don't have a users collection
+    // In production, you'd fetch from a users collection
+    return { displayName: 'Anonymous User' };
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    return null;
+  }
+}
