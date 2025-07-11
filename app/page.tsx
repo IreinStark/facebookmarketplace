@@ -27,6 +27,7 @@ import { PhotoUpload } from "../components/photo-upload"
 import { useSocket } from "../hooks/use-socket"
 import { subscribeToProducts, getAllProducts, type Product } from "../lib/firebase-utils"
 import { formatDistanceToNow } from "date-fns"
+import { Timestamp } from "firebase/firestore"
 
 // Location data with coordinates (lat, lng)
 const locationData = [
@@ -43,6 +44,104 @@ const locationData = [
 	{ name: "Dipkarpaz", lat: 35.6, lng: 34.3833, region: "Karpaz" },
 	{ name: "Yeni Iskele", lat: 35.2667, lng: 33.9333, region: "Eastern" },
 ]
+
+// Mock data for testing (you can switch to real Firebase data later)
+const mockProducts = [
+	{
+		id: "1",
+		title: "iPhone 14 Pro Max",
+		description: "Latest iPhone in excellent condition with all accessories",
+		price: 899,
+		location: "Downtown",
+		image: "/placeholder.svg?height=200&width=200",
+		category: "Electronics",
+		condition: "Like New",
+		isNegotiable: true,
+		userId: "mock-seller-1",
+		createdAt: Timestamp.fromDate(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)), // 2 days ago
+		photos: []
+	},
+	{
+		id: "2", 
+		title: "Vintage Leather Sofa",
+		description: "Beautiful vintage leather sofa, perfect for any living room",
+		price: 450,
+		location: "Suburbs",
+		image: "/placeholder.svg?height=200&width=200",
+		category: "Furniture",
+		condition: "Good",
+		isNegotiable: true,
+		userId: "mock-seller-2",
+		createdAt: Timestamp.fromDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)), // 1 week ago
+		photos: []
+	},
+	{
+		id: "3",
+		title: "Mountain Bike",
+		description: "High-quality mountain bike, great for trails and city riding",
+		price: 320,
+		location: "City Center", 
+		image: "/placeholder.svg?height=200&width=200",
+		category: "Sports",
+		condition: "Good",
+		isNegotiable: false,
+		userId: "mock-seller-3",
+		createdAt: Timestamp.fromDate(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)), // 3 days ago
+		photos: []
+	},
+	{
+		id: "4",
+		title: "Gaming Laptop",
+		description: "Powerful gaming laptop with RTX graphics card",
+		price: 1200,
+		location: "Tech District",
+		image: "/placeholder.svg?height=200&width=200", 
+		category: "Electronics",
+		condition: "Like New",
+		isNegotiable: true,
+		userId: "mock-seller-4",
+		createdAt: Timestamp.fromDate(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)), // 5 days ago
+		photos: []
+	},
+	{
+		id: "5",
+		title: "Dining Table Set",
+		description: "Solid wood dining table with 6 chairs",
+		price: 280,
+		location: "Residential Area",
+		image: "/placeholder.svg?height=200&width=200",
+		category: "Furniture", 
+		condition: "Good",
+		isNegotiable: true,
+		userId: "mock-seller-5",
+		createdAt: Timestamp.fromDate(new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)), // 1 day ago
+		photos: []
+	},
+	{
+		id: "6",
+		title: "Tennis Racket",
+		description: "Professional tennis racket in great condition",
+		price: 85,
+		location: "Sports Complex",
+		image: "/placeholder.svg?height=200&width=200",
+		category: "Sports",
+		condition: "Good", 
+		isNegotiable: false,
+		userId: "mock-seller-6",
+		createdAt: Timestamp.fromDate(new Date(Date.now() - 4 * 24 * 60 * 60 * 1000)), // 4 days ago
+		photos: []
+	}
+] as Product[];
+
+// Mock seller names for testing
+const mockSellerNames: { [key: string]: string } = {
+	'mock-seller-1': 'John Doe',
+	'mock-seller-2': 'Sarah Wilson', 
+	'mock-seller-3': 'Mike Johnson',
+	'mock-seller-4': 'Alex Chen',
+	'mock-seller-5': 'Emma Davis',
+	'mock-seller-6': 'David Brown'
+};
 
 // Categories for filtering (matching the sell page categories)
 const categories = ["All", "Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"]
@@ -101,18 +200,31 @@ export default function MarketplacePage() {
 		return () => unsubscribe()
 	}, [])
 
-	// Fetch products from Firestore
+	// Use mock data for now (comment this out and uncomment below to use real Firebase data)
 	useEffect(() => {
 		if (!isLoggedIn) return
 
 		setProductsLoading(true)
-		const unsubscribe = subscribeToProducts((newProducts) => {
-			setProducts(newProducts)
+		// Simulate loading time
+		setTimeout(() => {
+			setProducts(mockProducts)
 			setProductsLoading(false)
-		})
-
-		return () => unsubscribe()
+		}, 500)
 	}, [isLoggedIn])
+
+	// Uncomment this to use real Firebase data instead of mock data
+	// useEffect(() => {
+	// 	if (!isLoggedIn) return
+	// 
+	// 	setProductsLoading(true)
+	// 	const unsubscribe = subscribeToProducts((newProducts) => {
+	// 		// Combine real products with mock products for testing
+	// 		setProducts([...newProducts, ...mockProducts])
+	// 		setProductsLoading(false)
+	// 	})
+	// 
+	// 	return () => unsubscribe()
+	// }, [isLoggedIn])
 
 	const handleLogout = async () => {
 		try {
@@ -139,7 +251,7 @@ export default function MarketplacePage() {
 	const handleProductMessage = (product: Product) => {
 		setSelectedRecipient({
 			id: product.userId,
-			name: 'Seller' // We'll show this as placeholder since we don't have user names
+			name: mockSellerNames[product.userId] || 'Seller'
 		})
 		setSelectedProduct({
 			id: product.id,
@@ -388,10 +500,15 @@ export default function MarketplacePage() {
 											<div className="flex items-center space-x-1 sm:space-x-2 min-w-0 flex-1">
 												<Avatar className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 flex-shrink-0">
 													<AvatarFallback className="text-xs">
-														S
+														{(mockSellerNames[product.userId] || 'Seller')
+															.split(' ')
+															.map((n: string) => n[0])
+															.join('')}
 													</AvatarFallback>
 												</Avatar>
-												<span className="text-xs sm:text-sm text-muted-foreground truncate">Seller</span>
+												<span className="text-xs sm:text-sm text-muted-foreground truncate">
+													{mockSellerNames[product.userId] || 'Seller'}
+												</span>
 											</div>
 											<span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
 												{product.createdAt && formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true })}
