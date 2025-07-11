@@ -17,7 +17,7 @@ import { Label } from "@components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@components/ui/popover"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog"
-import { Search, MapPin, MessageCircle, Heart, User, Plus, Moon, Sun, MessageSquare, Menu, Send, LogOut, AlertCircle } from "lucide-react"
+import { Search, MapPin, MessageCircle, Heart, User, Plus, Moon, Sun, MessageSquare, Menu, Send, LogOut, AlertCircle, Tag, X } from "lucide-react"
 import { Alert, AlertDescription } from "@components/ui/alert"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -146,9 +146,16 @@ const mockSellerNames: { [key: string]: string } = {
 // Categories for filtering (matching the sell page categories)
 const categories = ["All", "Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"]
 
+// Extract unique locations from products for filtering
+const locations = ["All Locations", "Downtown", "Suburbs", "City Center", "Tech District", "Residential Area", "Sports Complex"]
+
 export default function MarketplacePage() {
 	const [selectedCategory, setSelectedCategory] = useState("All")
+	const [selectedLocation, setSelectedLocation] = useState("All Locations")
 	const [searchTerm, setSearchTerm] = useState("")
+	const [sortBy, setSortBy] = useState("newest")
+	const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000])
+	const [showPriceFilter, setShowPriceFilter] = useState(false)
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
 	const [user, setUser] = useState<any>(null)
 	const [userProfile, setUserProfile] = useState<any>(null)
@@ -262,8 +269,26 @@ export default function MarketplacePage() {
 
 	const filteredProducts = products.filter((product: Product) => {
 		const matchesCategory = selectedCategory === "All" || product.category === selectedCategory
-		const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase())
-		return matchesCategory && matchesSearch
+		const matchesLocation = selectedLocation === "All Locations" || product.location === selectedLocation
+		const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1]
+		const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+							 product.description.toLowerCase().includes(searchTerm.toLowerCase())
+		return matchesCategory && matchesLocation && matchesPrice && matchesSearch
+	}).sort((a, b) => {
+		switch (sortBy) {
+			case "newest":
+				return b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime()
+			case "oldest":
+				return a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime()
+			case "price-low":
+				return a.price - b.price
+			case "price-high":
+				return b.price - a.price
+			case "title":
+				return a.title.localeCompare(b.title)
+			default:
+				return 0
+		}
 	})
 
 	// Loading state
@@ -439,30 +464,245 @@ export default function MarketplacePage() {
 			</div>
 
 			<div id="products" className="container px-2 sm:px-4 py-4 sm:py-6">
-				{/* Categories and Filters */}
-				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
-					<div className="flex items-center space-x-2 sm:space-x-4">
-						<span className="text-sm font-medium whitespace-nowrap">
-							Welcome back, {userProfile?.displayName || 'User'}!
-						</span>
+				{/* Welcome Message */}
+				<div className="mb-4 sm:mb-6">
+					<h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
+						Welcome back, {userProfile?.displayName || 'User'}!
+					</h2>
+					<p className="text-sm text-gray-600 dark:text-gray-400">
+						{filteredProducts.length} item{filteredProducts.length !== 1 ? 's' : ''} available
+					</p>
+				</div>
+
+				{/* Filters Bar */}
+				<div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-4 mb-4 sm:mb-6">
+					<div className="flex flex-col xl:flex-row gap-4 items-start xl:items-center">
+						{/* Categories Section */}
+						<div className="flex-1 min-w-0">
+							<div className="flex items-center gap-2 mb-2 xl:mb-0">
+								<Tag className="h-4 w-4 text-gray-500" />
+								<span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+									Categories:
+								</span>
+							</div>
+							<div className="flex flex-wrap gap-2">
+								{categories.map((category) => {
+									const count = category === "All" ? products.length : products.filter(p => p.category === category).length;
+									return (
+										<Button
+											key={category}
+											variant={selectedCategory === category ? "default" : "outline"}
+											size="sm"
+											onClick={() => setSelectedCategory(category)}
+											className={`text-xs sm:text-sm px-2 sm:px-3 py-1 h-8 transition-all ${
+												selectedCategory === category 
+													? 'bg-blue-600 hover:bg-blue-700 text-white' 
+													: 'hover:bg-gray-100 dark:hover:bg-gray-700'
+											}`}
+										>
+											{category}
+											{count > 0 && (
+												<span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${
+													selectedCategory === category
+														? 'bg-blue-700 text-white'
+														: 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
+												}`}>
+													{count}
+												</span>
+											)}
+										</Button>
+									);
+								})}
+							</div>
+						</div>
+
+						{/* Filters Section */}
+						<div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+							{/* Location Filter */}
+							<div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+								<div className="flex items-center gap-2">
+									<MapPin className="h-4 w-4 text-gray-500" />
+									<span className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+										Location:
+									</span>
+								</div>
+								<Select value={selectedLocation} onValueChange={setSelectedLocation}>
+									<SelectTrigger className="w-full sm:w-44">
+										<SelectValue placeholder="Select location" />
+									</SelectTrigger>
+									<SelectContent>
+										{locations.map((location) => {
+											const count = location === "All Locations" ? products.length : products.filter(p => p.location === location).length;
+											return (
+												<SelectItem key={location} value={location}>
+													<div className="flex items-center justify-between gap-2 w-full">
+														<div className="flex items-center gap-2">
+															{location === "All Locations" ? (
+																<span>🌍 {location}</span>
+															) : (
+																<span>📍 {location}</span>
+															)}
+														</div>
+														{count > 0 && (
+															<span className="text-xs text-gray-500">({count})</span>
+														)}
+													</div>
+												</SelectItem>
+											);
+										})}
+									</SelectContent>
+								</Select>
+							</div>
+
+							{/* Sort Filter */}
+							<div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+								<div className="flex items-center gap-2">
+									<Search className="h-4 w-4 text-gray-500" />
+									<span className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+										Sort by:
+									</span>
+								</div>
+								<Select value={sortBy} onValueChange={setSortBy}>
+									<SelectTrigger className="w-full sm:w-36">
+										<SelectValue placeholder="Sort by" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="newest">🆕 Newest First</SelectItem>
+										<SelectItem value="oldest">📅 Oldest First</SelectItem>
+										<SelectItem value="price-low">💰 Price: Low to High</SelectItem>
+										<SelectItem value="price-high">💸 Price: High to Low</SelectItem>
+										<SelectItem value="title">🔤 Name: A to Z</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+
+							{/* Price Filter */}
+							<div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => setShowPriceFilter(!showPriceFilter)}
+									className={`text-xs sm:text-sm ${showPriceFilter ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : ''}`}
+								>
+									💲 Price Filter
+									{(priceRange[0] > 0 || priceRange[1] < 2000) && (
+										<span className="ml-1 text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded-full">
+											${priceRange[0]}-${priceRange[1]}
+										</span>
+									)}
+								</Button>
+							</div>
+						</div>
 					</div>
-					<div className="flex items-center space-x-2">
-						<label htmlFor="category-select" className="text-sm font-medium whitespace-nowrap">
-							Category:
-						</label>
-						<Select value={selectedCategory} onValueChange={setSelectedCategory}>
-							<SelectTrigger className="w-36 sm:w-40 lg:w-48">
-								<SelectValue placeholder="Select category" />
-							</SelectTrigger>
-							<SelectContent>
-								{categories.map((category) => (
-									<SelectItem key={category} value={category}>
-										{category}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
+
+					{/* Price Range Slider */}
+					{showPriceFilter && (
+						<div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+							<div className="flex items-center justify-between mb-3">
+								<Label className="text-sm font-medium">Price Range</Label>
+								<div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+									<span>${priceRange[0]}</span>
+									<span>-</span>
+									<span>${priceRange[1]}</span>
+								</div>
+							</div>
+							<Slider
+								value={priceRange}
+								onValueChange={(value) => setPriceRange(value as [number, number])}
+								max={2000}
+								min={0}
+								step={25}
+								className="w-full"
+							/>
+							<div className="flex justify-between text-xs text-gray-500 mt-2">
+								<span>$0</span>
+								<span>$2000+</span>
+							</div>
+							<div className="flex gap-2 mt-3">
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => setPriceRange([0, 2000])}
+									className="text-xs"
+								>
+									Reset
+								</Button>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => setShowPriceFilter(false)}
+									className="text-xs"
+								>
+									Close
+								</Button>
+							</div>
+						</div>
+					)}
+
+					{/* Active Filters Display */}
+					{(selectedCategory !== "All" || selectedLocation !== "All Locations" || sortBy !== "newest" || priceRange[0] > 0 || priceRange[1] < 2000) && (
+						<div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+							<span className="text-xs text-gray-500">Active filters:</span>
+							{selectedCategory !== "All" && (
+								<div className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-xs">
+									<span>📂 {selectedCategory}</span>
+									<button
+										onClick={() => setSelectedCategory("All")}
+										className="ml-1 hover:text-blue-600"
+									>
+										<X className="h-3 w-3" />
+									</button>
+								</div>
+							)}
+							{selectedLocation !== "All Locations" && (
+								<div className="flex items-center gap-1 bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs">
+									<span>📍 {selectedLocation}</span>
+									<button
+										onClick={() => setSelectedLocation("All Locations")}
+										className="ml-1 hover:text-green-600"
+									>
+										<X className="h-3 w-3" />
+									</button>
+								</div>
+							)}
+							{(priceRange[0] > 0 || priceRange[1] < 2000) && (
+								<div className="flex items-center gap-1 bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200 px-2 py-1 rounded-full text-xs">
+									<span>💲 ${priceRange[0]} - ${priceRange[1]}</span>
+									<button
+										onClick={() => setPriceRange([0, 2000])}
+										className="ml-1 hover:text-orange-600"
+									>
+										<X className="h-3 w-3" />
+									</button>
+								</div>
+							)}
+							{sortBy !== "newest" && (
+								<div className="flex items-center gap-1 bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200 px-2 py-1 rounded-full text-xs">
+									<span>🔀 {sortBy === "oldest" ? "Oldest First" : sortBy === "price-low" ? "Price ↑" : sortBy === "price-high" ? "Price ↓" : "A-Z"}</span>
+									<button
+										onClick={() => setSortBy("newest")}
+										className="ml-1 hover:text-purple-600"
+									>
+										<X className="h-3 w-3" />
+									</button>
+								</div>
+							)}
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={() => {
+									setSelectedCategory("All");
+									setSelectedLocation("All Locations");
+									setSortBy("newest");
+									setPriceRange([0, 2000]);
+									setShowPriceFilter(false);
+								}}
+								className="text-xs h-6 px-2 text-gray-500 hover:text-gray-700"
+							>
+								Clear all
+							</Button>
+						</div>
+					)}
 				</div>
 
 				{/* Products Grid */}
@@ -560,12 +800,42 @@ export default function MarketplacePage() {
 
 				{!productsLoading && filteredProducts.length === 0 && (
 					<div className="text-center py-12">
-						<p className="text-muted-foreground">
+						<div className="text-6xl mb-4">🔍</div>
+						<h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">
+							{products.length === 0 
+								? "No Products Yet" 
+								: "No Results Found"
+							}
+						</h3>
+						<p className="text-muted-foreground mb-4">
 							{products.length === 0 
 								? "No products have been listed yet. Be the first to post something!" 
-								: "No products found matching your criteria."
+								: `No products found for ${selectedCategory !== "All" ? `"${selectedCategory}"` : ""}${selectedCategory !== "All" && selectedLocation !== "All Locations" ? " in " : ""}${selectedLocation !== "All Locations" ? `"${selectedLocation}"` : ""}.`
 							}
 						</p>
+						{products.length > 0 && (
+							<div className="flex flex-col sm:flex-row gap-2 items-center justify-center">
+								<Button
+									variant="outline"
+									onClick={() => {
+										setSelectedCategory("All");
+										setSelectedLocation("All Locations");
+										setSortBy("newest");
+										setPriceRange([0, 2000]);
+										setShowPriceFilter(false);
+										setSearchTerm("");
+									}}
+								>
+									Clear All Filters
+								</Button>
+								<span className="text-sm text-gray-500">or</span>
+								<Link href="/sell">
+									<Button>
+										Post a New Item
+									</Button>
+								</Link>
+							</div>
+						)}
 					</div>
 				)}
 			</div>

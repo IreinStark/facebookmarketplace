@@ -6,10 +6,15 @@ A modern, full-featured marketplace application built with Next.js 15, React 19,
 
 ### Core Marketplace Features
 - **User Authentication**: Firebase Auth with login/signup
-- **Product Listings**: Browse, search, and filter products by category
+- **Advanced Filtering**: Filter by category, location with item counters
+- **Smart Search**: Search through titles and descriptions
+- **Flexible Sorting**: Sort by newest, oldest, price (low/high), or name
+- **Interactive Categories**: Button-based category selection with counts
+- **Location-Based Filtering**: Dropdown location filter with item counts
 - **Product Details**: Comprehensive product information with images
 - **Favorites System**: Save and manage favorite items
 - **User Profiles**: Personal profile management
+- **Filter Management**: Active filters display with easy removal
 
 ### 📸 Responsive Photo Management
 - **Touch-Friendly Upload**: Mobile-optimized drag & drop with tap-to-select
