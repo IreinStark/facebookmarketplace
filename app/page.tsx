@@ -22,7 +22,7 @@ import { Alert, AlertDescription } from "@components/ui/alert"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
-import { ChatInterface } from "../components/chat-interface"
+import { ChatInterfaceMock } from "../components/chat-interface-mock"
 import { PhotoUpload } from "../components/photo-upload"
 import { useSocket } from "../hooks/use-socket"
 import { subscribeToProducts, getAllProducts, type Product } from "../lib/firebase-utils"
@@ -561,7 +561,7 @@ export default function MarketplacePage() {
 
 
 			{/* Chat Interface */}
-			<ChatInterface
+			<ChatInterfaceMock
 				currentUserId={user?.uid || ''}
 				currentUserName={userProfile?.displayName || ''}
 				isOpen={isMessagesOpen}

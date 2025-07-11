@@ -97,6 +97,28 @@ The mock data includes:
 - All product fields match Firebase schema
 - Chat functionality works with mock sellers
 
-### 🚀 Ready to Go!
+### � Chat System (Mock Mode)
+
+The chat system is currently using **mock mode** to work without Firebase:
+- **Messages stored locally** - No Firebase setup needed
+- **Real-time simulation** - Updates every second  
+- **Full functionality** - Send text, photos, create conversations
+- **Professional UI** - Looks and feels like real chat
+
+**To switch to real Firebase chat:**
+In `app/page.tsx`:
+```typescript
+// Change this line:
+import { ChatInterfaceMock } from "../components/chat-interface-mock"
+// To this:
+import { ChatInterface } from "../components/chat-interface"
+
+// And change the component:
+<ChatInterfaceMock ... />
+// To:
+<ChatInterface ... />
+```
+
+### �🚀 Ready to Go!
 
 The app is ready to use immediately with mock data, or can be switched to Firebase with a simple code change when you're ready to go live!

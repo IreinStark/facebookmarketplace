@@ -20,13 +20,13 @@ A modern, full-featured marketplace application built with Next.js 15, React 19,
 - **Photo Gallery**: Display uploaded photos with management controls
 
 ### 💬 Real-time Chat System
-- **Live Messaging**: Socket.io powered real-time communication
-- **Conversation Management**: Organize chats by product/user
+- **Live Messaging**: Mock real-time communication (switches every second)
+- **Conversation Management**: Organize chats by product/user  
 - **Photo Sharing**: Send images directly in chat
-- **Typing Indicators**: See when others are typing
-- **Read Receipts**: Track message delivery and read status
-- **Online Status**: Real-time user presence indicators
-- **Chat History**: Persistent message storage in Firestore
+- **Local Storage**: Messages stored locally for immediate testing
+- **Professional UI**: Full-featured chat interface
+- **Easy Switch**: One line change to enable Firebase real-time
+- **Demo Mode**: Works immediately without any setup
 
 ### 🔒 Security & Permissions
 - **Firestore Security Rules**: Comprehensive data access control
