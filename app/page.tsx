@@ -22,7 +22,7 @@ import { Alert, AlertDescription } from "@components/ui/alert"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
-import { ChatInterfaceMock } from "../components/chat-interface-mock"
+import { ChatInterface } from "../components/chat-interface"
 import { PhotoUpload } from "../components/photo-upload"
 import { useSocket } from "../hooks/use-socket"
 import { subscribeToProducts, getAllProducts, type Product } from "../lib/firebase-utils"
@@ -207,31 +207,24 @@ export default function MarketplacePage() {
 		return () => unsubscribe()
 	}, [])
 
-	// Use mock data for now (comment this out and uncomment below to use real Firebase data)
+	// Use real Firebase data with fallback to mock data
 	useEffect(() => {
 		if (!isLoggedIn) return
 
 		setProductsLoading(true)
-		// Simulate loading time
-		setTimeout(() => {
-			setProducts(mockProducts)
+		const unsubscribe = subscribeToProducts((newProducts) => {
+			// If no real products, show mock products for demo purposes
+			if (newProducts.length === 0) {
+				setProducts(mockProducts)
+			} else {
+				// Combine real products with mock products for richer experience
+				setProducts([...newProducts, ...mockProducts])
+			}
 			setProductsLoading(false)
-		}, 500)
-	}, [isLoggedIn])
+		})
 
-	// Uncomment this to use real Firebase data instead of mock data
-	// useEffect(() => {
-	// 	if (!isLoggedIn) return
-	// 
-	// 	setProductsLoading(true)
-	// 	const unsubscribe = subscribeToProducts((newProducts) => {
-	// 		// Combine real products with mock products for testing
-	// 		setProducts([...newProducts, ...mockProducts])
-	// 		setProductsLoading(false)
-	// 	})
-	// 
-	// 	return () => unsubscribe()
-	// }, [isLoggedIn])
+		return () => unsubscribe()
+	}, [isLoggedIn])
 
 	const handleLogout = async () => {
 		try {
@@ -843,7 +836,7 @@ export default function MarketplacePage() {
 
 
 			{/* Chat Interface */}
-			<ChatInterfaceMock
+			<ChatInterface
 				currentUserId={user?.uid || ''}
 				currentUserName={userProfile?.displayName || ''}
 				isOpen={isMessagesOpen}

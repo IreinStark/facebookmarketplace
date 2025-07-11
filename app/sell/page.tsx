@@ -15,16 +15,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { PhotoUploadMock } from "../../components/photo-upload-mock";
-
-interface MockPhoto {
-  id: string;
-  url: string;
-  fileName: string;
-  size: number;
-  uploadedAt: Date;
-  userId: string;
-}
+import { PhotoUpload } from "../../components/photo-upload";
+import { type Photo } from "../../lib/firebase-utils";
 
 const categories = ["Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"];
 const conditions = ["New", "Like New", "Good", "Fair", "Poor"];
