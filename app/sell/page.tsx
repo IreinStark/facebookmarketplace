@@ -15,8 +15,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { PhotoUpload } from "../../components/photo-upload";
-import { type Photo } from "../../lib/firebase-utils";
+import { PhotoUploadMock } from "../../components/photo-upload-mock";
+
+interface MockPhoto {
+  id: string;
+  url: string;
+  fileName: string;
+  size: number;
+  uploadedAt: Date;
+  userId: string;
+}
 
 const categories = ["Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"];
 const conditions = ["New", "Like New", "Good", "Fair", "Poor"];
@@ -31,7 +39,7 @@ export default function SellPage() {
     location: "",
     isNegotiable: false,
   });
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [photos, setPhotos] = useState<MockPhoto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -42,7 +50,7 @@ export default function SellPage() {
     }));
   };
 
-  const handlePhotosUploaded = (newPhotos: Photo[]) => {
+  const handlePhotosUploaded = (newPhotos: MockPhoto[]) => {
     setPhotos((prev) => [...prev, ...newPhotos]);
   };
 
@@ -66,10 +74,10 @@ export default function SellPage() {
         location: formData.location,
         isNegotiable: formData.isNegotiable,
         image: photos[0]?.url || "/placeholder.svg",
-        photos: photos.map((photo: Photo) => ({
+        photos: photos.map((photo: MockPhoto) => ({
           id: photo.id,
           url: photo.url,
-          filename: photo.filename
+          filename: photo.fileName
         })),
         userId: user.uid,
         createdAt: serverTimestamp(),
@@ -141,7 +149,7 @@ export default function SellPage() {
                   )}
                 </div>
 
-                <PhotoUpload
+                <PhotoUploadMock
                   onPhotosUploaded={handlePhotosUploaded}
                   userId={auth.currentUser?.uid || ''}
                   maxFiles={10}

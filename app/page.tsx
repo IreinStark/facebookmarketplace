@@ -411,17 +411,29 @@ export default function MarketplacePage() {
             </header>
 
 			{/* Welcome Banner */}
-			<div className="container px-2 sm:px-4 py-4">
-				<div className="bg-blue-50 dark:bg-blue-900 rounded-lg p-4 mb-6 text-center">
-					<h1 className="text-2xl sm:text-3xl font-bold mb-2">Marketplace</h1>
-					<p className="mb-4">Welcome to the Marketplace clone.</p>
-					<div className="space-x-4">
-						<Link href="/sell" className="text-blue-600 underline font-medium">
-							Post a Listing
+			<div className="container px-2 sm:px-4 py-3 sm:py-4">
+				<div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/50 dark:to-indigo-900/50 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6 text-center border border-blue-100 dark:border-blue-800">
+					<h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 text-gray-900 dark:text-white">
+						Welcome to Marketplace
+					</h1>
+					<p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4">
+						Buy and sell items in your local community with real-time chat
+					</p>
+					<div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+						<Link href="/sell" className="text-blue-600 dark:text-blue-400 underline font-medium text-sm sm:text-base hover:text-blue-700 transition-colors">
+							📝 Post a Listing
 						</Link>
-						<Link href="#products" className="text-blue-600 underline font-medium">
-							View Listings
+						<span className="hidden sm:inline text-gray-400">•</span>
+						<Link href="#products" className="text-blue-600 dark:text-blue-400 underline font-medium text-sm sm:text-base hover:text-blue-700 transition-colors">
+							🛍️ Browse Items
 						</Link>
+						<span className="hidden sm:inline text-gray-400">•</span>
+						<button 
+							onClick={() => setIsMessagesOpen(true)}
+							className="text-blue-600 dark:text-blue-400 underline font-medium text-sm sm:text-base hover:text-blue-700 transition-colors"
+						>
+							💬 Try Chat Demo
+						</button>
 					</div>
 				</div>
 			</div>

@@ -6,11 +6,19 @@ import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Progress } from './ui/progress';
 import { Alert, AlertDescription } from './ui/alert';
-import { uploadPhoto, type Photo } from '../lib/firebase-utils';
 import { Upload, X, Image as ImageIcon, CheckCircle, AlertCircle, Camera } from 'lucide-react';
 
-interface PhotoUploadProps {
-  onPhotosUploaded: (photos: Photo[]) => void;
+interface MockPhoto {
+  id: string;
+  url: string;
+  fileName: string;
+  size: number;
+  uploadedAt: Date;
+  userId: string;
+}
+
+interface PhotoUploadMockProps {
+  onPhotosUploaded: (photos: MockPhoto[]) => void;
   userId: string;
   productId?: string;
   maxFiles?: number;
@@ -21,19 +29,34 @@ interface UploadState {
   file: File;
   progress: number;
   status: 'uploading' | 'success' | 'error';
-  photo?: Photo;
+  photo?: MockPhoto;
   error?: string;
+  url?: string;
 }
 
-export function PhotoUpload({ 
+export function PhotoUploadMock({ 
   onPhotosUploaded, 
   userId, 
   productId, 
   maxFiles = 5,
   className = ""
-}: PhotoUploadProps) {
+}: PhotoUploadMockProps) {
   const [uploads, setUploads] = useState<UploadState[]>([]);
   const [globalError, setGlobalError] = useState<string>("");
+
+  const createMockPhoto = (file: File): MockPhoto => {
+    // Create a local URL for the file
+    const url = URL.createObjectURL(file);
+    
+    return {
+      id: `photo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      url,
+      fileName: file.name,
+      size: file.size,
+      uploadedAt: new Date(),
+      userId
+    };
+  };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setGlobalError("");
@@ -63,61 +86,48 @@ export function PhotoUpload({
     const newUploads: UploadState[] = validFiles.map(file => ({
       file,
       progress: 0,
-      status: 'uploading' as const
+      status: 'uploading' as const,
+      url: URL.createObjectURL(file)
     }));
 
     setUploads(prev => [...prev, ...newUploads]);
 
-    // Upload files
+    // Simulate upload process
     const uploadPromises = validFiles.map(async (file, index) => {
-      try {
-        const uploadIndex = uploads.length + index;
-        
-        // Simulate progress (since Firebase doesn't provide real-time progress)
-        const progressInterval = setInterval(() => {
-          setUploads(prev => prev.map((upload, i) => 
-            i === uploadIndex && upload.status === 'uploading'
-              ? { ...upload, progress: Math.min(upload.progress + 10, 90) }
-              : upload
-          ));
-        }, 200);
-
-        const photo = await uploadPhoto(file, userId, productId);
-        
-        clearInterval(progressInterval);
-        
+      const uploadIndex = uploads.length + index;
+      
+      // Simulate progress
+      const progressInterval = setInterval(() => {
         setUploads(prev => prev.map((upload, i) => 
-          i === uploadIndex
-            ? { ...upload, progress: 100, status: 'success' as const, photo }
+          i === uploadIndex && upload.status === 'uploading'
+            ? { ...upload, progress: Math.min(upload.progress + 20, 100) }
             : upload
         ));
+      }, 100);
 
-        return photo;
-      } catch (error) {
-        setUploads(prev => prev.map((upload, i) => 
-          i === uploads.length + index
-            ? { 
-                ...upload, 
-                status: 'error' as const, 
-                error: error instanceof Error ? error.message : 'Upload failed' 
-              }
-            : upload
-        ));
-        return null;
-      }
+      // Simulate upload delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      clearInterval(progressInterval);
+      
+      const photo = createMockPhoto(file);
+      
+      setUploads(prev => prev.map((upload, i) => 
+        i === uploadIndex
+          ? { ...upload, progress: 100, status: 'success' as const, photo }
+          : upload
+      ));
+
+      return photo;
     });
 
     try {
       const results = await Promise.all(uploadPromises);
-      const successfulPhotos = results.filter((photo: Photo | null): photo is Photo => photo !== null);
-      
-      if (successfulPhotos.length > 0) {
-        onPhotosUploaded(successfulPhotos);
-      }
+      onPhotosUploaded(results);
     } catch (error) {
       console.error('Upload error:', error);
     }
-  }, [uploads.length, maxFiles, userId, productId, onPhotosUploaded]);
+  }, [uploads.length, maxFiles, userId, onPhotosUploaded]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -129,6 +139,10 @@ export function PhotoUpload({
   });
 
   const removeUpload = (index: number) => {
+    const upload = uploads[index];
+    if (upload && upload.url) {
+      URL.revokeObjectURL(upload.url);
+    }
     setUploads(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -140,35 +154,26 @@ export function PhotoUpload({
       i === index ? { ...u, status: 'uploading', progress: 0, error: undefined } : u
     ));
 
-    try {
-      const progressInterval = setInterval(() => {
-        setUploads(prev => prev.map((u, i) => 
-          i === index && u.status === 'uploading'
-            ? { ...u, progress: Math.min(u.progress + 10, 90) }
-            : u
-        ));
-      }, 200);
-
-      const photo = await uploadPhoto(upload.file, userId, productId);
-      
-      clearInterval(progressInterval);
-      
+    // Simulate retry
+    const progressInterval = setInterval(() => {
       setUploads(prev => prev.map((u, i) => 
-        i === index ? { ...u, progress: 100, status: 'success', photo } : u
-      ));
-
-      onPhotosUploaded([photo]);
-    } catch (error) {
-      setUploads(prev => prev.map((u, i) => 
-        i === index 
-          ? { 
-              ...u, 
-              status: 'error', 
-              error: error instanceof Error ? error.message : 'Upload failed' 
-            }
+        i === index && u.status === 'uploading'
+          ? { ...u, progress: Math.min(u.progress + 20, 100) }
           : u
       ));
-    }
+    }, 100);
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    clearInterval(progressInterval);
+    
+    const photo = createMockPhoto(upload.file);
+    
+    setUploads(prev => prev.map((u, i) => 
+      i === index ? { ...u, progress: 100, status: 'success', photo } : u
+    ));
+
+    onPhotosUploaded([photo]);
   };
 
   const hasSuccessfulUploads = uploads.some(upload => upload.status === 'success');
@@ -223,6 +228,9 @@ export function PhotoUpload({
                     <p className="text-xs text-gray-400 hidden sm:block">
                       JPG, PNG, GIF, WebP supported
                     </p>
+                    <p className="text-xs text-blue-500 mt-2">
+                      Demo Mode: Photos stored locally
+                    </p>
                   </div>
                 </div>
                 
@@ -267,9 +275,9 @@ export function PhotoUpload({
                   <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4">
                     {/* File Preview - Responsive sizing */}
                     <div className="flex-shrink-0">
-                      {upload.photo ? (
+                      {upload.url ? (
                         <img 
-                          src={upload.photo.url} 
+                          src={upload.url} 
                           alt={upload.file.name}
                           className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 object-cover rounded border"
                         />
