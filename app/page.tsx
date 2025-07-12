@@ -442,6 +442,10 @@ export default function MarketplacePage() {
 							📝 Post a Listing
 						</Link>
 						<span className="hidden sm:inline text-gray-400">•</span>
+						<Link href="/photos" className="text-blue-600 dark:text-blue-400 underline font-medium text-sm sm:text-base hover:text-blue-700 transition-colors">
+							📸 Photo Gallery
+						</Link>
+						<span className="hidden sm:inline text-gray-400">•</span>
 						<Link href="#products" className="text-blue-600 dark:text-blue-400 underline font-medium text-sm sm:text-base hover:text-blue-700 transition-colors">
 							🛍️ Browse Items
 						</Link>
