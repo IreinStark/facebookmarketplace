@@ -18,6 +18,21 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { PhotoUpload } from "../../components/photo-upload";
 import { type Photo } from "../../lib/firebase-utils";
 
+interface MockPhoto {
+  id: string;
+  url: string;
+  fileName: string;
+  size: number;
+  uploadedAt: Date;
+  userId: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+    radius: number;
+  };
+}
+
 const categories = ["Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"];
 const conditions = ["New", "Like New", "Good", "Fair", "Poor"];
 
@@ -141,11 +156,12 @@ export default function SellPage() {
                   )}
                 </div>
 
-                <PhotoUploadMock
+                <PhotoUpload
                   onPhotosUploaded={handlePhotosUploaded}
                   userId={auth.currentUser?.uid || ''}
                   maxFiles={10}
                   className="w-full"
+                  enableLocation={true}
                 />
 
                 <div className="space-y-2 text-xs text-muted-foreground">
