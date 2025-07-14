@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card"
 import { Separator } from "@components/ui/separator"
 import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
+import { serverTimestamp } from "firebase/firestore";
 
 // Import Firebase Auth & Firestore
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth"
@@ -58,7 +59,7 @@ export default function SignupPage() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        createdAt: new Date()
+        createdAt: serverTimestamp()
       })
 
       setIsLoading(false)
@@ -99,7 +100,7 @@ export default function SignupPage() {
             firstName: result.user.displayName?.split(" ")[0] || "",
             lastName: result.user.displayName?.split(" ")[1] || "",
             email: result.user.email,
-            createdAt: new Date()
+            createdAt: serverTimestamp()
           },
           { merge: true }
         )

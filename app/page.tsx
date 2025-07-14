@@ -268,20 +268,23 @@ export default function MarketplacePage() {
 							 product.description.toLowerCase().includes(searchTerm.toLowerCase())
 		return matchesCategory && matchesLocation && matchesPrice && matchesSearch
 	}).sort((a, b) => {
-		switch (sortBy) {
-			case "newest":
-				return b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime()
-			case "oldest":
-				return a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime()
-			case "price-low":
-				return a.price - b.price
-			case "price-high":
-				return b.price - a.price
-			case "title":
-				return a.title.localeCompare(b.title)
-			default:
-				return 0
-		}
+    const aTime = a.createdAt ? a.createdAt.toDate().getTime() : 0;
+    const bTime = b.createdAt ? b.createdAt.toDate().getTime() : 0;
+
+    switch (sortBy) {
+      case "newest":
+        return bTime - aTime;
+      case "oldest":
+        return aTime - bTime;
+      case "price-low":
+        return a.price - b.price;
+      case "price-high":
+        return b.price - a.price;
+      case "title":
+        return a.title.localeCompare(b.title);
+      default:
+        return 0;
+    }
 	})
 
 	// Loading state
@@ -437,22 +440,7 @@ export default function MarketplacePage() {
 					<p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4">
 						Buy and sell items in your local community with real-time chat
 					</p>
-					<div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
-						<Link href="/sell" className="text-blue-600 dark:text-blue-400 underline font-medium text-sm sm:text-base hover:text-blue-700 transition-colors">
-							📝 Post a Listing
-						</Link>
-						<span className="hidden sm:inline text-gray-400">•</span>
-						<Link href="#products" className="text-blue-600 dark:text-blue-400 underline font-medium text-sm sm:text-base hover:text-blue-700 transition-colors">
-							🛍️ Browse Items
-						</Link>
-						<span className="hidden sm:inline text-gray-400">•</span>
-						<button 
-							onClick={() => setIsMessagesOpen(true)}
-							className="text-blue-600 dark:text-blue-400 underline font-medium text-sm sm:text-base hover:text-blue-700 transition-colors"
-						>
-							💬 Try Chat Demo
-						</button>
-					</div>
+					
 				</div>
 			</div>
 
@@ -756,7 +744,7 @@ export default function MarketplacePage() {
 												</span>
 											</div>
 											<span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-												{product.createdAt && formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true })}
+												{product.createdAt ? formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true }) : '…'}
 											</span>
 										</div>
 

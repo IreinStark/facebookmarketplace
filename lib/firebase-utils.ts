@@ -24,6 +24,8 @@ import {
 } from 'firebase/storage';
 import { db, storage } from '../app/firebase';
 import { v4 as uuidv4 } from 'uuid';
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "../app/firebase"; // adjust the path to your auth export
 
 // Types for our data structures
 export interface Photo {
@@ -174,8 +176,8 @@ export async function createConversation(
     return {
       id: docRef.id,
       ...conversationData,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now()
+      createdAt: serverTimestamp() as Timestamp,
+      updatedAt: serverTimestamp() as Timestamp 
     } as Conversation;
   } catch (error) {
     console.error('Error creating conversation:', error);
@@ -231,52 +233,7 @@ export async function getUserConversations(userId: string): Promise<Conversation
 }
 
 // Message Management Functions
-export async function sendMessage(
-  conversationId: string,
-  senderId: string,
-  senderName: string,
-  content: string,
-  type: 'text' | 'image' = 'text',
-  photoUrl?: string
-): Promise<Message> {
-  try {
-    const batch = writeBatch(db);
-    
-    // Create message
-    const messageData: Omit<Message, 'id'> = {
-      conversationId,
-      senderId,
-      senderName,
-      content,
-      timestamp: serverTimestamp() as Timestamp,
-      type,
-      photoUrl,
-      read: false
-    };
-    
-    const messageRef = doc(collection(db, 'conversations', conversationId, 'messages'));
-    batch.set(messageRef, messageData);
-    
-    // Update conversation
-    const conversationRef = doc(db, 'conversations', conversationId);
-    batch.update(conversationRef, {
-      lastMessage: content,
-      lastMessageTime: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-    
-    await batch.commit();
-    
-    return {
-      id: messageRef.id,
-      ...messageData,
-      timestamp: Timestamp.now()
-    } as Message;
-  } catch (error) {
-    console.error('Error sending message:', error);
-    throw new Error('Failed to send message');
-  }
-}
+
 
 export function subscribeToMessages(
   conversationId: string,
@@ -345,6 +302,49 @@ export async function markMessagesAsRead(
   }
 }
 
+export async function sendMessage(
+  conversationId: string,
+  senderId: string,
+  senderName: string,
+  content: string,
+  type: 'text' | 'image' = 'text',
+  photoUrl?: string
+): Promise<void> {
+  try {
+    const messageData = {
+      conversationId,
+      senderId,
+      senderName,
+      content,
+      timestamp: serverTimestamp(),
+      type,
+      photoUrl: photoUrl || null,
+      read: false,
+    };
+
+    await addDoc(
+      collection(db, 'conversations', conversationId, 'messages'),
+      messageData
+    );
+
+    // Update conversation metadata
+    const conversationRef = doc(db, 'conversations', conversationId);
+    await updateDoc(conversationRef, {
+      lastMessage: type === 'image' ? 'Photo' : content,
+      lastMessageTime: serverTimestamp(),
+      [`unreadCount.${senderId}`]: 0, // reset sender's unread
+      // Increment unread for others (you can adjust this for more than 2 users)
+      [`unreadCount`]: {
+        [senderId]: 0 // default fallback
+      }
+    });
+  } catch (error) {
+    console.error('Error sending message:', error);
+    throw new Error('Failed to send message');
+  }
+}
+
+
 // Product Management Functions
 export interface Product {
   id: string;
@@ -405,5 +405,16 @@ export async function getUserById(userId: string): Promise<{displayName: string}
   } catch (error) {
     console.error('Error fetching user:', error);
     return null;
+  }
+}
+
+
+
+export async function resetPassword(email: string): Promise<void> {
+  try {
+    await sendPasswordResetEmail(auth, email);
+  } catch (error) {
+    console.error("Error sending password reset email:", error);
+    throw error;
   }
 }

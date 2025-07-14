@@ -31,7 +31,7 @@ export default function SellPage() {
     location: "",
     isNegotiable: false,
   });
-  const [photos, setPhotos] = useState<MockPhoto[]>([]);
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -42,9 +42,10 @@ export default function SellPage() {
     }));
   };
 
-  const handlePhotosUploaded = (newPhotos: MockPhoto[]) => {
-    setPhotos((prev) => [...prev, ...newPhotos]);
-  };
+ const handlePhotosUploaded = (newPhotos: Photo[]) => {
+  setPhotos((prev) => [...prev, ...newPhotos]);
+};
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,10 +67,10 @@ export default function SellPage() {
         location: formData.location,
         isNegotiable: formData.isNegotiable,
         image: photos[0]?.url || "/placeholder.svg",
-        photos: photos.map((photo: MockPhoto) => ({
+        photos: photos.map((photo: Photo) => ({
           id: photo.id,
           url: photo.url,
-          filename: photo.fileName
+          filename: photo.filename
         })),
         userId: user.uid,
         createdAt: serverTimestamp(),
@@ -141,7 +142,7 @@ export default function SellPage() {
                   )}
                 </div>
 
-                <PhotoUploadMock
+                <PhotoUpload
                   onPhotosUploaded={handlePhotosUploaded}
                   userId={auth.currentUser?.uid || ''}
                   maxFiles={10}

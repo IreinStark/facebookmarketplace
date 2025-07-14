@@ -11,7 +11,7 @@ import { Textarea } from './ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { 
   createConversation, 
-  sendMessage, 
+  sendMessage,
   subscribeToMessages, 
   subscribeToConversations,
   markMessagesAsRead,
@@ -257,11 +257,12 @@ export function ChatInterface({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                               <h4 className="font-medium truncate">{otherParticipantName}</h4>
-                              {conversation.lastMessageTime && (
+                              {conversation.lastMessageTime ? (
                                 <span className="text-xs text-gray-500">
                                   {format(conversation.lastMessageTime.toDate(), 'MMM d')}
-                                </span>
-                              )}
+                                  </span>
+                                ) : null}
+
                             </div>
                             
                             {conversation.productTitle && (
@@ -366,7 +367,7 @@ export function ChatInterface({
                           
                           <div className="flex items-center justify-between mt-1">
                             <span className="text-xs opacity-70">
-                              {format(message.timestamp.toDate(), 'h:mm a')}
+                              {message.timestamp ? format(message.timestamp.toDate(), 'h:mm a') : '...'}
                             </span>
                             {message.senderId === currentUserId && (
                               <span className="text-xs opacity-70">
