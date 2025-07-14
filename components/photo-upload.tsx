@@ -1,13 +1,17 @@
 "use client"
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Progress } from './ui/progress';
 import { Alert, AlertDescription } from './ui/alert';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Slider } from './ui/slider';
+import { Badge } from './ui/badge';
 import { uploadPhoto, type Photo } from '../lib/firebase-utils';
-import { Upload, X, Image as ImageIcon, CheckCircle, AlertCircle, Camera } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, CheckCircle, AlertCircle, Camera, MapPin, Navigation, Globe } from 'lucide-react';
 
 interface PhotoUploadProps {
   onPhotosUploaded: (photos: Photo[]) => void;
@@ -15,6 +19,7 @@ interface PhotoUploadProps {
   productId?: string;
   maxFiles?: number;
   className?: string;
+  enableLocation?: boolean;
 }
 
 interface UploadState {
@@ -23,6 +28,12 @@ interface UploadState {
   status: 'uploading' | 'success' | 'error';
   photo?: Photo;
   error?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+    radius: number;
+  };
 }
 
 export function PhotoUpload({ 
@@ -30,10 +41,53 @@ export function PhotoUpload({
   userId, 
   productId, 
   maxFiles = 5,
-  className = ""
+  className = "",
+  enableLocation = true
 }: PhotoUploadProps) {
   const [uploads, setUploads] = useState<UploadState[]>([]);
   const [globalError, setGlobalError] = useState<string>("");
+  const [locationEnabled, setLocationEnabled] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<{
+    latitude: number;
+    longitude: number;
+    address?: string;
+  } | null>(null);
+  const [defaultRadius, setDefaultRadius] = useState(5); // Default 5km radius
+
+  // Get current location on component mount
+  useEffect(() => {
+    if (enableLocation && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setCurrentLocation({ latitude, longitude });
+          setLocationEnabled(true);
+        },
+        (error) => {
+          console.log('Location access denied or unavailable:', error);
+          setLocationEnabled(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutes
+        }
+      );
+    }
+  }, [enableLocation]);
+
+  const getAddressFromCoords = async (lat: number, lng: number): Promise<string> => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+      );
+      const data = await response.json();
+      return data.display_name || 'Unknown location';
+    } catch (error) {
+      console.error('Error getting address:', error);
+      return 'Unknown location';
+    }
+  };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setGlobalError("");
@@ -59,11 +113,24 @@ export function PhotoUpload({
       validFiles.push(file);
     }
 
+    // Get location data if enabled
+    let locationData = null;
+    if (enableLocation && locationEnabled && currentLocation) {
+      const address = await getAddressFromCoords(currentLocation.latitude, currentLocation.longitude);
+      locationData = {
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+        address,
+        radius: defaultRadius
+      };
+    }
+
     // Initialize upload states
     const newUploads: UploadState[] = validFiles.map(file => ({
       file,
       progress: 0,
-      status: 'uploading' as const
+      status: 'uploading' as const,
+      location: locationData || undefined
     }));
 
     setUploads(prev => [...prev, ...newUploads]);
@@ -72,17 +139,18 @@ export function PhotoUpload({
     const uploadPromises = validFiles.map(async (file, index) => {
       try {
         const uploadIndex = uploads.length + index;
+        const currentUpload = newUploads[index];
         
         // Simulate progress (since Firebase doesn't provide real-time progress)
         const progressInterval = setInterval(() => {
-          setUploads(prev => prev.map((upload, i) => 
+          setUploads(prev => prev.map((upload, i: number) => 
             i === uploadIndex && upload.status === 'uploading'
               ? { ...upload, progress: Math.min(upload.progress + 10, 90) }
               : upload
           ));
         }, 200);
 
-        const photo = await uploadPhoto(file, userId, productId);
+        const photo = await uploadPhoto(file, userId, productId, currentUpload.location);
         
         clearInterval(progressInterval);
         
@@ -117,7 +185,7 @@ export function PhotoUpload({
     } catch (error) {
       console.error('Upload error:', error);
     }
-  }, [uploads.length, maxFiles, userId, productId, onPhotosUploaded]);
+  }, [uploads.length, maxFiles, userId, productId, onPhotosUploaded, enableLocation, locationEnabled, currentLocation, defaultRadius]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -149,7 +217,7 @@ export function PhotoUpload({
         ));
       }, 200);
 
-      const photo = await uploadPhoto(upload.file, userId, productId);
+      const photo = await uploadPhoto(upload.file, userId, productId, upload.location);
       
       clearInterval(progressInterval);
       
@@ -171,10 +239,68 @@ export function PhotoUpload({
     }
   };
 
+  const updateLocationRadius = (index: number, radius: number) => {
+    setUploads(prev => prev.map((upload, i: number) => 
+      i === index && upload.location
+        ? { ...upload, location: { ...upload.location, radius } }
+        : upload
+    ));
+  };
+
   const hasSuccessfulUploads = uploads.some(upload => upload.status === 'success');
 
   return (
     <div className={`space-y-3 sm:space-y-4 ${className}`}>
+      {/* Location Settings */}
+      {enableLocation && (
+        <Card className="w-full">
+          <CardContent className="p-3 sm:p-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <MapPin className="h-4 w-4 text-blue-500" />
+                  <Label className="text-sm font-medium">Location Settings</Label>
+                </div>
+                <Badge variant={locationEnabled ? "default" : "secondary"}>
+                  {locationEnabled ? "Location Enabled" : "Location Disabled"}
+                </Badge>
+              </div>
+              
+              {locationEnabled && currentLocation ? (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    <Navigation className="h-3 w-3" />
+                    <span>Current Location: {currentLocation.latitude.toFixed(4)}, {currentLocation.longitude.toFixed(4)}</span>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-xs">Default Radius: {defaultRadius}km</Label>
+                    <Slider
+                      value={[defaultRadius]}
+                      onValueChange={(value) => setDefaultRadius(value[0])}
+                      max={50}
+                      min={1}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>1km</span>
+                      <span>25km</span>
+                      <span>50km</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <Globe className="h-3 w-3" />
+                  <span>Location access required for radius features</span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Upload Area */}
       {uploads.length < maxFiles && (
         <Card className="w-full">
@@ -223,6 +349,11 @@ export function PhotoUpload({
                     <p className="text-xs text-gray-400 hidden sm:block">
                       JPG, PNG, GIF, WebP supported
                     </p>
+                    {enableLocation && locationEnabled && (
+                      <p className="text-xs text-blue-500">
+                        📍 Location will be captured automatically
+                      </p>
+                    )}
                   </div>
                 </div>
                 
@@ -287,6 +418,28 @@ export function PhotoUpload({
                         {(upload.file.size / (1024 * 1024)).toFixed(1)} MB
                       </p>
                       
+                      {/* Location Info */}
+                      {upload.location && (
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-1 text-xs text-blue-600">
+                            <MapPin className="h-3 w-3" />
+                            <span className="truncate">{upload.location.address}</span>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <Label className="text-xs">Radius: {upload.location.radius}km</Label>
+                            <Slider
+                              value={[upload.location.radius]}
+                              onValueChange={(value) => updateLocationRadius(index, value[0])}
+                              max={50}
+                              min={1}
+                              step={1}
+                              className="w-full h-2"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
                       {/* Progress Bar */}
                       {upload.status === 'uploading' && (
                         <div className="space-y-1">
@@ -345,6 +498,7 @@ export function PhotoUpload({
           <CheckCircle className="h-4 w-4" />
           <AlertDescription className="text-sm">
             {uploads.filter(u => u.status === 'success').length} photo(s) uploaded successfully!
+            {enableLocation && locationEnabled && " Location data has been captured."}
           </AlertDescription>
         </Alert>
       )}

@@ -39,6 +39,12 @@ export interface Photo {
     size: number;
     type: string;
   };
+  location?: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+    radius: number;
+  };
 }
 
 export interface Conversation {
@@ -70,7 +76,13 @@ export interface Message {
 export async function uploadPhoto(
   file: File, 
   uploadedBy: string, 
-  productId?: string
+  productId?: string,
+  location?: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+    radius: number;
+  }
 ): Promise<Photo> {
   try {
     const photoId = uuidv4();
@@ -91,7 +103,8 @@ export async function uploadPhoto(
       metadata: {
         size: file.size,
         type: file.type
-      }
+      },
+      location
     };
     
     const docRef = await addDoc(collection(db, 'photos'), photoData);

@@ -440,7 +440,22 @@ export default function MarketplacePage() {
 					<p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4">
 						Buy and sell items in your local community with real-time chat
 					</p>
-					
+					<div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+						<Link href="/sell" className="text-blue-600 dark:text-blue-400 underline font-medium text-sm sm:text-base hover:text-blue-700 transition-colors">
+							📝 Post a Listing
+						</Link>
+						<span className="hidden sm:inline text-gray-400">•</span>
+						<Link href="#products" className="text-blue-600 dark:text-blue-400 underline font-medium text-sm sm:text-base hover:text-blue-700 transition-colors">
+							🛍️ Browse Items
+						</Link>
+						<span className="hidden sm:inline text-gray-400">•</span>
+						<button 
+							onClick={() => setIsMessagesOpen(true)}
+							className="text-blue-600 dark:text-blue-400 underline font-medium text-sm sm:text-base hover:text-blue-700 transition-colors"
+						>
+							💬 Try Chat Demo
+						</button>
+					</div>
 				</div>
 			</div>
 
