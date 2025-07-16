@@ -14,7 +14,8 @@ import {
   Timestamp,
   writeBatch,
   QueryDocumentSnapshot,
-  DocumentData
+  DocumentData,
+  FieldValue
 } from 'firebase/firestore';
 import { 
   ref, 
@@ -108,15 +109,42 @@ export async function uploadPhoto(
     };
     
     const docRef = await addDoc(collection(db, 'photos'), photoData);
-    
+
+
     return {
       id: docRef.id,
-      ...photoData,
-      uploadedAt: Timestamp.now()
+      url: downloadURL,
+      filename,
+      uploadedBy,
+      uploadedAt: serverTimestamp() as Timestamp,
+      productId,
+      metadata: {
+        size: file.size,
+        type: file.type
+      },
+      location
     } as Photo;
   } catch (error) {
     console.error('Error uploading photo:', error);
     throw new Error('Failed to upload photo');
+  }
+}
+
+export async function getPhotosByProduct(productId: string): Promise<Photo[]> {
+  try {
+    const q = query(
+      collection(db, 'photos'),
+      where('productId', '==', productId),
+      orderBy('uploadedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
+      id: doc.id,
+      ...doc.data()
+    } as Photo));
+  } catch (error) {
+    console.error('Error fetching product photos:', error);
+    return [];
   }
 }
 

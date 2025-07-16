@@ -12,6 +12,7 @@ import { Slider } from './ui/slider';
 import { Badge } from './ui/badge';
 import { uploadPhoto, type Photo } from '../lib/firebase-utils';
 import { Upload, X, Image as ImageIcon, CheckCircle, AlertCircle, Camera, MapPin, Navigation, Globe } from 'lucide-react';
+import { Timestamp } from "firebase/firestore";
 
 interface PhotoUploadProps {
   onPhotosUploaded: (photos: Photo[]) => void;
