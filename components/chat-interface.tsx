@@ -208,7 +208,7 @@ export function ChatInterface({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[80vh] p-0">
+      <DialogContent className="max-w-4xl h-[80vh] p-0 flex flex-col">
         <DialogHeader className="p-4 border-b">
           <DialogTitle>Messages</DialogTitle>
         </DialogHeader>
@@ -230,7 +230,7 @@ export function ChatInterface({
             </div>
 
             {/* Conversations */}
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 overflow-y-auto h-full px-6 py-4">
               <div className="p-2 space-y-1">
                 {filteredConversations.map((conversation) => {
                   const otherParticipantEntry = Object.entries(conversation.participantNames)
@@ -241,8 +241,10 @@ export function ChatInterface({
                   return (
                     <Card
                       key={conversation.id}
-                      className={`cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
-                        selectedConversation === conversation.id ? 'ring-2 ring-blue-500' : ''
+                      className={`cursor-pointer transition-colors rounded-md p-2 ${
+                        selectedConversation === conversation.id
+                        ? 'bg-blue-100 dark:bg-blue-900 ring-2 ring-blue-500'
+                         : 'hover:bg-muted dark:hover:bg-gray-800'
                       }`}
                       onClick={() => setSelectedConversation(conversation.id)}
                     >
@@ -298,7 +300,7 @@ export function ChatInterface({
           </div>
 
           {/* Chat Area */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col overflow hidd">
             {selectedConversation ? (
               <>
                 {/* Chat Header */}
@@ -334,7 +336,7 @@ export function ChatInterface({
                 </div>
 
                 {/* Messages */}
-                <ScrollArea className="flex-1 p-4">
+                <ScrollArea className="flex-1 px-6 py-6 space-y-4">
                   <div className="space-y-4">
                     {messages.map((message) => (
                       <div
@@ -346,8 +348,8 @@ export function ChatInterface({
                         <div
                           className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                             message.senderId === currentUserId
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-100 dark:bg-gray-800'
+                              ? 'bg-blue-600 text-white rounded-br-none'
+                              : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white rounded-bl-none'
                           }`}
                         >
                           {message.type === 'image' && message.photoUrl ? (
@@ -400,7 +402,7 @@ export function ChatInterface({
                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewMessage(e.target.value)}
                          onKeyPress={handleKeyPress}
                          rows={1}
-                         className="resize-none min-h-[40px] max-h-32"
+                         className="resize-none min-h-[40px] max-h-32 rounded-full border border-gray-300 dark:border-gray-600 px-4 py-2 focus:ring-2 focus:ring-blue-500"
                        />
                     </div>
                     
