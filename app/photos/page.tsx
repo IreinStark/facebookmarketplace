@@ -10,6 +10,7 @@ import { PhotoUpload } from "../../components/photo-upload";
 import { PhotoGallery } from "../../components/photo-gallery";
 import { type Photo } from "../../lib/firebase-utils";
 import { auth } from "@/firebase";
+import { Timestamp } from "firebase/firestore";
 
 // Mock photos for demonstration
 const mockPhotos: Photo[] = [
@@ -18,7 +19,7 @@ const mockPhotos: Photo[] = [
     url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
     filename: "mountain-landscape.jpg",
     uploadedBy: "user1",
-    uploadedAt: new Date() as any,
+    uploadedAt: Timestamp.fromDate(new Date()),
     location: {
       latitude: 35.1856,
       longitude: 33.3823,
@@ -31,7 +32,7 @@ const mockPhotos: Photo[] = [
     url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop",
     filename: "forest-path.jpg",
     uploadedBy: "user2",
-    uploadedAt: new Date() as any,
+    uploadedAt: Timestamp.fromDate(new Date()),
     location: {
       latitude: 35.3414,
       longitude: 33.3152,
@@ -44,7 +45,7 @@ const mockPhotos: Photo[] = [
     url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
     filename: "beach-sunset.jpg",
     uploadedBy: "user3",
-    uploadedAt: new Date() as any,
+    uploadedAt: Timestamp.fromDate(new Date()),
     location: {
       latitude: 35.1264,
       longitude: 33.9378,
@@ -57,7 +58,7 @@ const mockPhotos: Photo[] = [
     url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop",
     filename: "city-street.jpg",
     uploadedBy: "user4",
-    uploadedAt: new Date() as any,
+    uploadedAt: Timestamp.fromDate(new Date()),
     location: {
       latitude: 35.2833,
       longitude: 33.9167,

@@ -261,8 +261,15 @@ export function ChatInterface({
                               <h4 className="font-medium truncate">{otherParticipantName}</h4>
                               {conversation.lastMessageTime ? (
                                 <span className="text-xs text-gray-500">
-                                  {format(conversation.lastMessageTime.toDate(), 'MMM d')}
-                                  </span>
+                                  {(() => {
+                                    try {
+                                      return format(conversation.lastMessageTime.toDate(), 'MMM d');
+                                    } catch (error) {
+                                      console.warn('Error formatting conversation date:', error);
+                                      return 'Recent';
+                                    }
+                                  })()}
+                                </span>
                                 ) : null}
 
                             </div>
@@ -369,7 +376,14 @@ export function ChatInterface({
                           
                           <div className="flex items-center justify-between mt-1">
                             <span className="text-xs opacity-70">
-                              {message.timestamp ? format(message.timestamp.toDate(), 'h:mm a') : '...'}
+                              {message.timestamp ? (() => {
+                                try {
+                                  return format(message.timestamp.toDate(), 'h:mm a');
+                                } catch (error) {
+                                  console.warn('Error formatting message timestamp:', error);
+                                  return '...';
+                                }
+                              })() : '...'}
                             </span>
                             {message.senderId === currentUserId && (
                               <span className="text-xs opacity-70">
