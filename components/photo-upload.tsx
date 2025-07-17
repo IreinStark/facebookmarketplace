@@ -179,12 +179,12 @@ export function PhotoUpload({
           filename: file.name,
           uploadedBy: userId,
           uploadedAt: new Date(), // or serverTimestamp if using Firestore server-side
-          productId,
           metadata: {
             size: file.size,
             type: file.type
           },
-          location: currentUpload.location
+          ...(productId ? { productId } : {}),
+          ...(currentUpload.location ? { location: currentUpload.location } : {})
         };
         // Save to Firestore
         const docRef = await addDoc(collection(db, 'photos'), photoData);
@@ -257,12 +257,12 @@ export function PhotoUpload({
         filename: upload.file.name,
         uploadedBy: userId,
         uploadedAt: new Date(),
-        productId,
         metadata: {
           size: upload.file.size,
           type: upload.file.type
         },
-        location: upload.location
+        ...(productId ? { productId } : {}),
+        ...(upload.location ? { location: upload.location } : {})
       };
       // Save to Firestore
       const docRef = await addDoc(collection(db, 'photos'), photoData);
