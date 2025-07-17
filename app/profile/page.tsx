@@ -30,6 +30,8 @@ import { useRouter } from "next/navigation"
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/firebase";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@components/ui/dialog";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/firebase";
 
 // Mock products data (same as in main page)
 const allProducts = [
@@ -131,6 +133,7 @@ export default function ProfilePage() {
   const [editName, setEditName] = useState("");
   const [editLocation, setEditLocation] = useState("");
   const [saving, setSaving] = useState(false);
+  const [myListings, setMyListings] = useState<any[]>([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -148,8 +151,18 @@ export default function ProfilePage() {
     if (savedFavorites) {
       setFavorites(JSON.parse(savedFavorites));
     }
+
+    // Fetch user's listings from Firestore
+    async function fetchListings(uid: string) {
+      const q = query(collection(db, "products"), where("userId", "==", uid));
+      const querySnapshot = await getDocs(q);
+      setMyListings(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }
+    if (auth.currentUser) {
+      fetchListings(auth.currentUser.uid);
+    }
     return () => unsubscribe();
-  }, []);
+  }, [userEmail]);
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn")
@@ -164,27 +177,6 @@ export default function ProfilePage() {
     setFavorites(updatedFavorites)
     localStorage.setItem("favorites", JSON.stringify(updatedFavorites))
   }
-
-  const myListings = [
-    {
-      id: 1,
-      title: "Vintage Camera",
-      price: 250,
-      image: "/placeholder.svg?height=150&width=150",
-      status: "active",
-      views: 45,
-      messages: 3,
-    },
-    {
-      id: 2,
-      title: "Office Chair",
-      price: 120,
-      image: "/placeholder.svg?height=150&width=150",
-      status: "sold",
-      views: 32,
-      messages: 8,
-    },
-  ]
 
   // Get favorite products from the main products list
   const favoriteItems = allProducts.filter((product) => favorites.includes(product.id))
