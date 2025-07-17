@@ -74,62 +74,6 @@ export interface Message {
 }
 
 // Photo Management Functions
-export async function uploadPhoto(
-  file: File, 
-  uploadedBy: string, 
-  productId?: string,
-  location?: {
-    latitude: number;
-    longitude: number;
-    address?: string;
-    radius: number;
-  }
-): Promise<Photo> {
-  try {
-    const photoId = uuidv4();
-    const filename = `${photoId}_${file.name}`;
-    const storageRef = ref(storage, `photos/${filename}`);
-    
-    // Upload file to Firebase Storage
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    
-    // Create photo document in Firestore
-    const photoData: Omit<Photo, 'id'> = {
-      url: downloadURL,
-      filename,
-      uploadedBy,
-      uploadedAt: serverTimestamp() as Timestamp,
-      productId,
-      metadata: {
-        size: file.size,
-        type: file.type
-      },
-      location
-    };
-    
-    const docRef = await addDoc(collection(db, 'photos'), photoData);
-
-
-    return {
-      id: docRef.id,
-      url: downloadURL,
-      filename,
-      uploadedBy,
-      uploadedAt: serverTimestamp() as Timestamp,
-      productId,
-      metadata: {
-        size: file.size,
-        type: file.type
-      },
-      location
-    } as Photo;
-  } catch (error) {
-    console.error('Error uploading photo:', error);
-    throw new Error('Failed to upload photo');
-  }
-}
-
 export async function getPhotosByProduct(productId: string): Promise<Photo[]> {
   try {
     const q = query(
