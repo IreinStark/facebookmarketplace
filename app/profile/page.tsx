@@ -23,6 +23,7 @@ import {
   Bell,
   Shield,
   LogOut,
+  Pencil,
 } from "lucide-react"
 import Link from "next/link"
 import { useTheme } from "next-themes"
@@ -30,7 +31,7 @@ import { useRouter } from "next/navigation"
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/firebase";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@components/ui/dialog";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/firebase";
 import { updatePassword } from "firebase/auth";
 
@@ -185,6 +186,16 @@ export default function ProfilePage() {
     localStorage.setItem("favorites", JSON.stringify(updatedFavorites))
   }
 
+  const handleDeleteListing = async (listingId: string) => {
+    if (!window.confirm("Are you sure you want to delete this listing?")) return;
+    try {
+      await deleteDoc(doc(db, "products", listingId));
+      setMyListings((prev) => prev.filter((item) => item.id !== listingId));
+    } catch (err) {
+      alert("Failed to delete listing.");
+    }
+  };
+
   // Get favorite products from the main products list
   const favoriteItems = allProducts.filter((product) => favorites.includes(product.id))
 
@@ -333,24 +344,48 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {myListings.map((item) => (
                 <Card key={item.id}>
-                  <div className="relative">
-                    <img
-                      src={item.image || "/placeholder.svg"}
-                      alt={item.title}
-                      className="w-full h-32 sm:h-40 object-cover rounded-t-lg"
-                    />
+                  <div className="relative group">
+                    <Link href={`/products/${item.id}`} className="block">
+                      <img
+                        src={item.image || "/placeholder.svg"}
+                        alt={item.title}
+                        className="w-full h-32 sm:h-40 object-cover rounded-t-lg group-hover:opacity-80 transition"
+                      />
+                    </Link>
                     <Badge
                       className={`absolute top-2 right-2 text-xs ${item.status === "sold" ? "bg-green-500" : "bg-blue-500"}`}
                     >
                       {item.status === "sold" ? "Sold" : "Active"}
                     </Badge>
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="absolute top-2 left-10 h-7 w-7 p-0 opacity-80 hover:opacity-100"
+                      title="Edit Listing"
+                      asChild
+                    >
+                      <Link href={`/products/${item.id}/edit`}>
+                        <Pencil className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 left-2 h-7 w-7 p-0 opacity-80 hover:opacity-100"
+                      title="Delete Listing"
+                      onClick={() => handleDeleteListing(item.id)}
+                    >
+                      ×
+                    </Button>
                   </div>
                   <CardContent className="p-3 sm:p-4">
-                    <h4 className="font-semibold text-sm sm:text-base">{item.title}</h4>
+                    <Link href={`/products/${item.id}`} className="block hover:underline">
+                      <h4 className="font-semibold text-sm sm:text-base">{item.title}</h4>
+                    </Link>
                     <p className="text-base sm:text-lg font-bold text-green-600">${item.price}</p>
                     <div className="flex justify-between text-xs sm:text-sm text-muted-foreground mt-2">
-                      <span>{item.views} views</span>
-                      <span>{item.messages} messages</span>
+                      <span>{item.views || 0} views</span>
+                      <span>{item.messages || 0} messages</span>
                     </div>
                   </CardContent>
                 </Card>
