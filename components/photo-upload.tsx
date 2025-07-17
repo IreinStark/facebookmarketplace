@@ -41,7 +41,8 @@ interface UploadState {
 
 // Cloudinary upload function
 async function uploadToCloudinary(file: File): Promise<string> {
-  const url = `https://api.cloudinary.com/v1_1/dhcdhsgax/image/upload`; // <-- Insert your Cloudinary cloud name
+  const url = `https://api.cloudinary.com/v1_1/dhcdhsgax/image/upload`;// <-- Insert your Cloudinary cloud name
+  const unsigned_preset = 'unsigned_preset'; // <-- Insert your unsigned upload preset 
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', unsigned_preset); // <-- Insert your unsigned upload preset
