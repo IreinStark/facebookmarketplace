@@ -10,12 +10,12 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Slider } from './ui/slider';
 import { Badge } from './ui/badge';
-import { uploadPhoto, type Photo } from '../lib/firebase-utils';
+// REMOVE: import { uploadPhoto, type Photo } from '../lib/firebase-utils';
 import { Upload, X, Image as ImageIcon, CheckCircle, AlertCircle, Camera, MapPin, Navigation, Globe } from 'lucide-react';
 import { Timestamp } from "firebase/firestore";
 
 interface PhotoUploadProps {
-  onPhotosUploaded: (photos: Photo[]) => void;
+  onPhotosUploaded: (photos: any[]) => void; // Changed type to any[] as Photo type is removed
   userId: string;
   productId?: string;
   maxFiles?: number;
@@ -27,7 +27,7 @@ interface UploadState {
   file: File;
   progress: number;
   status: 'uploading' | 'success' | 'error';
-  photo?: Photo;
+  photo?: any; // Changed type to any as Photo type is removed
   error?: string;
   location?: {
     latitude: number;
@@ -35,6 +35,22 @@ interface UploadState {
     address?: string;
     radius: number;
   };
+}
+
+// Cloudinary upload function
+async function uploadToCloudinary(file: File): Promise<string> {
+  const url = `https://api.cloudinary.com/v1_1/<your-cloud-name>/image/upload`; // <-- Insert your Cloudinary cloud name
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', '<your-upload-preset>'); // <-- Insert your unsigned upload preset
+
+  const res = await fetch(url, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) throw new Error('Cloudinary upload failed');
+  const data = await res.json();
+  return data.secure_url; // The hosted image URL
 }
 
 export function PhotoUpload({ 
@@ -141,8 +157,7 @@ export function PhotoUpload({
       try {
         const uploadIndex = uploads.length + index;
         const currentUpload = newUploads[index];
-        
-        // Simulate progress (since Firebase doesn't provide real-time progress)
+        // Simulate progress (optional, since Cloudinary doesn't provide progress)
         const progressInterval = setInterval(() => {
           setUploads(prev => prev.map((upload, i: number) => 
             i === uploadIndex && upload.status === 'uploading'
@@ -150,18 +165,34 @@ export function PhotoUpload({
               : upload
           ));
         }, 200);
-
-        const photo = await uploadPhoto(file, userId, productId, currentUpload.location);
-        
+        // --- Cloudinary upload ---
+        const imageUrl = await uploadToCloudinary(file);
         clearInterval(progressInterval);
-        
+        // --- Store URL in Firestore ---
+        // You may want to add more metadata as needed
+        const photoData = {
+          url: imageUrl,
+          filename: file.name,
+          uploadedBy: userId,
+          uploadedAt: new Date(), // or serverTimestamp if using Firestore server-side
+          productId,
+          metadata: {
+            size: file.size,
+            type: file.type
+          },
+          location: currentUpload.location
+        };
+        // Save to Firestore (replace with your Firestore add logic)
+        // Example:
+        // const docRef = await addDoc(collection(db, 'photos'), photoData);
+        // const photo = { id: docRef.id, ...photoData };
+        // For now, just return photoData
         setUploads(prev => prev.map((upload, i) => 
           i === uploadIndex
-            ? { ...upload, progress: 100, status: 'success' as const, photo }
+            ? { ...upload, progress: 100, status: 'success' as const, photo: photoData }
             : upload
         ));
-
-        return photo;
+        return photoData;
       } catch (error) {
         setUploads(prev => prev.map((upload, i) => 
           i === uploads.length + index
@@ -178,7 +209,7 @@ export function PhotoUpload({
 
     try {
       const results = await Promise.all(uploadPromises);
-      const successfulPhotos = results.filter((photo: Photo | null): photo is Photo => photo !== null);
+      const successfulPhotos = results.filter((photo: any): photo is any => photo !== null); // Changed type to any
       
       if (successfulPhotos.length > 0) {
         onPhotosUploaded(successfulPhotos);
@@ -204,11 +235,9 @@ export function PhotoUpload({
   const retryUpload = async (index: number) => {
     const upload = uploads[index];
     if (!upload || upload.status !== 'error') return;
-
     setUploads(prev => prev.map((u, i) => 
       i === index ? { ...u, status: 'uploading', progress: 0, error: undefined } : u
     ));
-
     try {
       const progressInterval = setInterval(() => {
         setUploads(prev => prev.map((u, i) => 
@@ -217,16 +246,30 @@ export function PhotoUpload({
             : u
         ));
       }, 200);
-
-      const photo = await uploadPhoto(upload.file, userId, productId, upload.location);
-      
+      // --- Cloudinary upload ---
+      const imageUrl = await uploadToCloudinary(upload.file);
       clearInterval(progressInterval);
-      
+      // --- Store URL in Firestore ---
+      const photoData = {
+        url: imageUrl,
+        filename: upload.file.name,
+        uploadedBy: userId,
+        uploadedAt: new Date(),
+        productId,
+        metadata: {
+          size: upload.file.size,
+          type: upload.file.type
+        },
+        location: upload.location
+      };
+      // Save to Firestore (replace with your Firestore add logic)
+      // Example:
+      // const docRef = await addDoc(collection(db, 'photos'), photoData);
+      // const photo = { id: docRef.id, ...photoData };
       setUploads(prev => prev.map((u, i) => 
-        i === index ? { ...u, progress: 100, status: 'success', photo } : u
+        i === index ? { ...u, progress: 100, status: 'success', photo: photoData } : u
       ));
-
-      onPhotosUploaded([photo]);
+      onPhotosUploaded([photoData]);
     } catch (error) {
       setUploads(prev => prev.map((u, i) => 
         i === index 
