@@ -29,6 +29,7 @@ import { useTheme } from "next-themes"
 import { useRouter } from "next/navigation"
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/firebase";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@components/ui/dialog";
 
 // Mock products data (same as in main page)
 const allProducts = [
@@ -126,6 +127,10 @@ export default function ProfilePage() {
   const { theme, setTheme } = useTheme()
   const router = useRouter()
   const [loading, setLoading] = useState(true);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -184,6 +189,33 @@ export default function ProfilePage() {
   // Get favorite products from the main products list
   const favoriteItems = allProducts.filter((product) => favorites.includes(product.id))
 
+  // Open modal and prefill fields
+  const handleEditProfile = () => {
+    setEditName(userName);
+    setEditLocation(location);
+    setShowEditModal(true);
+  };
+
+  // Save changes
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      // Update Firebase Auth displayName
+      if (auth.currentUser && editName !== userName) {
+        await auth.currentUser.updateProfile({ displayName: editName });
+        setUserName(editName);
+      }
+      // Update location (localStorage or Firestore as needed)
+      setLocation(editLocation);
+      localStorage.setItem("userLocation", editLocation);
+      setShowEditModal(false);
+    } catch (err) {
+      // Optionally show error
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
@@ -228,7 +260,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   <div className="flex flex-col xs:flex-row gap-2">
-                    <Button variant="outline" size="sm" className="text-xs sm:text-sm bg-transparent">
+                    <Button variant="outline" size="sm" className="text-xs sm:text-sm bg-transparent" onClick={handleEditProfile}>
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Profile
                     </Button>
@@ -585,6 +617,30 @@ export default function ProfilePage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Edit Profile Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editName">Name</Label>
+              <Input id="editName" value={editName} onChange={e => setEditName(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="editLocation">Location</Label>
+              <Input id="editLocation" value={editLocation} onChange={e => setEditLocation(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleSaveProfile} disabled={saving}>
+              {saving ? "Saving..." : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
