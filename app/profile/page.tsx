@@ -23,6 +23,7 @@ import {
   Bell,
   Shield,
   LogOut,
+  Pencil,
 } from "lucide-react"
 import Link from "next/link"
 import { useTheme } from "next-themes"
@@ -356,6 +357,17 @@ export default function ProfilePage() {
                     >
                       {item.status === "sold" ? "Sold" : "Active"}
                     </Badge>
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="absolute top-2 left-10 h-7 w-7 p-0 opacity-80 hover:opacity-100"
+                      title="Edit Listing"
+                      asChild
+                    >
+                      <Link href={`/products/${item.id}/edit`}>
+                        <Pencil className="h-4 w-4" />
+                      </Link>
+                    </Button>
                     <Button
                       variant="destructive"
                       size="icon"
