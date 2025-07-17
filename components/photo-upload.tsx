@@ -45,6 +45,10 @@ async function uploadToCloudinary(file: File): Promise<string> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', '<your-upload-preset>'); // <-- Insert your unsigned upload preset
+  // To upload to a specific folder, set the folder in your upload preset in Cloudinary dashboard.
+  // If you want to override the folder from code, uncomment the next line and set your folder name:
+  // formData.append('folder', 'samples/ecommerce'); // <-- Optional: override folder from code
+  // Note: If the folder is set in the preset, you do not need to set it here unless you want to override it.
 
   const res = await fetch(url, {
     method: 'POST',
