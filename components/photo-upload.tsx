@@ -13,6 +13,8 @@ import { Badge } from './ui/badge';
 // REMOVE: import { uploadPhoto, type Photo } from '../lib/firebase-utils';
 import { Upload, X, Image as ImageIcon, CheckCircle, AlertCircle, Camera, MapPin, Navigation, Globe } from 'lucide-react';
 import { Timestamp } from "firebase/firestore";
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '../app/firebase';
 
 interface PhotoUploadProps {
   onPhotosUploaded: (photos: any[]) => void; // Changed type to any[] as Photo type is removed
@@ -169,7 +171,6 @@ export function PhotoUpload({
         const imageUrl = await uploadToCloudinary(file);
         clearInterval(progressInterval);
         // --- Store URL in Firestore ---
-        // You may want to add more metadata as needed
         const photoData = {
           url: imageUrl,
           filename: file.name,
@@ -182,17 +183,15 @@ export function PhotoUpload({
           },
           location: currentUpload.location
         };
-        // Save to Firestore (replace with your Firestore add logic)
-        // Example:
-        // const docRef = await addDoc(collection(db, 'photos'), photoData);
-        // const photo = { id: docRef.id, ...photoData };
-        // For now, just return photoData
+        // Save to Firestore
+        const docRef = await addDoc(collection(db, 'photos'), photoData);
+        const photo = { id: docRef.id, ...photoData };
         setUploads(prev => prev.map((upload, i) => 
           i === uploadIndex
-            ? { ...upload, progress: 100, status: 'success' as const, photo: photoData }
+            ? { ...upload, progress: 100, status: 'success' as const, photo }
             : upload
         ));
-        return photoData;
+        return photo;
       } catch (error) {
         setUploads(prev => prev.map((upload, i) => 
           i === uploads.length + index
@@ -262,14 +261,13 @@ export function PhotoUpload({
         },
         location: upload.location
       };
-      // Save to Firestore (replace with your Firestore add logic)
-      // Example:
-      // const docRef = await addDoc(collection(db, 'photos'), photoData);
-      // const photo = { id: docRef.id, ...photoData };
+      // Save to Firestore
+      const docRef = await addDoc(collection(db, 'photos'), photoData);
+      const photo = { id: docRef.id, ...photoData };
       setUploads(prev => prev.map((u, i) => 
-        i === index ? { ...u, progress: 100, status: 'success', photo: photoData } : u
+        i === index ? { ...u, progress: 100, status: 'success', photo } : u
       ));
-      onPhotosUploaded([photoData]);
+      onPhotosUploaded([photo]);
     } catch (error) {
       setUploads(prev => prev.map((u, i) => 
         i === index 
