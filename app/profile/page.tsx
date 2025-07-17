@@ -32,6 +32,7 @@ import { auth } from "@/firebase";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@components/ui/dialog";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
+import { updatePassword } from "firebase/auth";
 
 // Mock products data (same as in main page)
 const allProducts = [
@@ -134,6 +135,12 @@ export default function ProfilePage() {
   const [editLocation, setEditLocation] = useState("");
   const [saving, setSaving] = useState(false);
   const [myListings, setMyListings] = useState<any[]>([]);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showBlockedModal, setShowBlockedModal] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordMsg, setPasswordMsg] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -205,6 +212,22 @@ export default function ProfilePage() {
       // Optionally show error
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordLoading(true);
+    setPasswordMsg("");
+    try {
+      if (auth.currentUser && newPassword) {
+        await updatePassword(auth.currentUser, newPassword);
+        setPasswordMsg("Password updated successfully.");
+        setNewPassword("");
+      }
+    } catch (err: any) {
+      setPasswordMsg(err.message || "Failed to update password.");
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -569,13 +592,13 @@ export default function ProfilePage() {
                   <h4 className="text-base sm:text-lg font-semibold">Privacy & Security</h4>
                 </div>
                 <div className="space-y-3 sm:space-y-4">
-                  <Button variant="outline" className="w-full justify-start text-sm bg-transparent">
+                  <Button variant="outline" className="w-full justify-start text-sm bg-transparent" onClick={() => setShowPasswordModal(true)}>
                     Change Password
                   </Button>
-                  <Button variant="outline" className="w-full justify-start text-sm bg-transparent">
+                  <Button variant="outline" className="w-full justify-start text-sm bg-transparent" onClick={() => setShowPrivacyModal(true)}>
                     Privacy Settings
                   </Button>
-                  <Button variant="outline" className="w-full justify-start text-sm bg-transparent">
+                  <Button variant="outline" className="w-full justify-start text-sm bg-transparent" onClick={() => setShowBlockedModal(true)}>
                     Blocked Users
                   </Button>
                   <Button variant="outline" className="w-full justify-start text-sm bg-transparent">
@@ -631,6 +654,42 @@ export default function ProfilePage() {
               {saving ? "Saving..." : "Save"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Change Password Modal */}
+      <Dialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Label htmlFor="newPassword">New Password</Label>
+            <Input id="newPassword" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+            {passwordMsg && <div className="text-sm text-center" style={{ color: passwordMsg.includes('success') ? 'green' : 'red' }}>{passwordMsg}</div>}
+          </div>
+          <DialogFooter>
+            <Button onClick={handleChangePassword} disabled={passwordLoading || !newPassword}>
+              {passwordLoading ? "Updating..." : "Update Password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Privacy Settings Modal */}
+      <Dialog open={showPrivacyModal} onOpenChange={setShowPrivacyModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Privacy Settings</DialogTitle>
+          </DialogHeader>
+          <div className="py-8 text-center text-muted-foreground">Privacy settings coming soon.</div>
+        </DialogContent>
+      </Dialog>
+      {/* Blocked Users Modal */}
+      <Dialog open={showBlockedModal} onOpenChange={setShowBlockedModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Blocked Users</DialogTitle>
+          </DialogHeader>
+          <div className="py-8 text-center text-muted-foreground">Blocked users management coming soon.</div>
         </DialogContent>
       </Dialog>
     </div>
