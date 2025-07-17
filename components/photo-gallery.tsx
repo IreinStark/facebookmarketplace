@@ -340,7 +340,20 @@ export function PhotoGallery({
                 )}
                 
                 <div className="text-xs text-muted-foreground">
-                  {new Date(photo.uploadedAt.toDate()).toLocaleDateString()}
+                  {(() => {
+                    try {
+                      // Handle both Firebase Timestamp and Date objects
+                      if (photo.uploadedAt && typeof photo.uploadedAt.toDate === 'function') {
+                        return new Date(photo.uploadedAt.toDate()).toLocaleDateString();
+                      } else if (photo.uploadedAt) {
+                        return new Date(photo.uploadedAt).toLocaleDateString();
+                      }
+                      return 'Unknown date';
+                    } catch (error) {
+                      console.warn('Error formatting date:', error);
+                      return 'Unknown date';
+                    }
+                  })()}
                 </div>
               </div>
             </CardContent>
