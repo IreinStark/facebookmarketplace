@@ -88,6 +88,7 @@ export default function SellPage() {
           filename: photo.filename
         })),
         userId: user.uid,
+        seller: user.displayName || user.email || 'Unknown',
         createdAt: serverTimestamp(),
       });
 

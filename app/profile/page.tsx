@@ -31,7 +31,7 @@ import { useRouter } from "next/navigation"
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/firebase";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@components/ui/dialog";
-import { collection, query, where, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { collection, query, where, getDocs, deleteDoc, doc, updateProfile, writeBatch } from "firebase/firestore";
 import { db } from "@/firebase";
 import { updatePassword } from "firebase/auth";
 
@@ -212,8 +212,16 @@ export default function ProfilePage() {
     try {
       // Update Firebase Auth displayName
       if (auth.currentUser && editName !== userName) {
-        await auth.currentUser.updateProfile({ displayName: editName });
+        await updateProfile(auth.currentUser, { displayName: editName });
         setUserName(editName);
+        // Update all product listings with new seller name
+        const q = query(collection(db, "products"), where("userId", "==", auth.currentUser.uid));
+        const querySnapshot = await getDocs(q);
+        const batch = writeBatch(db);
+        querySnapshot.forEach((docSnap) => {
+          batch.update(docSnap.ref, { seller: editName });
+        });
+        await batch.commit();
       }
       // Update location (localStorage or Firestore as needed)
       setLocation(editLocation);
