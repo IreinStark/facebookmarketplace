@@ -44,7 +44,7 @@ async function uploadToCloudinary(file: File): Promise<string> {
   const url = `https://api.cloudinary.com/v1_1/dhcdhsgax/image/upload`; // <-- Insert your Cloudinary cloud name
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('upload_preset', '<your-upload-preset>'); // <-- Insert your unsigned upload preset
+  formData.append('upload_preset', unsigned_preset); // <-- Insert your unsigned upload preset
 
   const res = await fetch(url, {
     method: 'POST',
