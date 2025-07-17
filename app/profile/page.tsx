@@ -27,6 +27,8 @@ import {
 import Link from "next/link"
 import { useTheme } from "next-themes"
 import { useRouter } from "next/navigation"
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/firebase";
 
 // Mock products data (same as in main page)
 const allProducts = [
@@ -123,17 +125,26 @@ export default function ProfilePage() {
   const [location, setLocation] = useState("Downtown Area")
   const { theme, setTheme } = useTheme()
   const router = useRouter()
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setUserName(localStorage.getItem("userName") || "John Doe")
-    setUserEmail(localStorage.getItem("userEmail") || "john@example.com")
-
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserName(user.displayName || "");
+        setUserEmail(user.email || "");
+      } else {
+        setUserName(localStorage.getItem("userName") || "");
+        setUserEmail(localStorage.getItem("userEmail") || "");
+      }
+      setLoading(false);
+    });
     // Load favorites from localStorage
-    const savedFavorites = localStorage.getItem("favorites")
+    const savedFavorites = localStorage.getItem("favorites");
     if (savedFavorites) {
-      setFavorites(JSON.parse(savedFavorites))
+      setFavorites(JSON.parse(savedFavorites));
     }
-  }, [])
+    return () => unsubscribe();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn")
@@ -172,6 +183,10 @@ export default function ProfilePage() {
 
   // Get favorite products from the main products list
   const favoriteItems = allProducts.filter((product) => favorites.includes(product.id))
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-background">

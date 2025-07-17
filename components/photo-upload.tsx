@@ -45,7 +45,9 @@ async function uploadToCloudinary(file: File): Promise<string> {
   const unsigned_preset = 'unsigned_preset'; // <-- Insert your unsigned upload preset 
   const formData = new FormData();
   formData.append('file', file);
+
   formData.append('upload_preset', unsigned_preset); // <-- Insert your unsigned upload preset
+
 
   const res = await fetch(url, {
     method: 'POST',
