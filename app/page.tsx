@@ -471,7 +471,7 @@ export default function MarketplacePage() {
 				{/* Welcome Message */}
 				<div className="mb-4 sm:mb-6">
 					<h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
-						Welcome back, {getUserDisplayName(user, userProfile)}!
+						Welcome back, {getUserDisplayName(user, userProfile ?? undefined)}!
 					</h2>
 					<p className="text-sm text-gray-600 dark:text-gray-400">
 						{filteredProducts.length} item{filteredProducts.length !== 1 ? 's' : ''} available
