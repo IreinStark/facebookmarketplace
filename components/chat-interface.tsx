@@ -15,7 +15,6 @@ import {
   subscribeToMessages, 
   subscribeToConversations,
   markMessagesAsRead,
-  uploadPhoto,
   type Conversation, 
   type Message, 
   type Photo 
