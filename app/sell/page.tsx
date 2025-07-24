@@ -102,7 +102,7 @@ export default function SellPage() {
           filename: photo.filename
         })),
         userId: user.uid,
-        seller: getUserDisplayName(user, userProfile),
+        seller: getUserDisplayName(user, userProfile ?? undefined),
         sellerProfile: userProfile ? {
           uid: userProfile.uid,
           displayName: userProfile.displayName,
