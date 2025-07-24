@@ -28,6 +28,8 @@ import { useSocket } from "../hooks/use-socket"
 import { subscribeToProducts, getAllProducts, type Product } from "../lib/firebase-utils"
 import { formatDistanceToNow } from "date-fns"
 import { Timestamp } from "firebase/firestore"
+import { getUserProfile, getUserDisplayName, calculateDistance, type UserProfile } from "../lib/user-utils"
+import { NearMeFilter } from "../components/near-me-filter"
 
 // Location data with coordinates (lat, lng)
 const locationData = [
@@ -158,7 +160,7 @@ export default function MarketplacePage() {
 	const [showPriceFilter, setShowPriceFilter] = useState(false)
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
 	const [user, setUser] = useState<any>(null)
-	const [userProfile, setUserProfile] = useState<any>(null)
+	const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 	const [isMessagesOpen, setIsMessagesOpen] = useState(false)
 	const [selectedRecipient, setSelectedRecipient] = useState<{id: string, name: string} | null>(null)
 	const [selectedProduct, setSelectedProduct] = useState<{id: string, title: string} | null>(null)
@@ -166,6 +168,11 @@ export default function MarketplacePage() {
 	const [error, setError] = useState<string | null>(null)
 	const [favorites, setFavorites] = useState<string[]>([])
 	const { theme, setTheme } = useTheme()
+
+	// Near Me filter state
+	const [nearMeEnabled, setNearMeEnabled] = useState(false)
+	const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null)
+	const [nearMeRadius, setNearMeRadius] = useState(10) // Default 10km radius
 
 	// Products state
 	const [products, setProducts] = useState<Product[]>([])
@@ -183,13 +190,13 @@ export default function MarketplacePage() {
 		const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
 			try {
 				if (firebaseUser) {
-					const name =
-						firebaseUser.displayName && firebaseUser.displayName.trim() !== ""
-							? firebaseUser.displayName
-							: firebaseUser.email?.split("@")[0]; // fallback: part before @ of email
 					setUser(firebaseUser)
 					setIsLoggedIn(true)
-					setUserProfile({ displayName: name })
+					
+					// Load user profile from Firestore
+					const profile = await getUserProfile(firebaseUser)
+					setUserProfile(profile)
+					
 					setFavorites([])
 					setError(null)
 				} else {
@@ -266,7 +273,24 @@ export default function MarketplacePage() {
 		const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1]
 		const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
 							 product.description.toLowerCase().includes(searchTerm.toLowerCase())
-		return matchesCategory && matchesLocation && matchesPrice && matchesSearch
+		
+		// Near Me filtering
+		let matchesNearMe = true
+		if (nearMeEnabled && userLocation) {
+			// For demo purposes, assign random coordinates to mock products based on location data
+			const locationCoords = locationData.find(loc => loc.name === product.location)
+			if (locationCoords) {
+				const distance = calculateDistance(
+					userLocation.latitude,
+					userLocation.longitude,
+					locationCoords.lat,
+					locationCoords.lng
+				)
+				matchesNearMe = distance <= nearMeRadius
+			}
+		}
+		
+		return matchesCategory && matchesLocation && matchesPrice && matchesSearch && matchesNearMe
 	}).sort((a, b) => {
     const aTime = a.createdAt ? a.createdAt.toDate().getTime() : 0;
     const bTime = b.createdAt ? b.createdAt.toDate().getTime() : 0;
@@ -345,18 +369,18 @@ export default function MarketplacePage() {
 	return (
 		<div className="min-h-screen bg-background">
 			{/* Header */}
-			<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+			<header className="sticky top-0 z-50 w-full border-b bg-primary/95 backdrop-blur supports-[backdrop-filter]:bg-primary/90">
 				<div className="container flex h-14 sm:h-16 items-center justify-between px-2 sm:px-4">
 					{/* Left side - Logo and Search */}
 					<div className="flex items-center space-x-2 sm:space-x-4 flex-1 min-w-0">
 						<h1
-							className="text-base sm:text-lg lg:text-xl font-bold text-white hidden sm:block whitespace-nowrap cursor-pointer hover:text-gray-200 transition-colors"
+							className="text-base sm:text-lg lg:text-xl font-bold text-primary-foreground hidden sm:block whitespace-nowrap cursor-pointer hover:text-primary-foreground/80 transition-colors"
 							onClick={() => window.location.reload()}
 						>
 							Local Marketplace
 						</h1>
 						<h1
-							className="text-lg font-bold text-white sm:hidden cursor-pointer hover:text-gray-200 transition-colors"
+							className="text-lg font-bold text-primary-foreground sm:hidden cursor-pointer hover:text-primary-foreground/80 transition-colors"
 							onClick={() => window.location.reload()}
 						>
 							LM
@@ -375,8 +399,8 @@ export default function MarketplacePage() {
 					{/* User info, theme toggle, and logout */}
 					<div className="flex items-center space-x-2">
                         {userProfile && (
-                            <span className="text-sm text-white mr-2 hidden sm:block">
-                                {userProfile.displayName}
+                            <span className="text-sm text-primary-foreground mr-2 hidden sm:block">
+                                {getUserDisplayName(user, userProfile)}
                             </span>
                         )}
                         <Button
@@ -433,7 +457,7 @@ export default function MarketplacePage() {
 
 			{/* Welcome Banner */}
 			<div className="container px-2 sm:px-4 py-3 sm:py-4">
-				<div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/50 dark:to-indigo-900/50 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6 text-center border border-blue-100 dark:border-blue-800">
+				<div className="bg-gradient-to-r from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-secondary/20 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6 text-center border border-primary/20 dark:border-primary/30">
 					<h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 text-gray-900 dark:text-white">
 						Welcome to Marketplace
 					</h1>
@@ -447,7 +471,7 @@ export default function MarketplacePage() {
 				{/* Welcome Message */}
 				<div className="mb-4 sm:mb-6">
 					<h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
-						Welcome back, {userProfile?.displayName || 'User'}!
+						Welcome back, {getUserDisplayName(user, userProfile)}!
 					</h2>
 					<p className="text-sm text-gray-600 dark:text-gray-400">
 						{filteredProducts.length} item{filteredProducts.length !== 1 ? 's' : ''} available
@@ -575,6 +599,17 @@ export default function MarketplacePage() {
 						</div>
 					</div>
 
+					{/* Near Me Filter */}
+					<div className="mt-4">
+						<NearMeFilter
+							isEnabled={nearMeEnabled}
+							onToggle={setNearMeEnabled}
+							onLocationChange={setUserLocation}
+							onRadiusChange={setNearMeRadius}
+							radius={nearMeRadius}
+						/>
+					</div>
+
 					{/* Price Range Slider */}
 					{showPriceFilter && (
 						<div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
@@ -620,7 +655,7 @@ export default function MarketplacePage() {
 					)}
 
 					{/* Active Filters Display */}
-					{(selectedCategory !== "All" || selectedLocation !== "All Locations" || sortBy !== "newest" || priceRange[0] > 0 || priceRange[1] < 2000) && (
+					{(selectedCategory !== "All" || selectedLocation !== "All Locations" || sortBy !== "newest" || priceRange[0] > 0 || priceRange[1] < 2000 || nearMeEnabled) && (
 						<div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
 							<span className="text-xs text-gray-500">Active filters:</span>
 							{selectedCategory !== "All" && (
@@ -667,6 +702,20 @@ export default function MarketplacePage() {
 									</button>
 								</div>
 							)}
+							{nearMeEnabled && (
+								<div className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-xs">
+									<span>📍 Near Me ({nearMeRadius}km)</span>
+									<button
+										onClick={() => {
+											setNearMeEnabled(false);
+											setUserLocation(null);
+										}}
+										className="ml-1 hover:text-blue-600"
+									>
+										<X className="h-3 w-3" />
+									</button>
+								</div>
+							)}
 							<Button
 								variant="ghost"
 								size="sm"
@@ -676,6 +725,8 @@ export default function MarketplacePage() {
 									setSortBy("newest");
 									setPriceRange([0, 2000]);
 									setShowPriceFilter(false);
+									setNearMeEnabled(false);
+									setUserLocation(null);
 								}}
 								className="text-xs h-6 px-2 text-gray-500 hover:text-gray-700"
 							>
@@ -732,15 +783,20 @@ export default function MarketplacePage() {
 											<div className="flex items-center space-x-1 sm:space-x-2 min-w-0 flex-1">
 												<Avatar className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 flex-shrink-0">
 													<AvatarFallback className="text-xs">
-														{(mockSellerNames[product.userId] || 'Seller')
+														{((product as any).seller || mockSellerNames[product.userId] || 'Seller')
 															.split(' ')
 															.map((n: string) => n[0])
 															.join('')}
 													</AvatarFallback>
 												</Avatar>
 												<span className="text-xs sm:text-sm text-muted-foreground truncate">
-													{mockSellerNames[product.userId] || 'Seller'}
+													{(product as any).seller || mockSellerNames[product.userId] || 'Seller'}
 												</span>
+												{(product as any).sellerProfile?.verified && (
+													<span className="text-blue-500" title="Verified seller">
+														✓
+													</span>
+												)}
 											</div>
 											<span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
 												{product.createdAt ? formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true }) : '…'}
