@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@components/ui/button";
 import { Input } from "@components/ui/input";
 import { Label } from "@components/ui/label";
@@ -17,6 +17,7 @@ import { auth, db } from "@/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { PhotoUpload } from "../../components/photo-upload";
 import { type Photo } from "../../lib/firebase-utils";
+import { getUserProfile, getUserDisplayName, type UserProfile } from "../../lib/user-utils";
 
 interface MockPhoto {
   id: string;
@@ -48,7 +49,20 @@ export default function SellPage() {
   });
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const router = useRouter();
+
+  // Load user profile on component mount
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const profile = await getUserProfile(user);
+        setUserProfile(profile);
+      }
+    };
+    loadUserProfile();
+  }, []);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
@@ -88,7 +102,14 @@ export default function SellPage() {
           filename: photo.filename
         })),
         userId: user.uid,
-        seller: user.displayName || user.email || 'Unknown',
+        seller: getUserDisplayName(user, userProfile),
+        sellerProfile: userProfile ? {
+          uid: userProfile.uid,
+          displayName: userProfile.displayName,
+          username: userProfile.username,
+          avatar: userProfile.avatar,
+          verified: userProfile.verified
+        } : null,
         createdAt: serverTimestamp(),
       });
 

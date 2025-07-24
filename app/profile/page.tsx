@@ -34,6 +34,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { collection, query, where, getDocs, deleteDoc, doc, updateProfile, writeBatch } from "firebase/firestore";
 import { db } from "@/firebase";
 import { updatePassword } from "firebase/auth";
+import { getUserProfile, updateUserProfile, getUserDisplayName, type UserProfile } from "../../lib/user-utils";
 
 // Mock products data (same as in main page)
 const allProducts = [
@@ -118,8 +119,8 @@ const allProducts = [
 ]
 
 export default function ProfilePage() {
-  const [userName, setUserName] = useState("")
-  const [userEmail, setUserEmail] = useState("")
+  const [user, setUser] = useState<any>(null)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [favorites, setFavorites] = useState<number[]>([])
   const [notifications, setNotifications] = useState({
     messages: true,
@@ -127,13 +128,14 @@ export default function ProfilePage() {
     priceDrops: true,
     marketing: false,
   })
-  const [location, setLocation] = useState("Downtown Area")
   const { theme, setTheme } = useTheme()
   const router = useRouter()
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editName, setEditName] = useState("");
+  const [editDisplayName, setEditDisplayName] = useState("");
+  const [editUsername, setEditUsername] = useState("");
   const [editLocation, setEditLocation] = useState("");
+  const [editBio, setEditBio] = useState("");
   const [saving, setSaving] = useState(false);
   const [myListings, setMyListings] = useState<any[]>([]);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -144,40 +146,81 @@ export default function ProfilePage() {
   const [passwordLoading, setPasswordLoading] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUserName(user.displayName || "");
-        setUserEmail(user.email || "");
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        
+        // Load user profile from Firestore
+        const profile = await getUserProfile(firebaseUser);
+        setUserProfile(profile);
+        
+        // Fetch user's listings
+        const q = query(collection(db, "products"), where("userId", "==", firebaseUser.uid));
+        const querySnapshot = await getDocs(q);
+        setMyListings(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       } else {
-        setUserName(localStorage.getItem("userName") || "");
-        setUserEmail(localStorage.getItem("userEmail") || "");
+        setUser(null);
+        setUserProfile(null);
+        router.push("/auth/login");
       }
       setLoading(false);
     });
+    
     // Load favorites from localStorage
     const savedFavorites = localStorage.getItem("favorites");
     if (savedFavorites) {
       setFavorites(JSON.parse(savedFavorites));
     }
 
-    // Fetch user's listings from Firestore
-    async function fetchListings(uid: string) {
-      const q = query(collection(db, "products"), where("userId", "==", uid));
-      const querySnapshot = await getDocs(q);
-      setMyListings(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }
-    if (auth.currentUser) {
-      fetchListings(auth.currentUser.uid);
-    }
     return () => unsubscribe();
-  }, [userEmail]);
+  }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn")
-    localStorage.removeItem("userEmail")
-    localStorage.removeItem("userName")
-    localStorage.removeItem("favorites")
-    router.push("/auth/login")
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      localStorage.removeItem("favorites");
+      router.push("/auth/login");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  }
+
+  const handleSaveProfile = async () => {
+    if (!user || !userProfile) return;
+    
+    setSaving(true);
+    try {
+      const updates: Partial<UserProfile> = {
+        displayName: editDisplayName,
+        username: editUsername,
+        location: editLocation,
+        bio: editBio
+      };
+      
+      const success = await updateUserProfile(user.uid, updates);
+      if (success) {
+        // Update local state
+        setUserProfile({...userProfile, ...updates});
+        setShowEditModal(false);
+      } else {
+        alert("Failed to update profile");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const openEditModal = () => {
+    if (userProfile) {
+      setEditDisplayName(userProfile.displayName);
+      setEditUsername(userProfile.username || "");
+      setEditLocation(userProfile.location || "");
+      setEditBio(userProfile.bio || "");
+      setShowEditModal(true);
+    }
   }
 
   const removeFavorite = (productId: number) => {
@@ -198,41 +241,6 @@ export default function ProfilePage() {
 
   // Get favorite products from the main products list
   const favoriteItems = allProducts.filter((product) => favorites.includes(product.id))
-
-  // Open modal and prefill fields
-  const handleEditProfile = () => {
-    setEditName(userName);
-    setEditLocation(location);
-    setShowEditModal(true);
-  };
-
-  // Save changes
-  const handleSaveProfile = async () => {
-    setSaving(true);
-    try {
-      // Update Firebase Auth displayName
-      if (auth.currentUser && editName !== userName) {
-        await updateProfile(auth.currentUser, { displayName: editName });
-        setUserName(editName);
-        // Update all product listings with new seller name
-        const q = query(collection(db, "products"), where("userId", "==", auth.currentUser.uid));
-        const querySnapshot = await getDocs(q);
-        const batch = writeBatch(db);
-        querySnapshot.forEach((docSnap) => {
-          batch.update(docSnap.ref, { seller: editName });
-        });
-        await batch.commit();
-      }
-      // Update location (localStorage or Firestore as needed)
-      setLocation(editLocation);
-      localStorage.setItem("userLocation", editLocation);
-      setShowEditModal(false);
-    } catch (err) {
-      // Optionally show error
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleChangePassword = async () => {
     setPasswordLoading(true);
@@ -274,9 +282,9 @@ export default function ProfilePage() {
           <CardContent className="p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
               <Avatar className="h-16 w-16 sm:h-20 sm:w-20 mx-auto sm:mx-0">
-                <AvatarImage src="/placeholder.svg?height=80&width=80" />
+                <AvatarImage src={userProfile?.avatar || "/placeholder.svg?height=80&width=80"} />
                 <AvatarFallback className="text-lg">
-                  {userName
+                  {getUserDisplayName(user, userProfile)
                     .split(" ")
                     .map((n) => n[0])
                     .join("")}
@@ -286,15 +294,30 @@ export default function ProfilePage() {
               <div className="flex-1 text-center sm:text-left">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                   <div className="mb-4 sm:mb-0">
-                    <h2 className="text-xl sm:text-2xl font-bold">{userName}</h2>
-                    <p className="text-muted-foreground text-sm sm:text-base">{userEmail}</p>
-                    <div className="flex items-center justify-center sm:justify-start mt-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      {location}
+                    <div className="flex items-center justify-center sm:justify-start gap-2">
+                      <h2 className="text-xl sm:text-2xl font-bold">{getUserDisplayName(user, userProfile)}</h2>
+                      {userProfile?.verified && (
+                        <span className="text-blue-500 text-lg" title="Verified user">
+                          ✓
+                        </span>
+                      )}
                     </div>
+                    {userProfile?.username && userProfile.username !== userProfile.displayName && (
+                      <p className="text-muted-foreground text-sm">@{userProfile.username}</p>
+                    )}
+                    <p className="text-muted-foreground text-sm sm:text-base">{user?.email}</p>
+                    {userProfile?.location && (
+                      <div className="flex items-center justify-center sm:justify-start mt-2 text-sm text-muted-foreground">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        {userProfile.location}
+                      </div>
+                    )}
+                    {userProfile?.bio && (
+                      <p className="text-sm text-muted-foreground mt-2">{userProfile.bio}</p>
+                    )}
                   </div>
                   <div className="flex flex-col xs:flex-row gap-2">
-                    <Button variant="outline" size="sm" className="text-xs sm:text-sm bg-transparent" onClick={handleEditProfile}>
+                    <Button variant="outline" size="sm" className="text-xs sm:text-sm bg-transparent" onClick={openEditModal}>
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Profile
                     </Button>
@@ -678,21 +701,52 @@ export default function ProfilePage() {
 
       {/* Edit Profile Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Profile</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="editName">Name</Label>
-              <Input id="editName" value={editName} onChange={e => setEditName(e.target.value)} />
+              <Label htmlFor="editDisplayName">Display Name</Label>
+              <Input 
+                id="editDisplayName" 
+                value={editDisplayName} 
+                onChange={e => setEditDisplayName(e.target.value)}
+                placeholder="Your display name" 
+              />
             </div>
             <div>
-              <Label htmlFor="editLocation">Location</Label>
-              <Input id="editLocation" value={editLocation} onChange={e => setEditLocation(e.target.value)} />
+              <Label htmlFor="editUsername">Username (optional)</Label>
+              <Input 
+                id="editUsername" 
+                value={editUsername} 
+                onChange={e => setEditUsername(e.target.value)}
+                placeholder="@username" 
+              />
+            </div>
+            <div>
+              <Label htmlFor="editLocation">Location (optional)</Label>
+              <Input 
+                id="editLocation" 
+                value={editLocation} 
+                onChange={e => setEditLocation(e.target.value)}
+                placeholder="City, Country" 
+              />
+            </div>
+            <div>
+              <Label htmlFor="editBio">Bio (optional)</Label>
+              <Input 
+                id="editBio" 
+                value={editBio} 
+                onChange={e => setEditBio(e.target.value)}
+                placeholder="Tell others about yourself" 
+              />
             </div>
           </div>
           <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditModal(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleSaveProfile} disabled={saving}>
               {saving ? "Saving..." : "Save"}
             </Button>
