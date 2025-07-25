@@ -14,9 +14,8 @@ import { ArrowLeft, Upload, X, MapPin, DollarSign, Tag, FileText, Camera, ImageI
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { PhotoUpload } from "../../components/photo-upload";
-import { type Photo } from "../../lib/firebase-utils";
+import { type Photo, createProduct } from "../../lib/firebase-utils";
 import { getUserProfile, getUserDisplayName, type UserProfile } from "../../lib/user-utils";
 
 interface MockPhoto {
@@ -87,7 +86,7 @@ export default function SellPage() {
         return;
       }
 
-      await addDoc(collection(db, "products"), {
+      const productId = await createProduct({
         title: formData.title,
         price: parseFloat(formData.price),
         description: formData.description,
@@ -109,20 +108,13 @@ export default function SellPage() {
           username: userProfile.username ?? null,
           avatar: userProfile.avatar,
           verified: userProfile.verified
-        } : null,
-        createdAt: serverTimestamp(),
+        } : undefined,
       });
 
-      // Simulate API call
-      setTimeout(() => {
-        // In a real app, you would send this data to your backend
-        console.log("Product data:", { ...formData, photos });
-
-        // Show success message and redirect
-        alert("Product listed successfully!");
-        setIsLoading(false);
-        router.push("/");
-      }, 2000);
+      console.log("Product created with ID:", productId);
+      alert("Product listed successfully!");
+      setIsLoading(false);
+      router.push("/");
     } catch (err) {
       console.error("Error adding product:", err);
       alert("Failed to post item.");
