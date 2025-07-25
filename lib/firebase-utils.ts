@@ -23,10 +23,9 @@ import {
   getDownloadURL, 
   deleteObject 
 } from 'firebase/storage';
-import { db, storage } from '../app/firebase';
+import { db, storage, auth } from '../app/firebase';
 import { v4 as uuidv4 } from 'uuid';
 import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../app/firebase"; // adjust the path to your auth export
 
 // Types for our data structures
 export interface Photo {
@@ -347,7 +346,29 @@ export interface Product {
     filename: string;
   }[];
   userId: string;
+  seller?: string;
+  sellerProfile?: {
+    uid: string;
+    displayName: string;
+    username?: string;
+    avatar?: string;
+    verified: boolean;
+  };
   createdAt: Timestamp;
+}
+
+export async function createProduct(productData: Omit<Product, 'id' | 'createdAt'>): Promise<string> {
+  try {
+    const docRef = await addDoc(collection(db, 'products'), {
+      ...productData,
+      createdAt: serverTimestamp(),
+    });
+    console.log('Product created with ID:', docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error creating product:', error);
+    throw error;
+  }
 }
 
 export async function getAllProducts(): Promise<Product[]> {

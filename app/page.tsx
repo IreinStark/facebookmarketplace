@@ -214,17 +214,19 @@ export default function MarketplacePage() {
 		return () => unsubscribe()
 	}, [])
 
-	// Use real Firebase data with fallback to mock data
+	// Load products from Firebase in real-time
 	useEffect(() => {
 		if (!isLoggedIn) return
 
 		setProductsLoading(true)
 		const unsubscribe = subscribeToProducts((newProducts) => {
-			// If no real products, show mock products for demo purposes
+			console.log("Products received from Firebase:", newProducts.length);
+			// Show real Firebase products, optionally include mock data for demo
 			if (newProducts.length === 0) {
+				// Only show mock products if no real products exist
 				setProducts(mockProducts)
 			} else {
-				// Combine real products with mock products for richer experience
+				// Show real products first, then mock products for demo
 				setProducts([...newProducts, ...mockProducts])
 			}
 			setProductsLoading(false)
