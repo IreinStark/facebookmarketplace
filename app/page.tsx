@@ -214,26 +214,34 @@ export default function MarketplacePage() {
 		return () => unsubscribe()
 	}, [])
 
-	// Load products from Firebase in real-time
+	// Load products from Firebase in real-time - always load for everyone
 	useEffect(() => {
-		if (!isLoggedIn) return
-
+		console.log('Setting up product subscription...');
 		setProductsLoading(true)
+		
 		const unsubscribe = subscribeToProducts((newProducts) => {
 			console.log("Products received from Firebase:", newProducts.length);
-			// Show real Firebase products, optionally include mock data for demo
-			if (newProducts.length === 0) {
+			
+			// Show new products immediately
+			if (newProducts.length > 0) {
+				console.log("Displaying real Firebase products:", newProducts);
+				// Show real products first, then mock products for demo
+				const allProducts = [...newProducts, ...mockProducts];
+				console.log("Total products to display:", allProducts.length);
+				setProducts(allProducts)
+			} else {
+				console.log("No Firebase products found, showing mock products only");
 				// Only show mock products if no real products exist
 				setProducts(mockProducts)
-			} else {
-				// Show real products first, then mock products for demo
-				setProducts([...newProducts, ...mockProducts])
 			}
 			setProductsLoading(false)
 		})
 
-		return () => unsubscribe()
-	}, [isLoggedIn])
+		return () => {
+			console.log('Cleaning up product subscription');
+			unsubscribe();
+		}
+	}, []) // Load products immediately on page load
 
 	const handleLogout = async () => {
 		try {

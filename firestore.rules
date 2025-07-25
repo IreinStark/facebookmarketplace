@@ -8,9 +8,9 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Products collection - authenticated users can read all, write their own
+    // Products collection - everyone can read, authenticated users can write their own
     match /products/{productId} {
-      allow read: if request.auth != null;
+      allow read: if true; // Allow public reading so everyone can see products
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
