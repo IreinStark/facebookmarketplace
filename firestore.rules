@@ -8,6 +8,12 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
+    // User profiles collection - users can read and write their own profiles
+    match /userProfiles/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null; // Allow reading other user profiles for display purposes
+    }
+    
     // Products collection - everyone can read, authenticated users can write their own
     match /products/{productId} {
       allow read: if true; // Allow public reading so everyone can see products
