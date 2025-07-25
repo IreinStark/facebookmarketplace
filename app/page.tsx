@@ -387,7 +387,7 @@ export default function MarketplacePage() {
 							className="text-base sm:text-lg lg:text-xl font-bold text-primary-foreground hidden sm:block whitespace-nowrap cursor-pointer hover:text-primary-foreground/80 transition-colors"
 							onClick={() => window.location.reload()}
 						>
-							Local Marketplace
+							NEAR ME
 						</h1>
 						<h1
 							className="text-lg font-bold text-primary-foreground sm:hidden cursor-pointer hover:text-primary-foreground/80 transition-colors"
@@ -469,7 +469,7 @@ export default function MarketplacePage() {
 			<div className="container px-2 sm:px-4 py-3 sm:py-4">
 				<div className="bg-gradient-to-r from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-secondary/20 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6 text-center border border-primary/20 dark:border-primary/30">
 					<h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 text-gray-900 dark:text-white">
-						Welcome to Marketplace
+						Welcome to NEAR 
 					</h1>
 					<p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4">
 						Buy and sell items in your local community with real-time chat
