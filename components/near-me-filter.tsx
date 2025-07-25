@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+
 import { Button } from "./ui/button"
 import { Label } from "./ui/label"
 import { Slider } from "./ui/slider"
@@ -9,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { MapPin, Navigation, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "./ui/alert"
 import { getCurrentLocation, calculateDistance } from "../lib/user-utils"
+
 
 interface NearMeFilterProps {
   isEnabled: boolean;
