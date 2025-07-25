@@ -29,7 +29,6 @@ import { subscribeToProducts, getAllProducts, type Product } from "../lib/fireba
 import { formatDistanceToNow } from "date-fns"
 import { Timestamp } from "firebase/firestore"
 import { getUserProfile, getUserDisplayName, calculateDistance, type UserProfile } from "../lib/user-utils"
-import { NearMeFilter } from "../components/near-me-filter"
 
 // Location data with coordinates (lat, lng)
 const locationData = [
@@ -187,11 +186,11 @@ export default function MarketplacePage() {
 				if (firebaseUser) {
 					setUser(firebaseUser)
 					setIsLoggedIn(true)
-					
+
 					// Load user profile from Firestore
 					const profile = await getUserProfile(firebaseUser)
 					setUserProfile(profile)
-					
+
 					setFavorites([])
 					setError(null)
 				} else {
@@ -203,4 +202,227 @@ export default function MarketplacePage() {
 			} catch (err: any) {
 				setError("Failed to load user data: " + (err?.message || "Unknown error"))
 			} finally {
-				setLoading(false
+				setLoading(false)
+			}
+		})
+		return () => unsubscribe()
+	}, [])
+
+	useEffect(() => {
+		setProductsLoading(true)
+
+		// Subscribe to products updates
+		const unsubscribe = subscribeToProducts((snapshot) => {
+			const loadedProducts: Product[] = []
+			snapshot.forEach((doc) => {
+				const data = doc.data() as Product
+				loadedProducts.push({ id: doc.id, ...data })
+			})
+
+			setProducts(loadedProducts)
+			setProductsLoading(false)
+		},
+		 (error) => {
+			console.error("Error fetching products: ", error)
+			setProductsLoading(false)
+		})
+
+		// Cleanup subscription on unmount
+		return () => unsubscribe()
+	}, [])
+
+	// Filter and sort products based on user selections
+	const filteredProducts = products.filter((product) => {
+		const matchesCategory = selectedCategory === "All" || product.category === selectedCategory
+		const matchesLocation = selectedLocation === "All Locations" || product.location === selectedLocation
+		const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase())
+		const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1]
+
+		return matchesCategory && matchesLocation && matchesSearch && matchesPrice
+	})
+
+	const sortedProducts = [...filteredProducts].sort((a, b) => {
+		if (sortBy === "newest") {
+			return b.createdAt.toMillis() - a.createdAt.toMillis()
+		} else if (sortBy === "oldest") {
+			return a.createdAt.toMillis() - b.createdAt.toMillis()
+		} else if (sortBy === "priceAsc") {
+			return a.price - b.price
+		} else if (sortBy === "priceDesc") {
+			return b.price - a.price
+		}
+		return 0
+	})
+
+	// Pagination state
+	const [currentPage, setCurrentPage] = useState(1)
+	const itemsPerPage = 10
+
+	// Get current items for pagination
+	const paginatedProducts = sortedProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+	// Calculate total pages for pagination
+	const totalPages = Math.ceil(sortedProducts.length / itemsPerPage)
+
+	// Handle page change
+	const handlePageChange = (page: number) => {
+		setCurrentPage(page)
+		window.scrollTo({ top: 0, behavior: "smooth" })
+	}
+
+	// Refresh user profile and favorites periodically
+	useEffect(() => {
+		const interval = setInterval(() => {
+			if (isLoggedIn && user) {
+				getUserProfile(user).then((profile) => {
+					setUserProfile(profile)
+				}).catch((err) => {
+					console.error("Error fetching user profile: ", err)
+				})
+			}
+		}, 5 * 60 * 1000) // Refresh every 5 minutes
+
+		return () => clearInterval(interval)
+	}, [isLoggedIn, user])
+
+	// Error boundary fallback UI
+	if (error) {
+		return (
+			<div className="flex items-center justify-center h-screen">
+				<Alert>
+					<AlertDescription>
+						{error}
+					</AlertDescription>
+				</Alert>
+			</div>
+		)
+	}
+
+	return (
+		<div className="container max-w-7xl mx-auto px-4 py-8">
+			<div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8">
+				<h1 className="text-3xl font-bold mb-4 md:mb-0">Marketplace</h1>
+				<div className="flex flex-col md:flex-row md:items-center">
+					<Button variant="outline" className="mr-4" onClick={() => setShowPriceFilter(!showPriceFilter)}>
+						Filter by Price
+					</Button>
+					<Select value={selectedCategory} onValueChange={setSelectedCategory} className="w-full md:w-auto mb-4 md:mb-0">
+						<SelectTrigger>
+							<SelectValue placeholder="Select category" />
+						</SelectTrigger>
+						<SelectContent>
+							{categories.map((category) => (
+								<SelectItem key={category} value={category}>
+									{category}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<Select value={selectedLocation} onValueChange={setSelectedLocation} className="w-full md:w-auto mb-4 md:mb-0">
+						<SelectTrigger>
+							<SelectValue placeholder="Select location" />
+						</SelectTrigger>
+						<SelectContent>
+							{locations.map((location) => (
+								<SelectItem key={location} value={location}>
+									{location}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				</div>
+			</div>
+
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+				{productsLoading ? (
+					<div className="col-span-full text-center py-8">
+						<Loader />
+					</div>
+				) : paginatedProducts.length === 0 ? (
+					<div className="col-span-full text-center py-8">
+						<Alert>
+							<AlertDescription>
+								No products found matching your criteria.
+							</AlertDescription>
+						</Alert>
+					</div>
+				) : (
+					paginatedProducts.map((product) => (
+						<Card key={product.id} className="hover:shadow-lg transition-shadow duration-300">
+							<CardHeader>
+								<CardTitle className="text-lg font-semibold">{product.title}</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<div className="flex flex-col sm:flex-row sm:items-center">
+									<div className="flex-shrink-0 mb-4 sm:mb-0">
+										<Avatar>
+											<AvatarFallback>
+												{mockSellerNames[product.userId]?.[0] || "U"}
+											</AvatarFallback>
+										</Avatar>
+									</div>
+									<div className="flex-grow">
+										<p className="text-sm text-gray-500">
+											{product.location} &bull;{" "}
+											{formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true })}
+										</p>
+										<h2 className="text-xl font-bold">
+											${Number(product.price).toFixed(2)}
+										</h2>
+									</div>
+								</div>
+								<p className="mt-2 text-gray-700">
+									{product.description}
+								</p>
+							</CardContent>
+						</Card>
+					))
+				)}
+			</div>
+
+			<div className="mt-8">
+				<Pagination
+					currentPage={currentPage}
+					totalPages={totalPages}
+					onPageChange={handlePageChange}
+				/>
+			</div>
+
+			{/* Price range filter sheet */}
+			<Sheet open={showPriceFilter} onOpenChange={setShowPriceFilter}>
+				<SheetContent>
+					<SheetHeader>
+						<SheetTitle>Filter by Price</SheetTitle>
+					</SheetHeader>
+					<div className="p-4">
+						<Label htmlFor="price-range" className="block text-sm font-medium text-gray-700">
+							Price range:
+						</Label>
+						<Slider
+							id="price-range"
+							value={priceRange}
+							onValueChange={setPriceRange}
+							min={0}
+							max={2000}
+							step={10}
+							className="mt-2"
+						/>
+						<div className="flex justify-between text-xs text-gray-500 mt-1">
+							<span>${priceRange[0]}</span>
+							<span>${priceRange[1]}</span>
+						</div>
+					</div>
+					<div className="flex justify-end p-4">
+						<Button variant="outline" onClick={() => setShowPriceFilter(false)} className="mr-2">
+							Cancel
+						</Button>
+						<Button onClick={() => setShowPriceFilter(false)}>
+							Apply
+						</Button>
+					</div>
+				</SheetContent>
+			</Sheet>
+		</div>
+	)
+}
+}
