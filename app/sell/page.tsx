@@ -106,7 +106,7 @@ export default function SellPage() {
         sellerProfile: userProfile ? {
           uid: userProfile.uid,
           displayName: userProfile.displayName,
-          username: userProfile.username,
+          username: userProfile.username ?? null,
           avatar: userProfile.avatar,
           verified: userProfile.verified
         } : null,
