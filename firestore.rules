@@ -11,8 +11,8 @@ service cloud.firestore {
     // Products collection - authenticated users can read all, write their own
     match /products/{productId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null && request.auth.uid == resource.data.sellerId;
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.sellerId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
     // Photos collection - users can upload and manage their own photos
