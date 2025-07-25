@@ -101,14 +101,17 @@ export default function SellPage() {
           filename: photo.filename
         })),
         userId: user.uid,
-        seller: getUserDisplayName(user, userProfile ?? undefined),
-        sellerProfile: userProfile ? {
-          uid: userProfile.uid,
-          displayName: userProfile.displayName,
-          username: userProfile.username ?? null,
-          avatar: userProfile.avatar,
-          verified: userProfile.verified
-        } : undefined,
+
+        seller: getUserDisplayName(user, userProfile),
+        ...(userProfile && {
+          sellerProfile: {
+            uid: userProfile.uid,
+            displayName: userProfile.displayName || 'Anonymous User',
+            ...(userProfile.username && { username: userProfile.username }),
+            ...(userProfile.avatar && { avatar: userProfile.avatar }),
+            verified: userProfile.verified || false
+          }
+        }),
       });
 
       console.log("Product created with ID:", productId);
