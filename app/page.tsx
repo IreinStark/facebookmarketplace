@@ -257,7 +257,10 @@ export default function MarketplacePage() {
 	}
 
 	const handleToggleFavorite = (productId: string) => {
-		if (!user) return
+		if (!user) {
+			alert("Please log in to save favorites");
+			return;
+		}
 		setFavorites((prev) =>
 			prev.includes(productId)
 				? prev.filter((id: string) => id !== productId)
@@ -266,6 +269,10 @@ export default function MarketplacePage() {
 	}
 
 	const handleProductMessage = (product: Product) => {
+		if (!isLoggedIn) {
+			alert("Please log in to send messages to sellers");
+			return;
+		}
 		setSelectedRecipient({
 			id: product.userId,
 			name: mockSellerNames[product.userId] || 'Seller'
@@ -350,31 +357,8 @@ export default function MarketplacePage() {
 		)
 	}
 
-	// Not logged in state
-	if (!isLoggedIn) {
-		return (
-			<div className="min-h-screen flex items-center justify-center bg-background p-4">
-				<Card className="w-full max-w-md">
-					<CardHeader className="text-center">
-						<CardTitle className="text-xl sm:text-2xl font-bold text-blue-600">Local Marketplace</CardTitle>
-						<p className="text-muted-foreground text-sm sm:text-base">Connect with your community</p>
-					</CardHeader>
-					<CardContent className="space-y-4">
-						<Link href="/auth/login">
-							<Button className="w-full" size="lg">
-								Log In
-							</Button>
-						</Link>
-						<Link href="/auth/signup">
-							<Button variant="outline" className="w-full" size="lg">
-								Sign Up
-							</Button>
-						</Link>
-					</CardContent>
-				</Card>
-			</div>
-		)
-	}
+	// Allow viewing marketplace even when not logged in
+	// Users will need to log in only when they want to create listings or send messages
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -406,9 +390,9 @@ export default function MarketplacePage() {
 						</div>
 					</div>
 
-					{/* User info, theme toggle, and logout */}
+					{/* User info, theme toggle, and auth buttons */}
 					<div className="flex items-center space-x-2">
-                        {userProfile && (
+                        {isLoggedIn && userProfile && (
                             <span className="text-sm text-primary-foreground mr-2 hidden sm:block">
                                 {getUserDisplayName(user, userProfile)}
                             </span>
@@ -422,45 +406,63 @@ export default function MarketplacePage() {
                         >
                             {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
                         </Button>
-                        <Link href="/sell">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="bg-transparent text-xs flex items-center"
-                                title="Sell an item"
-                            >
-                                <Plus className="h-4 w-4 mr-1" />
-                                Sell
-                            </Button>
-                        </Link>
-                        <Link href="/profile">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 lg:h-9 lg:w-9"
-                                title="Profile"
-                            >
-                                <User className="h-4 w-4" />
-                            </Button>
-                        </Link>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setIsMessagesOpen(true)}
-                            className="h-8 w-8 lg:h-9 lg:w-9"
-                            title="Messages"
-                        >
-                            <MessageSquare className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleLogout}
-                            className="h-8 w-8 lg:h-9 lg:w-9"
-                            title="Logout"
-                        >
-                            <LogOut className="h-4 w-4" />
-                        </Button>
+                        
+                        {isLoggedIn ? (
+                            <>
+                                <Link href="/sell">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="bg-transparent text-xs flex items-center"
+                                        title="Sell an item"
+                                    >
+                                        <Plus className="h-4 w-4 mr-1" />
+                                        Sell
+                                    </Button>
+                                </Link>
+                                <Link href="/profile">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 lg:h-9 lg:w-9"
+                                        title="Profile"
+                                    >
+                                        <User className="h-4 w-4" />
+                                    </Button>
+                                </Link>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setIsMessagesOpen(true)}
+                                    className="h-8 w-8 lg:h-9 lg:w-9"
+                                    title="Messages"
+                                >
+                                    <MessageSquare className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={handleLogout}
+                                    className="h-8 w-8 lg:h-9 lg:w-9"
+                                    title="Logout"
+                                >
+                                    <LogOut className="h-4 w-4" />
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Link href="/auth/login">
+                                    <Button variant="outline" size="sm" className="text-xs">
+                                        Log In
+                                    </Button>
+                                </Link>
+                                <Link href="/auth/signup">
+                                    <Button size="sm" className="text-xs">
+                                        Sign Up
+                                    </Button>
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </header>
@@ -481,10 +483,19 @@ export default function MarketplacePage() {
 				{/* Welcome Message */}
 				<div className="mb-4 sm:mb-6">
 					<h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
-						Welcome back, {getUserDisplayName(user, userProfile ?? undefined)}!
+						{isLoggedIn ? (
+							`Welcome back, ${getUserDisplayName(user, userProfile ?? undefined)}!`
+						) : (
+							"Browse Local Marketplace"
+						)}
 					</h2>
 					<p className="text-sm text-gray-600 dark:text-gray-400">
 						{filteredProducts.length} item{filteredProducts.length !== 1 ? 's' : ''} available
+						{!isLoggedIn && (
+							<span className="ml-2">
+								• <Link href="/auth/login" className="text-blue-600 hover:underline">Log in</Link> to create listings and send messages
+							</span>
+						)}
 					</p>
 				</div>
 
@@ -888,21 +899,23 @@ export default function MarketplacePage() {
 
 
 
-			{/* Chat Interface */}
-			<ChatInterface
-				currentUserId={user?.uid || ''}
-				currentUserName={userProfile?.displayName || ''}
-				isOpen={isMessagesOpen}
-				onClose={() => {
-					setIsMessagesOpen(false)
-					setSelectedRecipient(null)
-					setSelectedProduct(null)
-				}}
-				initialRecipientId={selectedRecipient?.id}
-				initialRecipientName={selectedRecipient?.name}
-				productId={selectedProduct?.id}
-				productTitle={selectedProduct?.title}
-			/>
+			{/* Chat Interface - Only for logged-in users */}
+			{isLoggedIn && (
+				<ChatInterface
+					currentUserId={user?.uid || ''}
+					currentUserName={userProfile?.displayName || ''}
+					isOpen={isMessagesOpen}
+					onClose={() => {
+						setIsMessagesOpen(false)
+						setSelectedRecipient(null)
+						setSelectedProduct(null)
+					}}
+					initialRecipientId={selectedRecipient?.id}
+					initialRecipientName={selectedRecipient?.name}
+					productId={selectedProduct?.id}
+					productTitle={selectedProduct?.title}
+				/>
+			)}
 		</div>
 	)
 }
