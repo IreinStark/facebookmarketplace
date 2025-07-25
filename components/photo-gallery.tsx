@@ -345,8 +345,10 @@ export function PhotoGallery({
                       // Handle both Firebase Timestamp and Date objects
                       if (photo.uploadedAt && typeof photo.uploadedAt.toDate === 'function') {
                         return new Date(photo.uploadedAt.toDate()).toLocaleDateString();
+                      } else if (photo.uploadedAt instanceof Date) {
+                        return photo.uploadedAt.toLocaleDateString();
                       } else if (photo.uploadedAt) {
-                        return new Date(photo.uploadedAt).toLocaleDateString();
+                        return new Date(photo.uploadedAt as any).toLocaleDateString();
                       }
                       return 'Unknown date';
                     } catch (error) {

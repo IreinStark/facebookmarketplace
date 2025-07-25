@@ -19,7 +19,7 @@ export interface UserProfile {
  * Get a consistent display name for a user
  * Priority: username > displayName > email prefix
  */
-export function getUserDisplayName(user: User | null, profile?: UserProfile): string {
+export function getUserDisplayName(user: User | null, profile?: UserProfile | null): string {
   if (!user) return 'Unknown User';
   
   if (profile?.username && profile.username.trim() !== '') {

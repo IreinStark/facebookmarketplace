@@ -31,7 +31,7 @@ import { useRouter } from "next/navigation"
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/firebase";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@components/ui/dialog";
-import { collection, query, where, getDocs, deleteDoc, doc, updateProfile, writeBatch } from "firebase/firestore";
+import { collection, query, where, getDocs, deleteDoc, doc, writeBatch } from "firebase/firestore";
 import { db } from "@/firebase";
 import { updatePassword } from "firebase/auth";
 import { getUserProfile, updateUserProfile, getUserDisplayName, type UserProfile } from "../../lib/user-utils";
@@ -637,8 +637,8 @@ export default function ProfilePage() {
                     </p>
                     <Input
                       id="location"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
+                      value={editLocation}
+                      onChange={(e) => setEditLocation(e.target.value)}
                       placeholder="Enter your location"
                       className="text-sm sm:text-base"
                     />
