@@ -39,15 +39,54 @@ import { auth } from "../app/firebase";
 import { db, storage, auth } from '../app/firebase';
 ```
 
-### 4. **Better Error Handling** ✅
-**Added**: New `createProduct()` function in firebase-utils.ts for better error handling
+### 4. **Firebase Undefined Values Issue** ❌ → ✅
+**Problem**: Firebase doesn't allow `undefined` values in documents
 ```javascript
+// OLD (BROKEN) - undefined values cause Firebase errors
+sellerProfile: {
+  username: userProfile.username, // Could be undefined!
+  avatar: userProfile.avatar,     // Could be undefined!
+}
+
+// NEW (FIXED) - only include defined values
+sellerProfile: {
+  uid: userProfile.uid,
+  displayName: userProfile.displayName || 'Anonymous User',
+  ...(userProfile.username && { username: userProfile.username }),
+  ...(userProfile.avatar && { avatar: userProfile.avatar }),
+  verified: userProfile.verified || false
+}
+```
+
+### 5. **Better Error Handling** ✅
+**Added**: New `createProduct()` function with undefined value cleaning
+```javascript
+// Helper function to remove undefined values
+function removeUndefinedValues(obj: any): any {
+  const cleaned: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        const cleanedNested = removeUndefinedValues(value);
+        if (Object.keys(cleanedNested).length > 0) {
+          cleaned[key] = cleanedNested;
+        }
+      } else {
+        cleaned[key] = value;
+      }
+    }
+  }
+  return cleaned;
+}
+
 export async function createProduct(productData: Omit<Product, 'id' | 'createdAt'>): Promise<string> {
   try {
-    const docRef = await addDoc(collection(db, 'products'), {
+    const cleanData = removeUndefinedValues({
       ...productData,
       createdAt: serverTimestamp(),
     });
+    
+    const docRef = await addDoc(collection(db, 'products'), cleanData);
     console.log('Product created with ID:', docRef.id);
     return docRef.id;
   } catch (error) {

@@ -102,13 +102,15 @@ export default function SellPage() {
         })),
         userId: user.uid,
         seller: getUserDisplayName(user, userProfile),
-        sellerProfile: userProfile ? {
-          uid: userProfile.uid,
-          displayName: userProfile.displayName,
-          username: userProfile.username,
-          avatar: userProfile.avatar,
-          verified: userProfile.verified
-        } : undefined,
+        ...(userProfile && {
+          sellerProfile: {
+            uid: userProfile.uid,
+            displayName: userProfile.displayName || 'Anonymous User',
+            ...(userProfile.username && { username: userProfile.username }),
+            ...(userProfile.avatar && { avatar: userProfile.avatar }),
+            verified: userProfile.verified || false
+          }
+        }),
       });
 
       console.log("Product created with ID:", productId);

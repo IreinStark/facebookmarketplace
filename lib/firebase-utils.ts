@@ -353,16 +353,39 @@ export interface Product {
     username?: string;
     avatar?: string;
     verified: boolean;
-  };
+  } | null;
   createdAt: Timestamp;
+}
+
+// Helper function to remove undefined values from an object
+function removeUndefinedValues(obj: any): any {
+  const cleaned: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+        const cleanedNested = removeUndefinedValues(value);
+        if (Object.keys(cleanedNested).length > 0) {
+          cleaned[key] = cleanedNested;
+        }
+      } else {
+        cleaned[key] = value;
+      }
+    }
+  }
+  return cleaned;
 }
 
 export async function createProduct(productData: Omit<Product, 'id' | 'createdAt'>): Promise<string> {
   try {
-    const docRef = await addDoc(collection(db, 'products'), {
+    // Clean the data to remove undefined values
+    const cleanData = removeUndefinedValues({
       ...productData,
       createdAt: serverTimestamp(),
     });
+    
+    console.log('Creating product with data:', cleanData);
+    
+    const docRef = await addDoc(collection(db, 'products'), cleanData);
     console.log('Product created with ID:', docRef.id);
     return docRef.id;
   } catch (error) {
