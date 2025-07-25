@@ -418,11 +418,20 @@ export function subscribeToProducts(callback: (products: Product[]) => void): ()
   );
   
   return onSnapshot(q, (snapshot) => {
-    const products = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
-      id: doc.id,
-      ...doc.data()
-    } as Product));
+    console.log('Firebase snapshot received:', snapshot.size, 'documents');
+    const products = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
+      const data = doc.data();
+      console.log('Product document:', doc.id, data);
+      return {
+        id: doc.id,
+        ...data
+      } as Product;
+    });
+    console.log('Processed products for callback:', products);
     callback(products);
+  }, (error) => {
+    console.error('Error in subscribeToProducts:', error);
+    callback([]); // Return empty array on error
   });
 }
 
