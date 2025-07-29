@@ -1,8 +1,12 @@
 "use client"
 
+
 import type React from "react"
 import { useState, useEffect } from "react"
 import { onAuthStateChanged, type User } from "firebase/auth"
+import React, { useState, useEffect, useRef } from "react"
+import { onAuthStateChanged, signOut } from "firebase/auth"
+
 import { auth } from "@/firebase"
 import { Button } from "@components/ui/button"
 import { Card, CardContent } from "@components/ui/card"
@@ -18,111 +22,69 @@ import { useSocket } from "../hooks/use-socket"
 import { subscribeToProducts, type Product } from "../lib/firebase-utils"
 import { formatDistanceToNow } from "date-fns"
 import { Timestamp } from "firebase/firestore"
+
 import { getUserProfile, type UserProfile } from "../lib/user-utils"
+import { getUserProfile, getUserDisplayName, calculateDistance, type UserProfile } from "../lib/user-utils"
 
-// Mock data for testing (you can switch to real Firebase data later)
-const mockProducts = [
-	{
-		id: "1",
-		title: "iPhone 14 Pro Max",
-		description: "Latest iPhone in excellent condition with all accessories",
-		price: 899,
-		location: "Downtown",
-		image: "/placeholder.svg?height=200&width=200",
-		category: "Electronics",
-		condition: "Like New",
-		isNegotiable: true,
-		userId: "mock-seller-1",
-		createdAt: Timestamp.fromDate(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)), // 2 days ago
-		photos: []
-	},
-	{
-		id: "2", 
-		title: "Vintage Leather Sofa",
-		description: "Beautiful vintage leather sofa, perfect for any living room",
-		price: 450,
-		location: "Suburbs",
-		image: "/placeholder.svg?height=200&width=200",
-		category: "Furniture",
-		condition: "Good",
-		isNegotiable: true,
-		userId: "mock-seller-2",
-		createdAt: Timestamp.fromDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)), // 1 week ago
-		photos: []
-	},
-	{
-		id: "3",
-		title: "Mountain Bike",
-		description: "High-quality mountain bike, great for trails and city riding",
-		price: 320,
-		location: "City Center", 
-		image: "/placeholder.svg?height=200&width=200",
-		category: "Sports",
-		condition: "Good",
-		isNegotiable: false,
-		userId: "mock-seller-3",
-		createdAt: Timestamp.fromDate(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)), // 3 days ago
-		photos: []
-	},
-	{
-		id: "4",
-		title: "Gaming Laptop",
-		description: "Powerful gaming laptop with RTX graphics card",
-		price: 1200,
-		location: "Tech District",
-		image: "/placeholder.svg?height=200&width=200", 
-		category: "Electronics",
-		condition: "Like New",
-		isNegotiable: true,
-		userId: "mock-seller-4",
-		createdAt: Timestamp.fromDate(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)), // 5 days ago
-		photos: []
-	},
-	{
-		id: "5",
-		title: "Dining Table Set",
-		description: "Solid wood dining table with 6 chairs",
-		price: 280,
-		location: "Residential Area",
-		image: "/placeholder.svg?height=200&width=200",
-		category: "Furniture", 
-		condition: "Good",
-		isNegotiable: true,
-		userId: "mock-seller-5",
-		createdAt: Timestamp.fromDate(new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)), // 1 day ago
-		photos: []
-	},
-	{
-		id: "6",
-		title: "Tennis Racket",
-		description: "Professional tennis racket in great condition",
-		price: 85,
-		location: "Sports Complex",
-		image: "/placeholder.svg?height=200&width=200",
-		category: "Sports",
-		condition: "Good", 
-		isNegotiable: false,
-		userId: "mock-seller-6",
-		createdAt: Timestamp.fromDate(new Date(Date.now() - 4 * 24 * 60 * 60 * 1000)), // 4 days ago
-		photos: []
-	}
-] as Product[];
+// Simple Loader component
+const Loader = () => (
+	<div className="flex items-center justify-center p-8">
+		<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+		<span className="ml-2">Loading products...</span>
+	</div>
+)
 
-// Mock seller names for testing
-const mockSellerNames: { [key: string]: string } = {
-	'mock-seller-1': 'John Doe',
-	'mock-seller-2': 'Sarah Wilson', 
-	'mock-seller-3': 'Mike Johnson',
-	'mock-seller-4': 'Alex Chen',
-	'mock-seller-5': 'Emma Davis',
-	'mock-seller-6': 'David Brown'
-};
+// Simple Pagination component
+const Pagination = ({ currentPage, totalPages, onPageChange }: {
+	currentPage: number
+	totalPages: number
+	onPageChange: (page: number) => void
+}) => {
+	if (totalPages <= 1) return null
+
+	return (
+		<div className="flex justify-center items-center space-x-2">
+			<Button
+				variant="outline"
+				onClick={() => onPageChange(currentPage - 1)}
+				disabled={currentPage === 1}
+			>
+				Previous
+			</Button>
+			<span className="text-sm text-gray-600">
+				Page {currentPage} of {totalPages}
+			</span>
+			<Button
+				variant="outline"
+				onClick={() => onPageChange(currentPage + 1)}
+				disabled={currentPage === totalPages}
+			>
+				Next
+			</Button>
+		</div>
+	)
+}
+
+// Location data with coordinates (lat, lng)
+const locationData = [
+	{ name: "Lefkosa", lat: 35.1856, lng: 33.3823, region: "Central" },
+	{ name: "Girne", lat: 35.3414, lng: 33.3152, region: "Northern" },
+	{ name: "Famagusta", lat: 35.1264, lng: 33.9378, region: "Eastern" },
+	{ name: "Iskele", lat: 35.2833, lng: 33.9167, region: "Eastern" },
+	{ name: "Guzelyurt", lat: 35.2042, lng: 33.0292, region: "Western" },
+	{ name: "Lapta", lat: 35.3333, lng: 33.1833, region: "Northern" },
+	{ name: "Alsancak", lat: 35.3167, lng: 33.2167, region: "Northern" },
+	{ name: "Catalkoy", lat: 35.35, lng: 33.3833, region: "Northern" },
+	{ name: "Esentepe", lat: 35.3667, lng: 33.5167, region: "Northern" },
+	{ name: "Bogaz", lat: 35.3833, lng: 33.6167, region: "Northern" },
+	{ name: "Dipkarpaz", lat: 35.6, lng: 34.3833, region: "Karpaz" },
+	{ name: "Yeni Iskele", lat: 35.2667, lng: 33.9333, region: "Eastern" },
+]
+
+// Note: Mock data has been removed - all products now come from Firebase in real-time
 
 // Categories for filtering (matching the sell page categories)
 const categories = ["All", "Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"]
-
-// Extract unique locations from products for filtering
-const locations = ["All Locations", "Downtown", "Suburbs", "City Center", "Tech District", "Residential Area", "Sports Complex"]
 
 export default function MarketplacePage() {
 	const [selectedCategory, setSelectedCategory] = useState("All")
@@ -139,6 +101,15 @@ export default function MarketplacePage() {
 	// Products state
 	const [products, setProducts] = useState<Product[]>([])
 	const [productsLoading, setProductsLoading] = useState(true)
+
+	// Extract unique locations from products for filtering
+	const locations = React.useMemo(() => {
+		if (!products || products.length === 0) {
+			return ["All Locations"]
+		}
+		const uniqueLocations = Array.from(new Set(products.map(product => product.location).filter(Boolean)))
+		return ["All Locations", ...uniqueLocations]
+	}, [products])
 
 	// Initialize Socket.io for real-time chat
 	useSocket({
@@ -179,18 +150,9 @@ export default function MarketplacePage() {
 		setProductsLoading(true)
 
 		// Subscribe to products updates
-		const unsubscribe = subscribeToProducts((snapshot) => {
-			const loadedProducts: Product[] = []
-			snapshot.forEach((doc) => {
-				const data = doc.data() as Product
-				loadedProducts.push({ id: doc.id, ...data })
-			})
-
-			setProducts(loadedProducts)
-			setProductsLoading(false)
-		},
-		 (error) => {
-			console.error("Error fetching products: ", error)
+		const unsubscribe = subscribeToProducts((products) => {
+			console.log('Received products from Firebase:', products.length, 'products')
+			setProducts(products)
 			setProductsLoading(false)
 		})
 
@@ -312,7 +274,7 @@ export default function MarketplacePage() {
 					<div className="col-span-full text-center py-8">
 						<Alert>
 							<AlertDescription>
-								No products found matching your criteria.
+								No products found matching your criteria. Total products: {products.length}, Filtered: {filteredProducts.length}
 							</AlertDescription>
 						</Alert>
 					</div>
@@ -324,13 +286,13 @@ export default function MarketplacePage() {
 							</CardHeader>
 							<CardContent>
 								<div className="flex flex-col sm:flex-row sm:items-center">
-									<div className="flex-shrink-0 mb-4 sm:mb-0">
-										<Avatar>
-											<AvatarFallback>
-												{mockSellerNames[product.userId]?.[0] || "U"}
-											</AvatarFallback>
-										</Avatar>
-									</div>
+																	<div className="flex-shrink-0 mb-4 sm:mb-0">
+									<Avatar>
+										<AvatarFallback>
+											{product.seller?.[0]?.toUpperCase() || product.sellerProfile?.displayName?.[0]?.toUpperCase() || "U"}
+										</AvatarFallback>
+									</Avatar>
+								</div>
 									<div className="flex-grow">
 										<p className="text-sm text-gray-500">
 											{product.location} &bull;{" "}
