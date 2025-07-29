@@ -174,7 +174,7 @@ export async function findExistingConversation(
   productId?: string
 ): Promise<Conversation | null> {
   try {
-    let q = query(
+    const q = query(
       collection(db, 'conversations'),
       where('participants', 'array-contains', participants[0])
     );
