@@ -436,6 +436,17 @@ export function subscribeToProducts(callback: (products: Product[]) => void): ()
   });
 }
 
+export async function deleteProduct(productId: string): Promise<void> {
+  try {
+    console.log('Deleting product with ID:', productId);
+    await deleteDoc(doc(db, 'products', productId));
+    console.log('Product deleted successfully');
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    throw error;
+  }
+}
+
 export async function getUserById(userId: string): Promise<{displayName: string} | null> {
   try {
     // For now, return a placeholder since we don't have a users collection
@@ -448,6 +459,54 @@ export async function getUserById(userId: string): Promise<{displayName: string}
 }
 
 
+
+export async function deleteProduct(productId: string, userId: string): Promise<void> {
+  try {
+    // First check if the product exists and belongs to the user
+    const productRef = doc(db, 'products', productId);
+    const productDoc = await getDoc(productRef);
+    
+    if (!productDoc.exists()) {
+      throw new Error('Product not found');
+    }
+    
+    const productData = productDoc.data() as Product;
+    
+    // Check if the current user owns this product
+    if (productData.userId !== userId) {
+      throw new Error('You can only delete your own listings');
+    }
+    
+    // Delete the product document
+    await deleteDoc(productRef);
+    
+    // TODO: Also delete associated photos from storage if needed
+    // You can implement this later if photos are stored separately
+    
+    console.log('Product deleted successfully:', productId);
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    throw error;
+  }
+}
+
+export async function getUserProducts(userId: string): Promise<Product[]> {
+  try {
+    const q = query(
+      collection(db, 'products'),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
+      id: doc.id,
+      ...doc.data()
+    } as Product));
+  } catch (error) {
+    console.error('Error fetching user products:', error);
+    return [];
+  }
+}
 
 export async function resetPassword(email: string): Promise<void> {
   try {
