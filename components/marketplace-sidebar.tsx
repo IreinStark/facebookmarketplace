@@ -2,22 +2,20 @@
 
 import React, { useState } from 'react'
 import { MapPin, Filter, Grid3X3, List, Plus, Search, X, Navigation } from 'lucide-react'
+
+import React from 'react'
+import { Filter, Grid3X3, List, Plus, Clock, TrendingUp } from 'lucide-react'
+
 import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { Separator } from './ui/separator'
 import { Badge } from './ui/badge'
 import { Input } from './ui/input'
 
 interface MarketplaceSidebarProps {
   selectedCategory: string
-  selectedLocation: string
-  priceRange: [number, number]
   categories: string[]
-  locations: string[]
   onCategoryChange: (category: string) => void
-  onLocationChange: (location: string) => void
-  onPriceRangeChange: (range: [number, number]) => void
   onCreateListing?: () => void
 }
 
@@ -40,11 +38,8 @@ const availableLocations = [
 
 export function MarketplaceSidebar({
   selectedCategory,
-  selectedLocation,
   categories,
-  locations,
   onCategoryChange,
-  onLocationChange,
   onCreateListing
 }: MarketplaceSidebarProps) {
   const [showLocationSearch, setShowLocationSearch] = useState(false)
@@ -85,7 +80,7 @@ export function MarketplaceSidebar({
         {/* Create listing button */}
         <Button 
           onClick={onCreateListing}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white transition-colors"
           size="lg"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -198,10 +193,11 @@ export function MarketplaceSidebar({
           </CardContent>
         </Card>
 
+
         {/* Category filter */}
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center">
+            <CardTitle className="text-lg flex items-center dark:text-gray-100">
               <Filter className="w-5 h-5 mr-2" />
               Category
             </CardTitle>
@@ -211,16 +207,16 @@ export function MarketplaceSidebar({
               <Button
                 key={category}
                 variant={selectedCategory === category ? "default" : "ghost"}
-                className={`w-full justify-start ${
+                className={`w-full justify-start transition-colors ${
                   selectedCategory === category 
-                    ? 'bg-blue-50 text-blue-600 border-blue-200' 
-                    : 'text-gray-700 hover:bg-gray-50'
+                    ? 'bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-700' 
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
                 onClick={() => onCategoryChange(category)}
               >
                 {category}
                 {selectedCategory === category && (
-                  <Badge variant="secondary" className="ml-auto">
+                  <Badge variant="secondary" className="ml-auto dark:bg-blue-800 dark:text-blue-100">
                     ✓
                   </Badge>
                 )}
@@ -230,29 +226,39 @@ export function MarketplaceSidebar({
         </Card>
 
         {/* Quick filters */}
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Quick filters</CardTitle>
+            <CardTitle className="text-lg dark:text-gray-100">Quick filters</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button variant="outline" className="w-full justify-start">
-              <Grid3X3 className="w-4 h-4 mr-2" />
+            <Button variant="outline" className="w-full justify-start dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
+              <Clock className="w-4 h-4 mr-2" />
               Recently listed
             </Button>
-            <Button variant="outline" className="w-full justify-start">
+            <Button variant="outline" className="w-full justify-start dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
               <List className="w-4 h-4 mr-2" />
               Price: Low to high
+            </Button>
+
+            <Button variant="outline" className="w-full justify-start dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Most popular
+            </Button>
+            <Button variant="outline" className="w-full justify-start dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
+              <Grid3X3 className="w-4 h-4 mr-2" />
+              Featured listings
             </Button>
           </CardContent>
         </Card>
 
         {/* Info section */}
         <div className="pt-4">
-          <Separator />
-          <div className="pt-4 text-sm text-gray-500 space-y-1">
-            <p>Help</p>
-            <p>Community guidelines</p>
-            <p>Safety tips</p>
+          <Separator className="dark:bg-gray-700" />
+          <div className="pt-4 text-sm text-gray-500 dark:text-gray-400 space-y-1">
+            <p className="hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">Help</p>
+            <p className="hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">Community guidelines</p>
+            <p className="hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">Safety tips</p>
+            <p className="hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">Report an issue</p>
           </div>
         </div>
       </div>

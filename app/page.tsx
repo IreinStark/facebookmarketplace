@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { onAuthStateChanged, type User } from "firebase/auth"
-import { Timestamp } from "firebase/firestore"
+import { useRouter } from "next/navigation"
 
 import { auth } from "@/firebase"
 import { Alert, AlertDescription } from "@components/ui/alert"
@@ -15,32 +15,17 @@ import { MarketplaceNav } from "../components/marketplace-nav"
 import { MarketplaceSidebar } from "../components/marketplace-sidebar"
 import { ProductCard } from "../components/product-card"
 
-// Location data with coordinates (lat, lng)
-const locationData = [
-	{ name: "Lefkosa", lat: 35.1856, lng: 33.3823, region: "Central" },
-	{ name: "Girne", lat: 35.3414, lng: 33.3152, region: "Northern" },
-	{ name: "Famagusta", lat: 35.1264, lng: 33.9378, region: "Eastern" },
-	{ name: "Iskele", lat: 35.2833, lng: 33.9167, region: "Eastern" },
-	{ name: "Guzelyurt", lat: 35.2042, lng: 33.0292, region: "Western" },
-	{ name: "Lapta", lat: 35.3333, lng: 33.1833, region: "Northern" },
-	{ name: "Alsancak", lat: 35.3167, lng: 33.2167, region: "Northern" },
-	{ name: "Catalkoy", lat: 35.35, lng: 33.3833, region: "Northern" },
-	{ name: "Esentepe", lat: 35.3667, lng: 33.5167, region: "Northern" },
-	{ name: "Bogaz", lat: 35.3833, lng: 33.6167, region: "Northern" },
-	{ name: "Dipkarpaz", lat: 35.6, lng: 34.3833, region: "Karpaz" },
-	{ name: "Yeni Iskele", lat: 35.2667, lng: 33.9333, region: "Eastern" },
-]
-
 // Categories for filtering (matching the sell page categories)
 const categories = ["All", "Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"]
 
 export default function MarketplacePage() {
+	const router = useRouter()
+	
 	// Filter and UI state
 	const [selectedCategory, setSelectedCategory] = useState("All")
 	const [selectedLocation, setSelectedLocation] = useState("All Locations")
 	const [searchTerm, setSearchTerm] = useState("")
 	const [sortBy, setSortBy] = useState("newest")
-	const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000])
 	
 	// Auth and user state
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
@@ -53,15 +38,6 @@ export default function MarketplacePage() {
 	// Products state
 	const [products, setProducts] = useState<Product[]>([])
 	const [productsLoading, setProductsLoading] = useState(true)
-
-	// Extract unique locations from products for filtering
-	const locations = React.useMemo(() => {
-		if (!products || products.length === 0) {
-			return ["All Locations"]
-		}
-		const uniqueLocations = Array.from(new Set(products.map(product => product.location).filter(Boolean)))
-		return ["All Locations", ...uniqueLocations]
-	}, [products])
 
 	// Initialize Socket.io for real-time chat
 	useSocket({
@@ -117,10 +93,10 @@ export default function MarketplacePage() {
 	const filteredProducts = products.filter((product) => {
 		const matchesCategory = selectedCategory === "All" || product.category === selectedCategory
 		const matchesLocation = selectedLocation === "All Locations" || product.location === selectedLocation
-		const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase())
-		const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1]
+		const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+		                     product.description.toLowerCase().includes(searchTerm.toLowerCase())
 
-		return matchesCategory && matchesLocation && matchesSearch && matchesPrice
+		return matchesCategory && matchesLocation && matchesSearch
 	})
 
 	const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -141,21 +117,47 @@ export default function MarketplacePage() {
 		console.log('Product clicked:', productId)
 		// Navigate to product detail page
 		window.location.href = `/product/${productId}`
+
+		router.push(`/products/${productId}`)
 	}
 
 	const handleFavoriteClick = (productId: string) => {
 		console.log('Favorite clicked:', productId)
-		// Toggle favorite status
+		// Toggle favorite status - implement with Firebase later
+		setFavorites(prev => 
+			prev.includes(productId) 
+				? prev.filter(id => id !== productId)
+				: [...prev, productId]
+		)
 	}
 
 	const handleMessageClick = (productId: string) => {
 		console.log('Message clicked:', productId)
-		// Open chat with seller
+		// Navigate to chat or open chat modal
+		router.push(`/messages?product=${productId}`)
+	}
+
+	const handleDeleteClick = async (productId: string) => {
+		try {
+			await deleteProduct(productId)
+			console.log('Product deleted successfully')
+			// Products will be updated automatically via the subscription
+		} catch (error) {
+			console.error('Failed to delete product:', error)
+			setError('Failed to delete product. Please try again.')
+		}
+	}
+
+	const handleUserClick = (userId: string) => {
+		router.push(`/user/${userId}`)
 	}
 
 	const handleCreateListing = () => {
-		console.log('Create listing clicked')
-		// Navigate to create listing page
+		if (isLoggedIn) {
+			router.push('/sell')
+		} else {
+			router.push('/auth/login')
+		}
 	}
 
 	const handleDeleteProduct = async (productId: string) => {
@@ -220,20 +222,17 @@ export default function MarketplacePage() {
 			<MarketplaceNav 
 				user={user}
 				onSearch={setSearchTerm}
+				onLocationChange={setSelectedLocation}
 				searchValue={searchTerm}
+				selectedLocation={selectedLocation}
 			/>
 
 			<div className="flex">
 				{/* Sidebar */}
 				<MarketplaceSidebar
 					selectedCategory={selectedCategory}
-					selectedLocation={selectedLocation}
-					priceRange={priceRange}
 					categories={categories}
-					locations={locations}
 					onCategoryChange={setSelectedCategory}
-					onLocationChange={setSelectedLocation}
-					onPriceRangeChange={setPriceRange}
 					onCreateListing={handleCreateListing}
 				/>
 
@@ -241,16 +240,19 @@ export default function MarketplacePage() {
 				<div className="flex-1 p-6">
 					{/* Results header */}
 					<div className="mb-6">
-						<h2 className="text-2xl font-bold text-gray-900 mb-2">
+						<h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
 							{selectedCategory === "All" ? "All listings" : selectedCategory}
 						</h2>
-						<p className="text-gray-600">
+						<p className="text-gray-600 dark:text-gray-400">
 							{productsLoading ? (
 								"Loading products..."
 							) : (
-								`${sortedProducts.length} listing${sortedProducts.length !== 1 ? 's' : ''} found`
+								<>
+									{sortedProducts.length} listing{sortedProducts.length !== 1 ? 's' : ''} found
+									{selectedLocation !== "All Locations" && ` in ${selectedLocation}`}
+									{searchTerm && ` matching "${searchTerm}"`}
+								</>
 							)}
-							{selectedLocation !== "All Locations" && ` in ${selectedLocation}`}
 						</p>
 					</div>
 
@@ -258,28 +260,33 @@ export default function MarketplacePage() {
 					{productsLoading ? (
 						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
 							{Array.from({ length: 10 }).map((_, index) => (
-								<div key={index} className="bg-white rounded-lg p-4 animate-pulse">
-									<div className="aspect-square bg-gray-200 rounded-lg mb-3"></div>
-									<div className="h-4 bg-gray-200 rounded mb-2"></div>
-									<div className="h-3 bg-gray-200 rounded mb-2 w-3/4"></div>
-									<div className="h-3 bg-gray-200 rounded w-1/2"></div>
+								<div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-4 animate-pulse">
+									<div className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-lg mb-3"></div>
+									<div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+									<div className="h-3 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-3/4"></div>
+									<div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
 								</div>
 							))}
 						</div>
 					) : sortedProducts.length === 0 ? (
 						<div className="text-center py-12">
-							<div className="text-gray-400 mb-4">
-								<div className="w-24 h-24 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+							<div className="text-gray-400 dark:text-gray-500 mb-4">
+								<div className="w-24 h-24 mx-auto mb-4 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
 									<span className="text-4xl">📦</span>
 								</div>
 							</div>
-							<h3 className="text-xl font-semibold text-gray-900 mb-2">No listings found</h3>
-							<p className="text-gray-600 mb-4">
-								Try adjusting your filters or search terms
+							<h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No listings found</h3>
+							<p className="text-gray-600 dark:text-gray-400 mb-4">
+								{searchTerm || selectedLocation !== "All Locations" || selectedCategory !== "All"
+									? "Try adjusting your filters or search terms"
+									: "Be the first to list an item in this marketplace!"
+								}
 							</p>
-							<p className="text-sm text-gray-500">
-								Total products: {products.length}, Filtered: {filteredProducts.length}
-							</p>
+							{filteredProducts.length !== products.length && (
+								<p className="text-sm text-gray-500 dark:text-gray-400">
+									Total products: {products.length}, Filtered: {filteredProducts.length}
+								</p>
+							)}
 						</div>
 					) : (
 						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -287,10 +294,13 @@ export default function MarketplacePage() {
 								<ProductCard
 									key={product.id}
 									product={product}
+									currentUserId={user?.uid}
 									onProductClick={handleProductClick}
 									onFavoriteClick={handleFavoriteClick}
 									onMessageClick={handleMessageClick}
 									onDeleteClick={handleDeleteProduct}
+									onDeleteClick={handleDeleteClick}
+									onUserClick={handleUserClick}
 									isFavorited={favorites.includes(product.id)}
 									currentUserId={user?.uid}
 									showDeleteButton={true}
