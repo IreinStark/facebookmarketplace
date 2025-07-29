@@ -3,21 +3,17 @@
 import React, { useState, useEffect } from "react"
 import { onAuthStateChanged, type User } from "firebase/auth"
 import { Timestamp } from "firebase/firestore"
-import { formatDistanceToNow } from "date-fns"
 
 import { auth } from "@/firebase"
-import { Button } from "@components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card"
-import { Avatar, AvatarFallback } from "@components/ui/avatar"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@components/ui/sheet"
-import { Slider } from "@components/ui/slider"
-import { Label } from "@components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select"
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@components/ui/pagination"
 import { Alert, AlertDescription } from "@components/ui/alert"
 import { useSocket } from "../hooks/use-socket"
 import { subscribeToProducts, type Product } from "../lib/firebase-utils"
 import { getUserProfile, type UserProfile } from "../lib/user-utils"
+
+// Import new components
+import { MarketplaceNav } from "../components/marketplace-nav"
+import { MarketplaceSidebar } from "../components/marketplace-sidebar"
+import { ProductCard } from "../components/product-card"
 
 // Location data with coordinates (lat, lng)
 const locationData = [
@@ -45,7 +41,6 @@ export default function MarketplacePage() {
 	const [searchTerm, setSearchTerm] = useState("")
 	const [sortBy, setSortBy] = useState("newest")
 	const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000])
-	const [showPriceFilter, setShowPriceFilter] = useState(false)
 	
 	// Auth and user state
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
@@ -58,10 +53,6 @@ export default function MarketplacePage() {
 	// Products state
 	const [products, setProducts] = useState<Product[]>([])
 	const [productsLoading, setProductsLoading] = useState(true)
-
-	// Pagination state
-	const [currentPage, setCurrentPage] = useState(1)
-	const itemsPerPage = 10
 
 	// Extract unique locations from products for filtering
 	const locations = React.useMemo(() => {
@@ -145,16 +136,25 @@ export default function MarketplacePage() {
 		return 0
 	})
 
-	// Get current items for pagination
-	const paginatedProducts = sortedProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+	// Handle actions
+	const handleProductClick = (productId: string) => {
+		console.log('Product clicked:', productId)
+		// Navigate to product detail page
+	}
 
-	// Calculate total pages for pagination
-	const totalPages = Math.ceil(sortedProducts.length / itemsPerPage)
+	const handleFavoriteClick = (productId: string) => {
+		console.log('Favorite clicked:', productId)
+		// Toggle favorite status
+	}
 
-	// Handle page change
-	const handlePageChange = (page: number) => {
-		setCurrentPage(page)
-		window.scrollTo({ top: 0, behavior: "smooth" })
+	const handleMessageClick = (productId: string) => {
+		console.log('Message clicked:', productId)
+		// Open chat with seller
+	}
+
+	const handleCreateListing = () => {
+		console.log('Create listing clicked')
+		// Navigate to create listing page
 	}
 
 	// Refresh user profile and favorites periodically
@@ -175,9 +175,11 @@ export default function MarketplacePage() {
 	// Show loading state while initializing
 	if (loading) {
 		return (
-			<div className="flex items-center justify-center h-screen">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-				<span className="ml-2">Loading...</span>
+			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
+				<div className="text-center">
+					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+					<p className="text-gray-600">Loading Marketplace...</p>
+				</div>
 			</div>
 		)
 	}
@@ -185,8 +187,8 @@ export default function MarketplacePage() {
 	// Error boundary fallback UI
 	if (error) {
 		return (
-			<div className="flex items-center justify-center h-screen">
-				<Alert>
+			<div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+				<Alert className="max-w-md">
 					<AlertDescription>
 						{error}
 					</AlertDescription>
@@ -196,218 +198,88 @@ export default function MarketplacePage() {
 	}
 
 	return (
-		<div className="container max-w-7xl mx-auto px-4 py-8">
-			{/* Header with filters */}
-			<div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8">
-				<h1 className="text-3xl font-bold mb-4 md:mb-0">Marketplace</h1>
-				<div className="flex flex-col md:flex-row md:items-center gap-4">
-					<Button variant="outline" onClick={() => setShowPriceFilter(!showPriceFilter)}>
-						Filter by Price
-					</Button>
-					
-					{/* Search input */}
-					<input
-						type="text"
-						placeholder="Search products..."
-						value={searchTerm}
-						onChange={(e) => setSearchTerm(e.target.value)}
-						className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-					/>
-					
-					{/* Sort by dropdown */}
-					<Select value={sortBy} onValueChange={setSortBy}>
-						<SelectTrigger className="w-full md:w-auto">
-							<SelectValue placeholder="Sort by" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="newest">Newest First</SelectItem>
-							<SelectItem value="oldest">Oldest First</SelectItem>
-							<SelectItem value="priceAsc">Price: Low to High</SelectItem>
-							<SelectItem value="priceDesc">Price: High to Low</SelectItem>
-						</SelectContent>
-					</Select>
-					
-					{/* Category filter */}
-					<Select value={selectedCategory} onValueChange={setSelectedCategory}>
-						<SelectTrigger className="w-full md:w-auto">
-							<SelectValue placeholder="Select category" />
-						</SelectTrigger>
-						<SelectContent>
-							{categories.map((category) => (
-								<SelectItem key={category} value={category}>
-									{category}
-								</SelectItem>
+		<div className="min-h-screen bg-gray-50">
+			{/* Navigation */}
+			<MarketplaceNav 
+				user={user}
+				onSearch={setSearchTerm}
+				searchValue={searchTerm}
+			/>
+
+			<div className="flex">
+				{/* Sidebar */}
+				<MarketplaceSidebar
+					selectedCategory={selectedCategory}
+					selectedLocation={selectedLocation}
+					priceRange={priceRange}
+					categories={categories}
+					locations={locations}
+					onCategoryChange={setSelectedCategory}
+					onLocationChange={setSelectedLocation}
+					onPriceRangeChange={setPriceRange}
+					onCreateListing={handleCreateListing}
+				/>
+
+				{/* Main content */}
+				<div className="flex-1 p-6">
+					{/* Results header */}
+					<div className="mb-6">
+						<h2 className="text-2xl font-bold text-gray-900 mb-2">
+							{selectedCategory === "All" ? "All listings" : selectedCategory}
+						</h2>
+						<p className="text-gray-600">
+							{productsLoading ? (
+								"Loading products..."
+							) : (
+								`${sortedProducts.length} listing${sortedProducts.length !== 1 ? 's' : ''} found`
+							)}
+							{selectedLocation !== "All Locations" && ` in ${selectedLocation}`}
+						</p>
+					</div>
+
+					{/* Products grid */}
+					{productsLoading ? (
+						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+							{Array.from({ length: 10 }).map((_, index) => (
+								<div key={index} className="bg-white rounded-lg p-4 animate-pulse">
+									<div className="aspect-square bg-gray-200 rounded-lg mb-3"></div>
+									<div className="h-4 bg-gray-200 rounded mb-2"></div>
+									<div className="h-3 bg-gray-200 rounded mb-2 w-3/4"></div>
+									<div className="h-3 bg-gray-200 rounded w-1/2"></div>
+								</div>
 							))}
-						</SelectContent>
-					</Select>
-					
-					{/* Location filter */}
-					<Select value={selectedLocation} onValueChange={setSelectedLocation}>
-						<SelectTrigger className="w-full md:w-auto">
-							<SelectValue placeholder="Select location" />
-						</SelectTrigger>
-						<SelectContent>
-							{locations.map((location) => (
-								<SelectItem key={location} value={location}>
-									{location}
-								</SelectItem>
+						</div>
+					) : sortedProducts.length === 0 ? (
+						<div className="text-center py-12">
+							<div className="text-gray-400 mb-4">
+								<div className="w-24 h-24 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+									<span className="text-4xl">📦</span>
+								</div>
+							</div>
+							<h3 className="text-xl font-semibold text-gray-900 mb-2">No listings found</h3>
+							<p className="text-gray-600 mb-4">
+								Try adjusting your filters or search terms
+							</p>
+							<p className="text-sm text-gray-500">
+								Total products: {products.length}, Filtered: {filteredProducts.length}
+							</p>
+						</div>
+					) : (
+						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+							{sortedProducts.map((product) => (
+								<ProductCard
+									key={product.id}
+									product={product}
+									onProductClick={handleProductClick}
+									onFavoriteClick={handleFavoriteClick}
+									onMessageClick={handleMessageClick}
+									isFavorited={favorites.includes(product.id)}
+								/>
 							))}
-						</SelectContent>
-					</Select>
+						</div>
+					)}
 				</div>
 			</div>
-
-			{/* Products grid */}
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-				{productsLoading ? (
-					<div className="col-span-full text-center py-8">
-						<div className="flex items-center justify-center">
-							<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-							<span className="ml-2 text-gray-600">Loading products...</span>
-						</div>
-					</div>
-				) : paginatedProducts.length === 0 ? (
-					<div className="col-span-full text-center py-8">
-						<Alert>
-							<AlertDescription>
-								No products found matching your criteria. Total products: {products.length}, Filtered: {filteredProducts.length}
-							</AlertDescription>
-						</Alert>
-					</div>
-				) : (
-					paginatedProducts.map((product) => (
-						<Card key={product.id} className="hover:shadow-lg transition-shadow duration-300">
-							<CardHeader>
-								<CardTitle className="text-lg font-semibold">{product.title}</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<div className="flex flex-col sm:flex-row sm:items-center mb-4">
-									<div className="flex-shrink-0 mb-4 sm:mb-0 sm:mr-4">
-										<Avatar>
-											<AvatarFallback>
-												{product.seller?.[0]?.toUpperCase() || 
-												 product.sellerProfile?.displayName?.[0]?.toUpperCase() || 
-												 "U"}
-											</AvatarFallback>
-										</Avatar>
-									</div>
-									<div className="flex-grow">
-										<p className="text-sm text-gray-500">
-											{product.location} • {" "}
-											{formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true })}
-										</p>
-										<h2 className="text-xl font-bold">
-											${Number(product.price).toFixed(2)}
-										</h2>
-									</div>
-								</div>
-								<p className="text-gray-700 line-clamp-3">
-									{product.description}
-								</p>
-								<div className="mt-2">
-									<span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
-										{product.category}
-									</span>
-								</div>
-							</CardContent>
-						</Card>
-					))
-				)}
-			</div>
-
-			{/* Pagination */}
-			{totalPages > 1 && (
-				<div className="mt-8">
-					<Pagination>
-						<PaginationContent>
-							<PaginationItem>
-								<PaginationPrevious 
-									href="#" 
-									onClick={(e) => {
-										e.preventDefault();
-										if (currentPage > 1) handlePageChange(currentPage - 1);
-									}}
-									className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
-								/>
-							</PaginationItem>
-							{Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-								let page;
-								if (totalPages <= 5) {
-									page = i + 1;
-								} else if (currentPage <= 3) {
-									page = i + 1;
-								} else if (currentPage >= totalPages - 2) {
-									page = totalPages - 4 + i;
-								} else {
-									page = currentPage - 2 + i;
-								}
-								return (
-									<PaginationItem key={page}>
-										<PaginationLink
-											href="#"
-											onClick={(e) => {
-												e.preventDefault();
-												handlePageChange(page);
-											}}
-											isActive={currentPage === page}
-										>
-											{page}
-										</PaginationLink>
-									</PaginationItem>
-								);
-							})}
-							<PaginationItem>
-								<PaginationNext 
-									href="#" 
-									onClick={(e) => {
-										e.preventDefault();
-										if (currentPage < totalPages) handlePageChange(currentPage + 1);
-									}}
-									className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
-								/>
-							</PaginationItem>
-						</PaginationContent>
-					</Pagination>
-				</div>
-			)}
-
-			{/* Price range filter sheet */}
-			<Sheet open={showPriceFilter} onOpenChange={setShowPriceFilter}>
-				<SheetContent>
-					<SheetHeader>
-						<SheetTitle>Filter by Price</SheetTitle>
-					</SheetHeader>
-					<div className="p-4">
-						<Label htmlFor="price-range" className="block text-sm font-medium text-gray-700 mb-4">
-							Price range: ${priceRange[0]} - ${priceRange[1]}
-						</Label>
-						<Slider
-							id="price-range"
-							value={priceRange}
-							onValueChange={setPriceRange}
-							min={0}
-							max={2000}
-							step={10}
-							className="mt-2"
-						/>
-						<div className="flex justify-between text-xs text-gray-500 mt-2">
-							<span>$0</span>
-							<span>$2000</span>
-						</div>
-					</div>
-					<div className="flex justify-end p-4 gap-2">
-						<Button 
-							variant="outline" 
-							onClick={() => setShowPriceFilter(false)}
-						>
-							Cancel
-						</Button>
-						<Button onClick={() => setShowPriceFilter(false)}>
-							Apply
-						</Button>
-					</div>
-				</SheetContent>
-			</Sheet>
 		</div>
 	)
 }
