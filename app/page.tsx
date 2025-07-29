@@ -29,7 +29,7 @@ import { getUserProfile, type UserProfile } from "../lib/user-utils"
 // Import new components
 import { MarketplaceNav } from "../components/marketplace-nav"
 import { MarketplaceSidebar } from "../components/marketplace-sidebar"
-import { ProductCard } from "../component
+import { ProductCard } from "../component"
 
 // Location data with coordinates (lat, lng) - remains unchanged
 const locationData = [
@@ -172,21 +172,6 @@ export default function MarketplacePage() {
 		return 0
 	})
 
-<<<<<<< HEAD
-	// Get current items for pagination
-	const paginatedProducts = sortedProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-
-	// Calculate total pages for pagination
-	const totalPages = Math.ceil(sortedProducts.length / itemsPerPage)
-
-	// Handle page change
-	const handlePageChange = (page: number) => {
-		setCurrentPage(page)
-		window.scrollTo({ top: 0, behavior: "smooth" })
-	}
-
-	// Refresh user profile and favorites periodically (remains unchanged)
-=======
 	// Handle actions
 	const handleProductClick = (productId: string) => {
 		console.log('Product clicked:', productId)
@@ -252,7 +237,6 @@ export default function MarketplacePage() {
 	}
 
 	// Refresh user profile and favorites periodically
->>>>>>> a0c33be01796a5eba0afa67da708d74dd0c902e7
 	useEffect(() => {
 		const interval = setInterval(() => {
 			if (isLoggedIn && user) {
@@ -345,56 +329,6 @@ export default function MarketplacePage() {
 								</div>
 							))}
 						</div>
-<<<<<<< HEAD
-					</div>
-				) : paginatedProducts.length === 0 ? (
-					<div className="col-span-full text-center py-8">
-						<Alert>
-							<AlertDescription>
-								No products found matching your criteria. Total products: {products.length}, Filtered: {filteredProducts.length}
-							</AlertDescription>
-						</Alert>
-					</div>
-				) : (
-					paginatedProducts.map((product) => (
-						<Card key={product.id} className="hover:shadow-lg transition-shadow duration-300">
-							<CardHeader>
-								<CardTitle className="text-lg font-semibold">{product.title}</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<div className="flex flex-col sm:flex-row sm:items-center mb-4">
-									<div className="flex-shrink-0 mb-4 sm:mb-0 sm:mr-4">
-										<Avatar>
-											<AvatarFallback>
-												{product.seller?.[0]?.toUpperCase() || 
-												 product.sellerProfile?.displayName?.[0]?.toUpperCase() || 
-												 "U"}
-											</AvatarFallback>
-										</Avatar>
-									</div>
-									<div className="flex-grow">
-										<p className="text-sm text-gray-500">
-											{product.location} • {" "}
-											{formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true })}
-										</p>
-										<h2 className="text-xl font-bold">
-											${Number(product.price).toFixed(2)}
-										</h2>
-									</div>
-								</div>
-								<p className="text-gray-700 line-clamp-3">
-									{product.description}
-								</p>
-								<div className="mt-2">
-									<span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
-										{product.category}
-									</span>
-								</div>
-							</CardContent>
-						</Card>
-					))
-				)}
-=======
 					) : sortedProducts.length === 0 ? (
 						<div className="text-center py-12">
 							<div className="text-gray-400 dark:text-gray-500 mb-4">
@@ -436,7 +370,6 @@ export default function MarketplacePage() {
 						</div>
 					)}
 				</div>
->>>>>>> a0c33be01796a5eba0afa67da708d74dd0c902e7
 			</div>
 
 			{/* Pagination */}
