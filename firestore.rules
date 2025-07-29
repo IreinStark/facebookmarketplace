@@ -3,51 +3,146 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the resource
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Helper function to validate required fields for products
+    function isValidProduct() {
+      return request.resource.data.keys().hasAll(['title', 'description', 'price', 'category', 'location', 'userId', 'createdAt']) &&
+             request.resource.data.title is string &&
+             request.resource.data.title.size() > 0 &&
+             request.resource.data.description is string &&
+             request.resource.data.price is number &&
+             request.resource.data.price >= 0 &&
+             request.resource.data.category is string &&
+             request.resource.data.location is string &&
+             request.resource.data.userId is string;
+    }
+    
     // Users can read and write their own user documents
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
     }
     
     // User profiles collection - users can read and write their own profiles
     match /userProfiles/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      allow read: if request.auth != null; // Allow reading other user profiles for display purposes
+      allow read, write: if isOwner(userId);
+      // Allow reading other user profiles for display purposes
+      allow read: if isAuthenticated();
     }
     
     // Products collection - everyone can read, authenticated users can write their own
     match /products/{productId} {
-      allow read: if true; // Allow public reading so everyone can see products
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Allow public reading so everyone can browse products
+      allow read: if true;
+      
+      // Allow creating products if user is authenticated and owns the product
+      allow create: if isAuthenticated() && 
+                       isOwner(request.resource.data.userId) &&
+                       isValidProduct();
+      
+      // Allow updating and deleting if user owns the product
+      allow update: if isAuthenticated() && 
+                       isOwner(resource.data.userId) &&
+                       isValidProduct();
+                       
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
     
     // Photos collection - users can upload and manage their own photos
     match /photos/{photoId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.uploadedBy;
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.uploadedBy;
+      // Allow reading photos if user is authenticated
+      allow read: if isAuthenticated();
+      
+      // Allow creating photos if user is authenticated and owns the photo
+      allow create: if isAuthenticated() && 
+                       isOwner(request.resource.data.uploadedBy) &&
+                       request.resource.data.keys().hasAll(['uploadedBy', 'createdAt']);
+      
+      // Allow updating and deleting if user owns the photo
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.uploadedBy);
     }
     
     // Conversations collection - participants can read and write
     match /conversations/{conversationId} {
-      allow read, write: if request.auth != null && 
-        request.auth.uid in resource.data.participants;
-      allow create: if request.auth != null && 
-        request.auth.uid in request.resource.data.participants;
+      // Helper function to check if user is participant
+      function isParticipant() {
+        return isAuthenticated() && request.auth.uid in resource.data.participants;
+      }
+      
+      function isValidParticipant() {
+        return isAuthenticated() && request.auth.uid in request.resource.data.participants;
+      }
+      
+      allow read, write: if isParticipant();
+      allow create: if isValidParticipant() &&
+                       request.resource.data.keys().hasAll(['participants', 'createdAt']) &&
+                       request.resource.data.participants is list &&
+                       request.resource.data.participants.size() == 2;
     }
     
     // Messages subcollection within conversations
     match /conversations/{conversationId}/messages/{messageId} {
-      allow read: if request.auth != null && 
-        request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
-      allow create: if request.auth != null && 
-        request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants &&
-        request.auth.uid == request.resource.data.senderId;
-      allow update: if request.auth != null && 
-        request.auth.uid == resource.data.senderId;
+      // Helper function to get conversation participants
+      function getConversationParticipants() {
+        return get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+      }
+      
+      function isConversationParticipant() {
+        return isAuthenticated() && request.auth.uid in getConversationParticipants();
+      }
+      
+      // Allow reading messages if user is participant in conversation
+      allow read: if isConversationParticipant();
+      
+      // Allow creating messages if user is participant and sender
+      allow create: if isConversationParticipant() &&
+                       isOwner(request.resource.data.senderId) &&
+                       request.resource.data.keys().hasAll(['senderId', 'content', 'createdAt']) &&
+                       request.resource.data.content is string &&
+                       request.resource.data.content.size() > 0;
+      
+      // Allow updating messages if user is the sender (e.g., for read receipts)
+      allow update: if isAuthenticated() && isOwner(resource.data.senderId);
+      
+      // Don't allow deleting messages for data integrity
+      allow delete: if false;
     }
     
-    // Deny all other access
+    // Favorites collection - users can manage their own favorites
+    match /favorites/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // Views/Analytics collection - track product views
+    match /productViews/{viewId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                       request.resource.data.keys().hasAll(['productId', 'viewerId', 'viewedAt']) &&
+                       isOwner(request.resource.data.viewerId);
+      allow update, delete: if false; // Views should be immutable
+    }
+    
+    // Categories collection - read-only for all users
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if false; // Only admins should manage categories (handle via admin SDK)
+    }
+    
+    // Locations collection - read-only for all users
+    match /locations/{locationId} {
+      allow read: if true;
+      allow write: if false; // Only admins should manage locations (handle via admin SDK)
+    }
+    
+    // Deny all other access by default
     match /{document=**} {
       allow read, write: if false;
     }
