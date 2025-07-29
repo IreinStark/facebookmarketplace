@@ -427,10 +427,11 @@ export function subscribeToProducts(callback: (products: Product[]) => void): ()
         ...data
       } as Product;
     });
-    console.log('Processed products for callback:', products);
+    console.log('Processed products for callback:', products.length, 'products');
     callback(products);
   }, (error) => {
     console.error('Error in subscribeToProducts:', error);
+    console.error('Error details:', error.code, error.message);
     callback([]); // Return empty array on error
   });
 }
