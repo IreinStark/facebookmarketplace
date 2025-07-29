@@ -114,6 +114,10 @@ export default function MarketplacePage() {
 
 	// Handle actions
 	const handleProductClick = (productId: string) => {
+		console.log('Product clicked:', productId)
+		// Navigate to product detail page
+		window.location.href = `/product/${productId}`
+
 		router.push(`/products/${productId}`)
 	}
 
@@ -153,6 +157,22 @@ export default function MarketplacePage() {
 			router.push('/sell')
 		} else {
 			router.push('/auth/login')
+		}
+	}
+
+	const handleDeleteProduct = async (productId: string) => {
+		if (!user) {
+			console.error('User not authenticated')
+			return
+		}
+		
+		try {
+			await deleteProduct(productId, user.uid)
+			console.log('Product deleted successfully')
+			// The real-time subscription will automatically update the UI
+		} catch (error: any) {
+			console.error('Failed to delete product:', error.message)
+			setError('Failed to delete listing: ' + error.message)
 		}
 	}
 
@@ -278,9 +298,12 @@ export default function MarketplacePage() {
 									onProductClick={handleProductClick}
 									onFavoriteClick={handleFavoriteClick}
 									onMessageClick={handleMessageClick}
+									onDeleteClick={handleDeleteProduct}
 									onDeleteClick={handleDeleteClick}
 									onUserClick={handleUserClick}
 									isFavorited={favorites.includes(product.id)}
+									currentUserId={user?.uid}
+									showDeleteButton={true}
 								/>
 							))}
 						</div>

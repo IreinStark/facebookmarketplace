@@ -95,9 +95,15 @@ export function MarketplaceNav({
             </div>
             <div className="hidden md:block">
               <h1 className="text-2xl font-bold text-blue-600 dark:text-white transition-colors">
+
+                Local Market
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 transition-colors">
+
                 Marketplace
               </h1>
               <p className="text-xs text-gray-500 dark:text-gray-400">
+
                 Local community buying & selling
               </p>
             </div>
