@@ -436,6 +436,17 @@ export function subscribeToProducts(callback: (products: Product[]) => void): ()
   });
 }
 
+export async function deleteProduct(productId: string): Promise<void> {
+  try {
+    console.log('Deleting product with ID:', productId);
+    await deleteDoc(doc(db, 'products', productId));
+    console.log('Product deleted successfully');
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    throw error;
+  }
+}
+
 export async function getUserById(userId: string): Promise<{displayName: string} | null> {
   try {
     // For now, return a placeholder since we don't have a users collection
