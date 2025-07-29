@@ -1,50 +1,24 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef } from "react"
-import { onAuthStateChanged, signOut } from "firebase/auth"
+import { useState, useEffect } from "react"
+import { onAuthStateChanged, type User } from "firebase/auth"
 import { auth } from "@/firebase"
 import { Button } from "@components/ui/button"
-import { Input } from "@components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card"
-import { Badge } from "@components/ui/badge"
+import { Card, CardContent } from "@components/ui/card"
 import { Avatar, AvatarFallback } from "@components/ui/avatar"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@components/ui/sheet"
-import { ScrollArea } from "@components/ui/scroll-area"
-import { Textarea } from "@components/ui/textarea"
 import { Slider } from "@components/ui/slider"
 import { Label } from "@components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "@components/ui/popover"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog"
-import { Search, MapPin, MessageCircle, Heart, User, Plus, Moon, Sun, MessageSquare, Menu, Send, LogOut, AlertCircle, Tag, X } from "lucide-react"
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@components/ui/pagination"
 import { Alert, AlertDescription } from "@components/ui/alert"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
-import { ChatInterface } from "../components/chat-interface"
-import { PhotoUpload } from "../components/photo-upload"
 import { useSocket } from "../hooks/use-socket"
-import { subscribeToProducts, getAllProducts, type Product } from "../lib/firebase-utils"
+import { subscribeToProducts, type Product } from "../lib/firebase-utils"
 import { formatDistanceToNow } from "date-fns"
 import { Timestamp } from "firebase/firestore"
-import { getUserProfile, getUserDisplayName, calculateDistance, type UserProfile } from "../lib/user-utils"
-
-// Location data with coordinates (lat, lng)
-const locationData = [
-	{ name: "Lefkosa", lat: 35.1856, lng: 33.3823, region: "Central" },
-	{ name: "Girne", lat: 35.3414, lng: 33.3152, region: "Northern" },
-	{ name: "Famagusta", lat: 35.1264, lng: 33.9378, region: "Eastern" },
-	{ name: "Iskele", lat: 35.2833, lng: 33.9167, region: "Eastern" },
-	{ name: "Guzelyurt", lat: 35.2042, lng: 33.0292, region: "Western" },
-	{ name: "Lapta", lat: 35.3333, lng: 33.1833, region: "Northern" },
-	{ name: "Alsancak", lat: 35.3167, lng: 33.2167, region: "Northern" },
-	{ name: "Catalkoy", lat: 35.35, lng: 33.3833, region: "Northern" },
-	{ name: "Esentepe", lat: 35.3667, lng: 33.5167, region: "Northern" },
-	{ name: "Bogaz", lat: 35.3833, lng: 33.6167, region: "Northern" },
-	{ name: "Dipkarpaz", lat: 35.6, lng: 34.3833, region: "Karpaz" },
-	{ name: "Yeni Iskele", lat: 35.2667, lng: 33.9333, region: "Eastern" },
-]
+import { getUserProfile, type UserProfile } from "../lib/user-utils"
 
 // Mock data for testing (you can switch to real Firebase data later)
 const mockProducts = [
@@ -158,22 +132,16 @@ export default function MarketplacePage() {
 	const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000])
 	const [showPriceFilter, setShowPriceFilter] = useState(false)
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
-	const [user, setUser] = useState<any>(null)
+	const [user, setUser] = useState<User | null>(null)
 	const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-	const [isMessagesOpen, setIsMessagesOpen] = useState(false)
-	const [selectedRecipient, setSelectedRecipient] = useState<{id: string, name: string} | null>(null)
-	const [selectedProduct, setSelectedProduct] = useState<{id: string, title: string} | null>(null)
-	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
-	const [favorites, setFavorites] = useState<string[]>([])
-	const { theme, setTheme } = useTheme()
 
 	// Products state
 	const [products, setProducts] = useState<Product[]>([])
 	const [productsLoading, setProductsLoading] = useState(true)
 
 	// Initialize Socket.io for real-time chat
-	const socket = useSocket({
+	useSocket({
 		userId: user?.uid,
 		userName: userProfile?.displayName,
 		enabled: isLoggedIn === true
@@ -191,7 +159,6 @@ export default function MarketplacePage() {
 					const profile = await getUserProfile(firebaseUser)
 					setUserProfile(profile)
 
-					setFavorites([])
 					setError(null)
 				} else {
 					setUser(null)
@@ -336,7 +303,10 @@ export default function MarketplacePage() {
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 				{productsLoading ? (
 					<div className="col-span-full text-center py-8">
-						<Loader />
+						<div className="flex items-center justify-center">
+							<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+							<span className="ml-2 text-gray-600">Loading products...</span>
+						</div>
 					</div>
 				) : paginatedProducts.length === 0 ? (
 					<div className="col-span-full text-center py-8">
@@ -381,11 +351,44 @@ export default function MarketplacePage() {
 			</div>
 
 			<div className="mt-8">
-				<Pagination
-					currentPage={currentPage}
-					totalPages={totalPages}
-					onPageChange={handlePageChange}
-				/>
+				<Pagination>
+					<PaginationContent>
+						<PaginationItem>
+							<PaginationPrevious 
+								href="#" 
+								onClick={(e) => {
+									e.preventDefault();
+									if (currentPage > 1) handlePageChange(currentPage - 1);
+								}}
+								className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+							/>
+						</PaginationItem>
+						{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+							<PaginationItem key={page}>
+								<PaginationLink
+									href="#"
+									onClick={(e) => {
+										e.preventDefault();
+										handlePageChange(page);
+									}}
+									isActive={currentPage === page}
+								>
+									{page}
+								</PaginationLink>
+							</PaginationItem>
+						))}
+						<PaginationItem>
+							<PaginationNext 
+								href="#" 
+								onClick={(e) => {
+									e.preventDefault();
+									if (currentPage < totalPages) handlePageChange(currentPage + 1);
+								}}
+								className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+							/>
+						</PaginationItem>
+					</PaginationContent>
+				</Pagination>
 			</div>
 
 			{/* Price range filter sheet */}
@@ -424,5 +427,4 @@ export default function MarketplacePage() {
 			</Sheet>
 		</div>
 	)
-}
 }
