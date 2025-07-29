@@ -5,7 +5,7 @@ import { onAuthStateChanged, type User } from "firebase/auth"
 import { Timestamp } from "firebase/firestore"
 import { formatDistanceToNow } from "date-fns"
 
-import { auth } from "@/firebase"
+import { auth } from "@/firebase" // Assuming this imports your Firebase auth instance
 import { Button } from "@components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card"
 import { Avatar, AvatarFallback } from "@components/ui/avatar"
@@ -16,10 +16,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@components/ui/pagination"
 import { Alert, AlertDescription } from "@components/ui/alert"
 import { useSocket } from "../hooks/use-socket"
-import { subscribeToProducts, type Product } from "../lib/firebase-utils"
+
+// --- Import REAL Firebase product functions (from firebase-utils) ---
+// Make sure these paths are correct for your project
+import { subscribeToProducts as subscribeToRealProducts, type Product } from "../lib/firebase-utils"
+
+// --- Import MOCK product functions (from a new mock-data file) ---
+import { subscribeMockProducts } from "../lib/mock-data-utils" // We'll create this file
+
 import { getUserProfile, type UserProfile } from "../lib/user-utils"
 
-// Location data with coordinates (lat, lng)
+
+// Location data with coordinates (lat, lng) - remains unchanged
 const locationData = [
 	{ name: "Lefkosa", lat: 35.1856, lng: 33.3823, region: "Central" },
 	{ name: "Girne", lat: 35.3414, lng: 33.3152, region: "Northern" },
@@ -35,10 +43,15 @@ const locationData = [
 	{ name: "Yeni Iskele", lat: 35.2667, lng: 33.9333, region: "Eastern" },
 ]
 
-// Categories for filtering (matching the sell page categories)
+// Categories for filtering (matching the sell page categories) - remains unchanged
 const categories = ["All", "Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"]
 
 export default function MarketplacePage() {
+	// --- CONFIGURATION: Set this to true to use mock products during development ---
+	// In a real app, you might use an environment variable (e.g., process.env.NODE_ENV !== 'production')
+	const useMockProducts = true; // Set to `false` when you want to use real Firebase data for products
+	// --- END CONFIGURATION ---
+
 	// Filter and UI state
 	const [selectedCategory, setSelectedCategory] = useState("All")
 	const [selectedLocation, setSelectedLocation] = useState("All Locations")
@@ -53,7 +66,7 @@ export default function MarketplacePage() {
 	const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
-	const [favorites, setFavorites] = useState<string[]>([])
+	const [favorites, setFavorites] = useState<string[]>([]) // Assuming favorites will be part of userProfile or a separate collection
 
 	// Products state
 	const [products, setProducts] = useState<Product[]>([])
@@ -79,7 +92,7 @@ export default function MarketplacePage() {
 		enabled: isLoggedIn === true
 	})
 
-	// Enhanced auth state management
+	// Enhanced auth state management (remains unchanged)
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
 			try {
@@ -90,6 +103,9 @@ export default function MarketplacePage() {
 					// Load user profile from Firestore
 					const profile = await getUserProfile(firebaseUser)
 					setUserProfile(profile)
+
+					// If favorites are stored in user profile, set them here:
+					// setFavorites(profile?.favorites || []);
 
 					setError(null)
 				} else {
@@ -107,22 +123,36 @@ export default function MarketplacePage() {
 		return () => unsubscribe()
 	}, [])
 
-	// Subscribe to products from Firebase
+	// Subscribe to products from Firebase OR use mock data
 	useEffect(() => {
 		setProductsLoading(true)
 
-		// Subscribe to products updates
-		const unsubscribe = subscribeToProducts((products) => {
-			console.log('Received products from Firebase:', products.length, 'products')
-			setProducts(products)
-			setProductsLoading(false)
-		})
+		let unsubscribe: () => void;
+
+		if (useMockProducts) {
+			// Use mock data for products
+			console.log('Using mock products...');
+			unsubscribe = subscribeMockProducts((mockProducts) => {
+				console.log('Received mock products:', mockProducts.length, 'products');
+				// Ensure mock products conform to the Product type if necessary
+				setProducts(mockProducts as Product[]);
+				setProductsLoading(false);
+			});
+		} else {
+			// Use real Firebase data for products
+			console.log('Using real Firebase products...');
+			unsubscribe = subscribeToRealProducts((firebaseProducts) => {
+				console.log('Received real products from Firebase:', firebaseProducts.length, 'products');
+				setProducts(firebaseProducts);
+				setProductsLoading(false);
+			});
+		}
 
 		// Cleanup subscription on unmount
-		return () => unsubscribe()
-	}, [])
+		return () => unsubscribe();
+	}, [useMockProducts]); // Re-run if `useMockProducts` changes (though usually it's static)
 
-	// Filter and sort products based on user selections
+	// Filter and sort products based on user selections (remains unchanged)
 	const filteredProducts = products.filter((product) => {
 		const matchesCategory = selectedCategory === "All" || product.category === selectedCategory
 		const matchesLocation = selectedLocation === "All Locations" || product.location === selectedLocation
@@ -145,24 +175,25 @@ export default function MarketplacePage() {
 		return 0
 	})
 
-	// Get current items for pagination
+	// Get current items for pagination (remains unchanged)
 	const paginatedProducts = sortedProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
-	// Calculate total pages for pagination
+	// Calculate total pages for pagination (remains unchanged)
 	const totalPages = Math.ceil(sortedProducts.length / itemsPerPage)
 
-	// Handle page change
+	// Handle page change (remains unchanged)
 	const handlePageChange = (page: number) => {
 		setCurrentPage(page)
 		window.scrollTo({ top: 0, behavior: "smooth" })
 	}
 
-	// Refresh user profile and favorites periodically
+	// Refresh user profile and favorites periodically (remains unchanged)
 	useEffect(() => {
 		const interval = setInterval(() => {
 			if (isLoggedIn && user) {
 				getUserProfile(user).then((profile) => {
 					setUserProfile(profile)
+					// setFavorites(profile?.favorites || []); // If favorites are in profile
 				}).catch((err) => {
 					console.error("Error fetching user profile: ", err)
 				})
@@ -172,7 +203,7 @@ export default function MarketplacePage() {
 		return () => clearInterval(interval)
 	}, [isLoggedIn, user])
 
-	// Show loading state while initializing
+	// Show loading state while initializing (remains unchanged)
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center h-screen">
@@ -182,7 +213,7 @@ export default function MarketplacePage() {
 		)
 	}
 
-	// Error boundary fallback UI
+	// Error boundary fallback UI (remains unchanged)
 	if (error) {
 		return (
 			<div className="flex items-center justify-center h-screen">
@@ -285,8 +316,8 @@ export default function MarketplacePage() {
 									<div className="flex-shrink-0 mb-4 sm:mb-0 sm:mr-4">
 										<Avatar>
 											<AvatarFallback>
-												{product.seller?.[0]?.toUpperCase() || 
-												 product.sellerProfile?.displayName?.[0]?.toUpperCase() || 
+												{product.seller?.[0]?.toUpperCase() || 
+												 product.sellerProfile?.displayName?.[0]?.toUpperCase() || 
 												 "U"}
 											</AvatarFallback>
 										</Avatar>
@@ -294,7 +325,11 @@ export default function MarketplacePage() {
 									<div className="flex-grow">
 										<p className="text-sm text-gray-500">
 											{product.location} • {" "}
-											{formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true })}
+											{/* Ensure product.createdAt is a valid Timestamp or Date object */}
+											{product.createdAt instanceof Timestamp 
+												? formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true })
+												: "Date N/A" // Fallback if it's not a Timestamp
+											}
 										</p>
 										<h2 className="text-xl font-bold">
 											${Number(product.price).toFixed(2)}
@@ -321,8 +356,8 @@ export default function MarketplacePage() {
 					<Pagination>
 						<PaginationContent>
 							<PaginationItem>
-								<PaginationPrevious 
-									href="#" 
+								<PaginationPrevious 
+									href="#" 
 									onClick={(e) => {
 										e.preventDefault();
 										if (currentPage > 1) handlePageChange(currentPage - 1);
@@ -357,8 +392,8 @@ export default function MarketplacePage() {
 								);
 							})}
 							<PaginationItem>
-								<PaginationNext 
-									href="#" 
+								<PaginationNext 
+									href="#" 
 									onClick={(e) => {
 										e.preventDefault();
 										if (currentPage < totalPages) handlePageChange(currentPage + 1);
@@ -396,8 +431,8 @@ export default function MarketplacePage() {
 						</div>
 					</div>
 					<div className="flex justify-end p-4 gap-2">
-						<Button 
-							variant="outline" 
+						<Button 
+							variant="outline" 
 							onClick={() => setShowPriceFilter(false)}
 						>
 							Cancel
