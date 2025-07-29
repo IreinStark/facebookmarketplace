@@ -1,15 +1,13 @@
 "use client"
 
-
-import type React from "react"
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { onAuthStateChanged, type User } from "firebase/auth"
-import React, { useState, useEffect, useRef } from "react"
-import { onAuthStateChanged, signOut } from "firebase/auth"
+import { Timestamp } from "firebase/firestore"
+import { formatDistanceToNow } from "date-fns"
 
 import { auth } from "@/firebase"
 import { Button } from "@components/ui/button"
-import { Card, CardContent } from "@components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card"
 import { Avatar, AvatarFallback } from "@components/ui/avatar"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@components/ui/sheet"
 import { Slider } from "@components/ui/slider"
@@ -17,53 +15,9 @@ import { Label } from "@components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@components/ui/pagination"
 import { Alert, AlertDescription } from "@components/ui/alert"
-import { useTheme } from "next-themes"
 import { useSocket } from "../hooks/use-socket"
 import { subscribeToProducts, type Product } from "../lib/firebase-utils"
-import { formatDistanceToNow } from "date-fns"
-import { Timestamp } from "firebase/firestore"
-
 import { getUserProfile, type UserProfile } from "../lib/user-utils"
-import { getUserProfile, getUserDisplayName, calculateDistance, type UserProfile } from "../lib/user-utils"
-
-// Simple Loader component
-const Loader = () => (
-	<div className="flex items-center justify-center p-8">
-		<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-		<span className="ml-2">Loading products...</span>
-	</div>
-)
-
-// Simple Pagination component
-const Pagination = ({ currentPage, totalPages, onPageChange }: {
-	currentPage: number
-	totalPages: number
-	onPageChange: (page: number) => void
-}) => {
-	if (totalPages <= 1) return null
-
-	return (
-		<div className="flex justify-center items-center space-x-2">
-			<Button
-				variant="outline"
-				onClick={() => onPageChange(currentPage - 1)}
-				disabled={currentPage === 1}
-			>
-				Previous
-			</Button>
-			<span className="text-sm text-gray-600">
-				Page {currentPage} of {totalPages}
-			</span>
-			<Button
-				variant="outline"
-				onClick={() => onPageChange(currentPage + 1)}
-				disabled={currentPage === totalPages}
-			>
-				Next
-			</Button>
-		</div>
-	)
-}
 
 // Location data with coordinates (lat, lng)
 const locationData = [
@@ -81,26 +35,33 @@ const locationData = [
 	{ name: "Yeni Iskele", lat: 35.2667, lng: 33.9333, region: "Eastern" },
 ]
 
-// Note: Mock data has been removed - all products now come from Firebase in real-time
-
 // Categories for filtering (matching the sell page categories)
 const categories = ["All", "Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"]
 
 export default function MarketplacePage() {
+	// Filter and UI state
 	const [selectedCategory, setSelectedCategory] = useState("All")
 	const [selectedLocation, setSelectedLocation] = useState("All Locations")
 	const [searchTerm, setSearchTerm] = useState("")
 	const [sortBy, setSortBy] = useState("newest")
 	const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000])
 	const [showPriceFilter, setShowPriceFilter] = useState(false)
+	
+	// Auth and user state
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
 	const [user, setUser] = useState<User | null>(null)
 	const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
+	const [favorites, setFavorites] = useState<string[]>([])
 
 	// Products state
 	const [products, setProducts] = useState<Product[]>([])
 	const [productsLoading, setProductsLoading] = useState(true)
+
+	// Pagination state
+	const [currentPage, setCurrentPage] = useState(1)
+	const itemsPerPage = 10
 
 	// Extract unique locations from products for filtering
 	const locations = React.useMemo(() => {
@@ -146,6 +107,7 @@ export default function MarketplacePage() {
 		return () => unsubscribe()
 	}, [])
 
+	// Subscribe to products from Firebase
 	useEffect(() => {
 		setProductsLoading(true)
 
@@ -183,10 +145,6 @@ export default function MarketplacePage() {
 		return 0
 	})
 
-	// Pagination state
-	const [currentPage, setCurrentPage] = useState(1)
-	const itemsPerPage = 10
-
 	// Get current items for pagination
 	const paginatedProducts = sortedProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
@@ -214,6 +172,16 @@ export default function MarketplacePage() {
 		return () => clearInterval(interval)
 	}, [isLoggedIn, user])
 
+	// Show loading state while initializing
+	if (loading) {
+		return (
+			<div className="flex items-center justify-center h-screen">
+				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+				<span className="ml-2">Loading...</span>
+			</div>
+		)
+	}
+
 	// Error boundary fallback UI
 	if (error) {
 		return (
@@ -229,14 +197,39 @@ export default function MarketplacePage() {
 
 	return (
 		<div className="container max-w-7xl mx-auto px-4 py-8">
+			{/* Header with filters */}
 			<div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8">
 				<h1 className="text-3xl font-bold mb-4 md:mb-0">Marketplace</h1>
-				<div className="flex flex-col md:flex-row md:items-center">
-					<Button variant="outline" className="mr-4" onClick={() => setShowPriceFilter(!showPriceFilter)}>
+				<div className="flex flex-col md:flex-row md:items-center gap-4">
+					<Button variant="outline" onClick={() => setShowPriceFilter(!showPriceFilter)}>
 						Filter by Price
 					</Button>
-					<Select value={selectedCategory} onValueChange={setSelectedCategory} className="w-full md:w-auto mb-4 md:mb-0">
-						<SelectTrigger>
+					
+					{/* Search input */}
+					<input
+						type="text"
+						placeholder="Search products..."
+						value={searchTerm}
+						onChange={(e) => setSearchTerm(e.target.value)}
+						className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+					/>
+					
+					{/* Sort by dropdown */}
+					<Select value={sortBy} onValueChange={setSortBy}>
+						<SelectTrigger className="w-full md:w-auto">
+							<SelectValue placeholder="Sort by" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="newest">Newest First</SelectItem>
+							<SelectItem value="oldest">Oldest First</SelectItem>
+							<SelectItem value="priceAsc">Price: Low to High</SelectItem>
+							<SelectItem value="priceDesc">Price: High to Low</SelectItem>
+						</SelectContent>
+					</Select>
+					
+					{/* Category filter */}
+					<Select value={selectedCategory} onValueChange={setSelectedCategory}>
+						<SelectTrigger className="w-full md:w-auto">
 							<SelectValue placeholder="Select category" />
 						</SelectTrigger>
 						<SelectContent>
@@ -247,8 +240,10 @@ export default function MarketplacePage() {
 							))}
 						</SelectContent>
 					</Select>
-					<Select value={selectedLocation} onValueChange={setSelectedLocation} className="w-full md:w-auto mb-4 md:mb-0">
-						<SelectTrigger>
+					
+					{/* Location filter */}
+					<Select value={selectedLocation} onValueChange={setSelectedLocation}>
+						<SelectTrigger className="w-full md:w-auto">
 							<SelectValue placeholder="Select location" />
 						</SelectTrigger>
 						<SelectContent>
@@ -262,6 +257,7 @@ export default function MarketplacePage() {
 				</div>
 			</div>
 
+			{/* Products grid */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 				{productsLoading ? (
 					<div className="col-span-full text-center py-8">
@@ -285,17 +281,19 @@ export default function MarketplacePage() {
 								<CardTitle className="text-lg font-semibold">{product.title}</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<div className="flex flex-col sm:flex-row sm:items-center">
-																	<div className="flex-shrink-0 mb-4 sm:mb-0">
-									<Avatar>
-										<AvatarFallback>
-											{product.seller?.[0]?.toUpperCase() || product.sellerProfile?.displayName?.[0]?.toUpperCase() || "U"}
-										</AvatarFallback>
-									</Avatar>
-								</div>
+								<div className="flex flex-col sm:flex-row sm:items-center mb-4">
+									<div className="flex-shrink-0 mb-4 sm:mb-0 sm:mr-4">
+										<Avatar>
+											<AvatarFallback>
+												{product.seller?.[0]?.toUpperCase() || 
+												 product.sellerProfile?.displayName?.[0]?.toUpperCase() || 
+												 "U"}
+											</AvatarFallback>
+										</Avatar>
+									</div>
 									<div className="flex-grow">
 										<p className="text-sm text-gray-500">
-											{product.location} &bull;{" "}
+											{product.location} • {" "}
 											{formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true })}
 										</p>
 										<h2 className="text-xl font-bold">
@@ -303,55 +301,75 @@ export default function MarketplacePage() {
 										</h2>
 									</div>
 								</div>
-								<p className="mt-2 text-gray-700">
+								<p className="text-gray-700 line-clamp-3">
 									{product.description}
 								</p>
+								<div className="mt-2">
+									<span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+										{product.category}
+									</span>
+								</div>
 							</CardContent>
 						</Card>
 					))
 				)}
 			</div>
 
-			<div className="mt-8">
-				<Pagination>
-					<PaginationContent>
-						<PaginationItem>
-							<PaginationPrevious 
-								href="#" 
-								onClick={(e) => {
-									e.preventDefault();
-									if (currentPage > 1) handlePageChange(currentPage - 1);
-								}}
-								className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
-							/>
-						</PaginationItem>
-						{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-							<PaginationItem key={page}>
-								<PaginationLink
-									href="#"
+			{/* Pagination */}
+			{totalPages > 1 && (
+				<div className="mt-8">
+					<Pagination>
+						<PaginationContent>
+							<PaginationItem>
+								<PaginationPrevious 
+									href="#" 
 									onClick={(e) => {
 										e.preventDefault();
-										handlePageChange(page);
+										if (currentPage > 1) handlePageChange(currentPage - 1);
 									}}
-									isActive={currentPage === page}
-								>
-									{page}
-								</PaginationLink>
+									className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+								/>
 							</PaginationItem>
-						))}
-						<PaginationItem>
-							<PaginationNext 
-								href="#" 
-								onClick={(e) => {
-									e.preventDefault();
-									if (currentPage < totalPages) handlePageChange(currentPage + 1);
-								}}
-								className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
-							/>
-						</PaginationItem>
-					</PaginationContent>
-				</Pagination>
-			</div>
+							{Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+								let page;
+								if (totalPages <= 5) {
+									page = i + 1;
+								} else if (currentPage <= 3) {
+									page = i + 1;
+								} else if (currentPage >= totalPages - 2) {
+									page = totalPages - 4 + i;
+								} else {
+									page = currentPage - 2 + i;
+								}
+								return (
+									<PaginationItem key={page}>
+										<PaginationLink
+											href="#"
+											onClick={(e) => {
+												e.preventDefault();
+												handlePageChange(page);
+											}}
+											isActive={currentPage === page}
+										>
+											{page}
+										</PaginationLink>
+									</PaginationItem>
+								);
+							})}
+							<PaginationItem>
+								<PaginationNext 
+									href="#" 
+									onClick={(e) => {
+										e.preventDefault();
+										if (currentPage < totalPages) handlePageChange(currentPage + 1);
+									}}
+									className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+								/>
+							</PaginationItem>
+						</PaginationContent>
+					</Pagination>
+				</div>
+			)}
 
 			{/* Price range filter sheet */}
 			<Sheet open={showPriceFilter} onOpenChange={setShowPriceFilter}>
@@ -360,8 +378,8 @@ export default function MarketplacePage() {
 						<SheetTitle>Filter by Price</SheetTitle>
 					</SheetHeader>
 					<div className="p-4">
-						<Label htmlFor="price-range" className="block text-sm font-medium text-gray-700">
-							Price range:
+						<Label htmlFor="price-range" className="block text-sm font-medium text-gray-700 mb-4">
+							Price range: ${priceRange[0]} - ${priceRange[1]}
 						</Label>
 						<Slider
 							id="price-range"
@@ -372,13 +390,16 @@ export default function MarketplacePage() {
 							step={10}
 							className="mt-2"
 						/>
-						<div className="flex justify-between text-xs text-gray-500 mt-1">
-							<span>${priceRange[0]}</span>
-							<span>${priceRange[1]}</span>
+						<div className="flex justify-between text-xs text-gray-500 mt-2">
+							<span>$0</span>
+							<span>$2000</span>
 						</div>
 					</div>
-					<div className="flex justify-end p-4">
-						<Button variant="outline" onClick={() => setShowPriceFilter(false)} className="mr-2">
+					<div className="flex justify-end p-4 gap-2">
+						<Button 
+							variant="outline" 
+							onClick={() => setShowPriceFilter(false)}
+						>
 							Cancel
 						</Button>
 						<Button onClick={() => setShowPriceFilter(false)}>
