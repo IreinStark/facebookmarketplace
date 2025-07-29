@@ -1,12 +1,23 @@
 "use client"
 
-import React from 'react'
-import { MapPin, Heart, MessageCircle, Eye, Clock } from 'lucide-react'
+import React, { useState } from 'react'
+import { MapPin, Heart, MessageCircle, Eye, Clock, Trash2 } from 'lucide-react'
 import { Card, CardContent } from './ui/card'
 import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Badge } from './ui/badge'
 import { formatDistanceToNow } from 'date-fns'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from './ui/alert-dialog'
 
 interface ProductCardProps {
   product: {
@@ -18,6 +29,7 @@ interface ProductCardProps {
     location: string
     images?: string[]
     seller?: string
+    userId?: string
     sellerProfile?: {
       displayName?: string
       photoURL?: string
@@ -30,7 +42,10 @@ interface ProductCardProps {
   onProductClick?: (productId: string) => void
   onFavoriteClick?: (productId: string) => void
   onMessageClick?: (productId: string) => void
+  onDeleteClick?: (productId: string) => void
   isFavorited?: boolean
+  currentUserId?: string
+  showDeleteButton?: boolean
 }
 
 export function ProductCard({ 
@@ -38,8 +53,16 @@ export function ProductCard({
   onProductClick, 
   onFavoriteClick, 
   onMessageClick, 
-  isFavorited = false 
+  onDeleteClick,
+  isFavorited = false,
+  currentUserId,
+  showDeleteButton = false
 }: ProductCardProps) {
+  const [isDeleting, setIsDeleting] = useState(false)
+  
+  const isOwner = currentUserId && product.userId === currentUserId
+  const shouldShowDelete = showDeleteButton && isOwner
+
   const handleCardClick = () => {
     onProductClick?.(product.id)
   }
@@ -52,6 +75,18 @@ export function ProductCard({
   const handleMessageClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     onMessageClick?.(product.id)
+  }
+
+  const handleDeleteClick = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsDeleting(true)
+    try {
+      await onDeleteClick?.(product.id)
+    } catch (error) {
+      console.error('Error deleting product:', error)
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   return (
@@ -77,19 +112,56 @@ export function ProductCard({
             </div>
           )}
           
-          {/* Favorite button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`absolute top-2 right-2 rounded-full p-2 ${
-              isFavorited 
-                ? 'bg-red-100 text-red-600 hover:bg-red-200' 
-                : 'bg-white/80 text-gray-600 hover:bg-white'
-            }`}
-            onClick={handleFavoriteClick}
-          >
-            <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
-          </Button>
+          {/* Action buttons */}
+          <div className="absolute top-2 right-2 flex gap-1">
+            {/* Delete button (only for owners) */}
+            {shouldShowDelete && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-full p-2 bg-white/80 text-red-600 hover:bg-red-100"
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Listing</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{product.title}"? This action cannot be undone and will permanently remove your listing from the marketplace.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleDeleteClick}
+                      className="bg-red-600 hover:bg-red-700"
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? 'Deleting...' : 'Delete Listing'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            
+            {/* Favorite button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`rounded-full p-2 ${
+                isFavorited 
+                  ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                  : 'bg-white/80 text-gray-600 hover:bg-white'
+              }`}
+              onClick={handleFavoriteClick}
+            >
+              <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
+            </Button>
+          </div>
 
           {/* Views counter */}
           {product.views && (

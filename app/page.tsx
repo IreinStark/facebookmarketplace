@@ -7,7 +7,7 @@ import { Timestamp } from "firebase/firestore"
 import { auth } from "@/firebase"
 import { Alert, AlertDescription } from "@components/ui/alert"
 import { useSocket } from "../hooks/use-socket"
-import { subscribeToProducts, type Product } from "../lib/firebase-utils"
+import { subscribeToProducts, deleteProduct, type Product } from "../lib/firebase-utils"
 import { getUserProfile, type UserProfile } from "../lib/user-utils"
 
 // Import new components
@@ -140,6 +140,7 @@ export default function MarketplacePage() {
 	const handleProductClick = (productId: string) => {
 		console.log('Product clicked:', productId)
 		// Navigate to product detail page
+		window.location.href = `/product/${productId}`
 	}
 
 	const handleFavoriteClick = (productId: string) => {
@@ -155,6 +156,22 @@ export default function MarketplacePage() {
 	const handleCreateListing = () => {
 		console.log('Create listing clicked')
 		// Navigate to create listing page
+	}
+
+	const handleDeleteProduct = async (productId: string) => {
+		if (!user) {
+			console.error('User not authenticated')
+			return
+		}
+		
+		try {
+			await deleteProduct(productId, user.uid)
+			console.log('Product deleted successfully')
+			// The real-time subscription will automatically update the UI
+		} catch (error: any) {
+			console.error('Failed to delete product:', error.message)
+			setError('Failed to delete listing: ' + error.message)
+		}
 	}
 
 	// Refresh user profile and favorites periodically
@@ -175,10 +192,10 @@ export default function MarketplacePage() {
 	// Show loading state while initializing
 	if (loading) {
 		return (
-			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
+			<div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center transition-colors">
 				<div className="text-center">
 					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-					<p className="text-gray-600">Loading Marketplace...</p>
+					<p className="text-gray-600 dark:text-gray-400">Loading Marketplace...</p>
 				</div>
 			</div>
 		)
@@ -187,7 +204,7 @@ export default function MarketplacePage() {
 	// Error boundary fallback UI
 	if (error) {
 		return (
-			<div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+			<div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 transition-colors">
 				<Alert className="max-w-md">
 					<AlertDescription>
 						{error}
@@ -198,7 +215,7 @@ export default function MarketplacePage() {
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-50">
+		<div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
 			{/* Navigation */}
 			<MarketplaceNav 
 				user={user}
@@ -273,7 +290,10 @@ export default function MarketplacePage() {
 									onProductClick={handleProductClick}
 									onFavoriteClick={handleFavoriteClick}
 									onMessageClick={handleMessageClick}
+									onDeleteClick={handleDeleteProduct}
 									isFavorited={favorites.includes(product.id)}
+									currentUserId={user?.uid}
+									showDeleteButton={true}
 								/>
 							))}
 						</div>

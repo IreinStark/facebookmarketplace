@@ -26,17 +26,21 @@ interface MarketplaceNavProps {
 
 export function MarketplaceNav({ user, onSearch, searchValue }: MarketplaceNavProps) {
   return (
-    <nav className="bg-white border-b border-gray-200 px-4 py-2 sticky top-0 z-50">
+    <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 sticky top-0 z-50 transition-colors">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Left section - Logo and Marketplace */}
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center transition-colors">
               <ShoppingBag className="w-6 h-6 text-white" />
             </div>
             <div className="hidden md:block">
-              <h1 className="text-2xl font-bold text-blue-600">Marketplace</h1>
-              <p className="text-xs text-gray-500">Local community buying & selling</p>
+              <h1 className="text-2xl font-bold text-blue-600 dark:text-white transition-colors">
+                Local Market
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 transition-colors">
+                Local community buying & selling
+              </p>
             </div>
           </div>
         </div>
@@ -50,7 +54,7 @@ export function MarketplaceNav({ user, onSearch, searchValue }: MarketplaceNavPr
               placeholder="Search Marketplace"
               value={searchValue || ''}
               onChange={(e) => onSearch?.(e.target.value)}
-              className="pl-10 pr-4 py-2 w-full bg-gray-100 border-none rounded-full focus:bg-white focus:shadow-md transition-all"
+              className="pl-10 pr-4 py-2 w-full bg-gray-100 dark:bg-gray-800 border-none rounded-full focus:bg-white dark:focus:bg-gray-700 focus:shadow-md transition-all"
             />
           </div>
         </div>
