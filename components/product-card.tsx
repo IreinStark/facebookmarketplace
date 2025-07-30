@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState } from 'react'
-import { MapPin, Heart, MessageCircle, Eye, Clock, Trash2 } from 'lucide-react'
 import { MapPin, Heart, MessageCircle, Eye, Clock, Trash2, User } from 'lucide-react'
 import { Card, CardContent } from './ui/card'
 import { Button } from './ui/button'
@@ -18,17 +17,6 @@ import {
   AlertDialogTitle,
 } from './ui/alert-dialog'
 import { formatDistanceToNow } from 'date-fns'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from './ui/alert-dialog'
 
 interface ProductCardProps {
   product: {
@@ -39,10 +27,8 @@ interface ProductCardProps {
     category: string
     location: string
     images?: string[]
-    seller?: string1
-    userId?: string
+    seller?: string
     userId: string
-
     sellerProfile?: {
       displayName?: string
       photoURL?: string
@@ -57,11 +43,8 @@ interface ProductCardProps {
   onFavoriteClick?: (productId: string) => void
   onMessageClick?: (productId: string) => void
   onDeleteClick?: (productId: string) => void
-
   onUserClick?: (userId: string) => void
-
   isFavorited?: boolean
-  currentUserId?: string
   showDeleteButton?: boolean
 }
 
@@ -70,26 +53,16 @@ export function ProductCard({
   currentUserId,
   onProductClick, 
   onFavoriteClick, 
-
   onMessageClick, 
   onDeleteClick,
+  onUserClick,
   isFavorited = false,
-  currentUserId,
   showDeleteButton = false
 }: ProductCardProps) {
-  const [isDeleting, setIsDeleting] = useState(false)
-  
-  const isOwner = currentUserId && product.userId === currentUserId
-  const shouldShowDelete = showDeleteButton && isOwner
-
-  onMessageClick,
-  onDeleteClick,
-  onUserClick,
-  isFavorited = false 
-}: ProductCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  
   const isOwner = currentUserId === product.userId
-
+  const shouldShowDelete = showDeleteButton && isOwner
 
   const handleCardClick = () => {
     onProductClick?.(product.id)
@@ -105,16 +78,6 @@ export function ProductCard({
     onMessageClick?.(product.id)
   }
 
-  const handleDeleteClick = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setIsDeleting(true)
-    try {
-      await onDeleteClick?.(product.id)
-    } catch (error) {
-      console.error('Error deleting product:', error)
-    } finally {
-      setIsDeleting(false)
-    }
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     setShowDeleteDialog(true)
@@ -128,7 +91,6 @@ export function ProductCard({
   const handleUserClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     onUserClick?.(product.userId)
-
   }
 
   return (
@@ -172,7 +134,7 @@ export function ProductCard({
               </Button>
 
               {/* Delete button (only for owner) */}
-              {isOwner && (
+              {shouldShowDelete && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -183,66 +145,7 @@ export function ProductCard({
                 </Button>
               )}
             </div>
-          )}
-          
-          {/* Action buttons */}
-          <div className="absolute top-2 right-2 flex gap-1">
-            {/* Delete button (only for owners) */}
-            {shouldShowDelete && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-full p-2 bg-white/80 text-red-600 hover:bg-red-100"
-                    disabled={isDeleting}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Listing</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete "{product.title}"? This action cannot be undone and will permanently remove your listing from the marketplace.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={handleDeleteClick}
-                      className="bg-red-600 hover:bg-red-700"
-                      disabled={isDeleting}
-                    >
-                      {isDeleting ? 'Deleting...' : 'Delete Listing'}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-            
-            {/* Favorite button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`rounded-full p-2 ${
-                isFavorited 
-                  ? 'bg-red-100 text-red-600 hover:bg-red-200' 
-                  : 'bg-white/80 text-gray-600 hover:bg-white'
-              }`}
-              onClick={handleFavoriteClick}
-            >
-              <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
-            </Button>
-          </div>
 
-          {/* Views counter */}
-          {product.views && (
-            <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center">
-              <Eye className="w-3 h-3 mr-1" />
-              {product.views}
-            </div>
-          )}
             {/* Views counter */}
             {product.views && (
               <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center">
@@ -250,17 +153,15 @@ export function ProductCard({
                 {product.views}
               </div>
             )}
+
+            {/* Category badge */}
+            <Badge 
+              variant="secondary" 
+              className="absolute top-2 left-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 border-0"
+            >
+              {product.category}
+            </Badge>
           </div>
-
-          {/* Category badge */}
-          <Badge 
-            variant="secondary" 
-            className="absolute top-2 left-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 border-0"
-          >
-            {product.category}
-          </Badge>
-
-        
         </div>
 
         <CardContent className="p-4">
@@ -320,6 +221,7 @@ export function ProductCard({
           </div>
         </CardContent>
       </Card>
+
       {/* Delete confirmation dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>

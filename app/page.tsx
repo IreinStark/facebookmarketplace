@@ -17,21 +17,19 @@ import { Alert, AlertDescription } from "@components/ui/alert"
 import { useSocket } from "../hooks/use-socket"
 
 // --- Import REAL Firebase product functions (from firebase-utils) ---
-// Make sure these paths are correct for your project
-import { subscribeToProducts as subscribeToRealProducts, type Product } from "../lib/firebase-utils"
+import { subscribeToProducts as subscribeToRealProducts, deleteProduct, type Product } from "../lib/firebase-utils"
 
 // --- Import MOCK product functions (from a new mock-data file) ---
 import { subscribeMockProducts } from "../lib/mock-data-utils" // We'll create this file
 
-import { subscribeToProducts, deleteProduct, type Product } from "../lib/firebase-utils"
 import { getUserProfile, type UserProfile } from "../lib/user-utils"
 
 // Import new components
 import { MarketplaceNav } from "../components/marketplace-nav"
 import { MarketplaceSidebar } from "../components/marketplace-sidebar"
-import { ProductCard } from "../component"
+import { ProductCard } from "../components/product-card" // Fixed import path
 
-// Location data with coordinates (lat, lng) - remains unchanged
+// Location data with coordinates (lat, lng)
 const locationData = [
 	{ name: "Lefkosa", lat: 35.1856, lng: 33.3823, region: "Central" },
 	{ name: "Girne", lat: 35.3414, lng: 33.3152, region: "Northern" },
@@ -47,28 +45,26 @@ const locationData = [
 	{ name: "Yeni Iskele", lat: 35.2667, lng: 33.9333, region: "Eastern" },
 ]
 
-// Categories for filtering (matching the sell page categories) - remains unchanged
-const categories = ["All", "Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"]
-
-export default function MarketplacePage() {
-	// --- CONFIGURATION: Set this to true to use mock products during development ---
-	// In a real app, you might use an environment variable (e.g., process.env.NODE_ENV !== 'production')
-	const useMockProducts = true; // Set to `false` when you want to use real Firebase data for products
-	// --- END CONFIGURATION ---
-
-=======
 // Categories for filtering (matching the sell page categories)
 const categories = ["All", "Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"]
 
 export default function MarketplacePage() {
+	// --- CONFIGURATION: Set this to true to use mock products during development ---
+	const useMockProducts = true; // Set to `false` when you want to use real Firebase data for products
+	
 	const router = useRouter()
 	
->>>>>>> a0c33be01796a5eba0afa67da708d74dd0c902e7
 	// Filter and UI state
 	const [selectedCategory, setSelectedCategory] = useState("All")
 	const [selectedLocation, setSelectedLocation] = useState("All Locations")
 	const [searchTerm, setSearchTerm] = useState("")
 	const [sortBy, setSortBy] = useState("newest")
+	const [showPriceFilter, setShowPriceFilter] = useState(false)
+	const [priceRange, setPriceRange] = useState([0, 2000])
+	
+	// Pagination state
+	const [currentPage, setCurrentPage] = useState(1)
+	const [itemsPerPage] = useState(20)
 	
 	// Auth and user state
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
@@ -76,7 +72,7 @@ export default function MarketplacePage() {
 	const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
-	const [favorites, setFavorites] = useState<string[]>([]) // Assuming favorites will be part of userProfile or a separate collection
+	const [favorites, setFavorites] = useState<string[]>([])
 
 	// Products state
 	const [products, setProducts] = useState<Product[]>([])
@@ -89,7 +85,7 @@ export default function MarketplacePage() {
 		enabled: isLoggedIn === true
 	})
 
-	// Enhanced auth state management (remains unchanged)
+	// Enhanced auth state management
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
 			try {
@@ -131,7 +127,6 @@ export default function MarketplacePage() {
 			console.log('Using mock products...');
 			unsubscribe = subscribeMockProducts((mockProducts) => {
 				console.log('Received mock products:', mockProducts.length, 'products');
-				// Ensure mock products conform to the Product type if necessary
 				setProducts(mockProducts as Product[]);
 				setProductsLoading(false);
 			});
@@ -147,16 +142,17 @@ export default function MarketplacePage() {
 
 		// Cleanup subscription on unmount
 		return () => unsubscribe();
-	}, [useMockProducts]); // Re-run if `useMockProducts` changes (though usually it's static)
+	}, [useMockProducts]);
 
-	// Filter and sort products based on user selections (remains unchanged)
+	// Filter and sort products based on user selections
 	const filteredProducts = products.filter((product) => {
 		const matchesCategory = selectedCategory === "All" || product.category === selectedCategory
 		const matchesLocation = selectedLocation === "All Locations" || product.location === selectedLocation
 		const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
 		                     product.description.toLowerCase().includes(searchTerm.toLowerCase())
+		const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1]
 
-		return matchesCategory && matchesLocation && matchesSearch
+		return matchesCategory && matchesLocation && matchesSearch && matchesPrice
 	})
 
 	const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -172,18 +168,26 @@ export default function MarketplacePage() {
 		return 0
 	})
 
+	// Pagination calculations
+	const totalPages = Math.ceil(sortedProducts.length / itemsPerPage)
+	const startIndex = (currentPage - 1) * itemsPerPage
+	const endIndex = startIndex + itemsPerPage
+	const paginatedProducts = sortedProducts.slice(startIndex, endIndex)
+
+	// Handle page change
+	const handlePageChange = (page: number) => {
+		setCurrentPage(page)
+		window.scrollTo({ top: 0, behavior: 'smooth' })
+	}
+
 	// Handle actions
 	const handleProductClick = (productId: string) => {
 		console.log('Product clicked:', productId)
-		// Navigate to product detail page
-		window.location.href = `/product/${productId}`
-
-		router.push(`/products/${productId}`)
+		router.push(`/product/${productId}`)
 	}
 
 	const handleFavoriteClick = (productId: string) => {
 		console.log('Favorite clicked:', productId)
-		// Toggle favorite status - implement with Firebase later
 		setFavorites(prev => 
 			prev.includes(productId) 
 				? prev.filter(id => id !== productId)
@@ -193,18 +197,21 @@ export default function MarketplacePage() {
 
 	const handleMessageClick = (productId: string) => {
 		console.log('Message clicked:', productId)
-		// Navigate to chat or open chat modal
 		router.push(`/messages?product=${productId}`)
 	}
 
-	const handleDeleteClick = async (productId: string) => {
+	const handleDeleteProduct = async (productId: string) => {
+		if (!user) {
+			console.error('User not authenticated')
+			return
+		}
+		
 		try {
-			await deleteProduct(productId)
+			await deleteProduct(productId, user.uid)
 			console.log('Product deleted successfully')
-			// Products will be updated automatically via the subscription
-		} catch (error) {
-			console.error('Failed to delete product:', error)
-			setError('Failed to delete product. Please try again.')
+		} catch (error: any) {
+			console.error('Failed to delete product:', error.message)
+			setError('Failed to delete listing: ' + error.message)
 		}
 	}
 
@@ -220,29 +227,12 @@ export default function MarketplacePage() {
 		}
 	}
 
-	const handleDeleteProduct = async (productId: string) => {
-		if (!user) {
-			console.error('User not authenticated')
-			return
-		}
-		
-		try {
-			await deleteProduct(productId, user.uid)
-			console.log('Product deleted successfully')
-			// The real-time subscription will automatically update the UI
-		} catch (error: any) {
-			console.error('Failed to delete product:', error.message)
-			setError('Failed to delete listing: ' + error.message)
-		}
-	}
-
 	// Refresh user profile and favorites periodically
 	useEffect(() => {
 		const interval = setInterval(() => {
 			if (isLoggedIn && user) {
 				getUserProfile(user).then((profile) => {
 					setUserProfile(profile)
-					// setFavorites(profile?.favorites || []); // If favorites are in profile
 				}).catch((err) => {
 					console.error("Error fetching user profile: ", err)
 				})
@@ -252,7 +242,7 @@ export default function MarketplacePage() {
 		return () => clearInterval(interval)
 	}, [isLoggedIn, user])
 
-	// Show loading state while initializing (remains unchanged)
+	// Show loading state while initializing
 	if (loading) {
 		return (
 			<div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center transition-colors">
@@ -264,7 +254,7 @@ export default function MarketplacePage() {
 		)
 	}
 
-	// Error boundary fallback UI (remains unchanged)
+	// Error boundary fallback UI
 	if (error) {
 		return (
 			<div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 transition-colors">
@@ -312,6 +302,7 @@ export default function MarketplacePage() {
 									{sortedProducts.length} listing{sortedProducts.length !== 1 ? 's' : ''} found
 									{selectedLocation !== "All Locations" && ` in ${selectedLocation}`}
 									{searchTerm && ` matching "${searchTerm}"`}
+									{totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
 								</>
 							)}
 						</p>
@@ -351,7 +342,7 @@ export default function MarketplacePage() {
 						</div>
 					) : (
 						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-							{sortedProducts.map((product) => (
+							{paginatedProducts.map((product) => (
 								<ProductCard
 									key={product.id}
 									product={product}
@@ -360,73 +351,71 @@ export default function MarketplacePage() {
 									onFavoriteClick={handleFavoriteClick}
 									onMessageClick={handleMessageClick}
 									onDeleteClick={handleDeleteProduct}
-									onDeleteClick={handleDeleteClick}
 									onUserClick={handleUserClick}
 									isFavorited={favorites.includes(product.id)}
-									currentUserId={user?.uid}
-									showDeleteButton={true}
+									showDeleteButton={user?.uid === product.sellerId}
 								/>
 							))}
 						</div>
 					)}
-				</div>
-			</div>
 
-			{/* Pagination */}
-			{totalPages > 1 && (
-				<div className="mt-8">
-					<Pagination>
-						<PaginationContent>
-							<PaginationItem>
-								<PaginationPrevious 
-									href="#" 
-									onClick={(e) => {
-										e.preventDefault();
-										if (currentPage > 1) handlePageChange(currentPage - 1);
-									}}
-									className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
-								/>
-							</PaginationItem>
-							{Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-								let page;
-								if (totalPages <= 5) {
-									page = i + 1;
-								} else if (currentPage <= 3) {
-									page = i + 1;
-								} else if (currentPage >= totalPages - 2) {
-									page = totalPages - 4 + i;
-								} else {
-									page = currentPage - 2 + i;
-								}
-								return (
-									<PaginationItem key={page}>
-										<PaginationLink
-											href="#"
+					{/* Pagination */}
+					{totalPages > 1 && (
+						<div className="mt-8">
+							<Pagination>
+								<PaginationContent>
+									<PaginationItem>
+										<PaginationPrevious 
+											href="#" 
 											onClick={(e) => {
 												e.preventDefault();
-												handlePageChange(page);
+												if (currentPage > 1) handlePageChange(currentPage - 1);
 											}}
-											isActive={currentPage === page}
-										>
-											{page}
-										</PaginationLink>
+											className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+										/>
 									</PaginationItem>
-								);
-							})}
-							<PaginationItem>
-								<PaginationNext 
-									href="#" 
-									onClick={(e) => {
-										e.preventDefault();
-										if (currentPage < totalPages) handlePageChange(currentPage + 1);
-									}}
-									className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
-								/>
-							</PaginationItem>
-						</PaginationContent>
-					</Pagination>
+									{Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+										let page;
+										if (totalPages <= 5) {
+											page = i + 1;
+										} else if (currentPage <= 3) {
+											page = i + 1;
+										} else if (currentPage >= totalPages - 2) {
+											page = totalPages - 4 + i;
+										} else {
+											page = currentPage - 2 + i;
+										}
+										return (
+											<PaginationItem key={page}>
+												<PaginationLink
+													href="#"
+													onClick={(e) => {
+														e.preventDefault();
+														handlePageChange(page);
+													}}
+													isActive={currentPage === page}
+												>
+													{page}
+												</PaginationLink>
+											</PaginationItem>
+										);
+									})}
+									<PaginationItem>
+										<PaginationNext 
+											href="#" 
+											onClick={(e) => {
+												e.preventDefault();
+												if (currentPage < totalPages) handlePageChange(currentPage + 1);
+											}}
+											className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+										/>
+									</PaginationItem>
+								</PaginationContent>
+							</Pagination>
+						</div>
+					)}
 				</div>
-			)}
+			</div>
 
 			{/* Price range filter sheet */}
 			<Sheet open={showPriceFilter} onOpenChange={setShowPriceFilter}>

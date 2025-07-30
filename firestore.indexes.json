@@ -15,12 +15,16 @@
       ]
     },
     {
-      "collectionGroup": "products",
-      "queryScope": "COLLECTION", 
+      "collectionGroup": "messages",
+      "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
+          "fieldPath": "read",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "senderId",
+          "order": "ASCENDING"
         }
       ]
     }
