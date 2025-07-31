@@ -155,65 +155,85 @@ export function MarketplaceBottomNav({
     )
   }
 
-  // Desktop sidebar
+  // Desktop horizontal bar below navbar
   return (
-    <div className="w-80 bg-white border-r border-gray-200 h-screen sticky top-16 overflow-y-auto">
-      <div className="p-4 space-y-4">
-        <Button 
-          onClick={onCreateListing}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-          size="lg"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create new listing
-        </Button>
+    <div className="w-full bg-white border-b border-gray-200 sticky top-14 md:top-16 z-40">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center justify-between">
+          {/* Create Listing Button */}
+          <Button 
+            onClick={onCreateListing}
+            className="bg-blue-600 hover:bg-blue-700 text-white h-8 md:h-9 px-3 md:px-4 text-xs md:text-sm"
+            size="sm"
+          >
+            <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+            Create Listing
+          </Button>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <MapPin className="w-5 h-5 mr-2" />
-              Location
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {availableLocations.map((location) => (
-                <Button
-                  key={location.name}
-                  variant={selectedLocation === location.name ? "default" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => handleLocationSelect(location.name)}
-                >
-                  {location.name}
-                  {location.region && (
-                    <span className="ml-2 text-xs text-gray-500">({location.region})</span>
-                  )}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <Filter className="w-5 h-5 mr-2" />
-              Category
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+          {/* Categories */}
+          <div className="flex items-center space-x-1 md:space-x-2 overflow-x-auto flex-1 mx-4">
             {categories.map((category) => (
               <Button
                 key={category}
                 variant={selectedCategory === category ? "default" : "ghost"}
-                className="w-full justify-start"
+                size="sm"
+                className={`whitespace-nowrap h-8 md:h-9 px-2 md:px-3 text-xs md:text-sm ${
+                  selectedCategory === category 
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
                 onClick={() => onCategoryChange(category)}
               >
                 {category}
               </Button>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+
+          {/* Location Selector */}
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 md:h-9 px-2 md:px-3 text-xs md:text-sm border-gray-300 hover:border-gray-400"
+              onClick={() => setShowLocationSearch(!showLocationSearch)}
+            >
+              <MapPin className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+              <span className="hidden sm:inline truncate max-w-24 md:max-w-32">
+                {selectedLocation}
+              </span>
+              <span className="sm:hidden">Location</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Location Search Dropdown */}
+        {showLocationSearch && (
+          <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 shadow-lg z-50 max-h-64 overflow-y-auto">
+            <div className="p-3">
+              <Input
+                placeholder="Search locations..."
+                value={locationSearchTerm}
+                onChange={(e) => setLocationSearchTerm(e.target.value)}
+                className="mb-3 text-sm"
+              />
+              <div className="space-y-1">
+                {filteredLocations.map((location) => (
+                  <Button
+                    key={location.name}
+                    variant="ghost"
+                    className="w-full justify-start text-sm h-8"
+                    onClick={() => handleLocationSelect(location.name)}
+                  >
+                    {location.name}
+                    {location.region && (
+                      <span className="ml-2 text-xs text-gray-500">({location.region})</span>
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
