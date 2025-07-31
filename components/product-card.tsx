@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -160,10 +161,12 @@ export function ProductCard({
 
         {/* Product Image */}
         {!imageError ? (
-          <img
+          <Image
             src={getMainImage()}
             alt={product.title}
-            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 ${
+            fill
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
+            className={`object-cover group-hover:scale-105 transition-transform duration-200 ${
               isLoading ? 'opacity-0' : 'opacity-100'
             }`}
             onLoad={handleImageLoad}

@@ -29,10 +29,10 @@ import Link from "next/link"
 import { useTheme } from "next-themes"
 import { useRouter } from "next/navigation"
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/firebase";
+import { auth } from "@/app/firebase";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@components/ui/dialog";
-import { collection, query, where, getDocs, deleteDoc, doc, writeBatch } from "firebase/firestore";
-import { db } from "@/firebase";
+import { collection, query, where, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { db } from "@/app/firebase";
 import { updatePassword } from "firebase/auth";
 import { getUserProfile, updateUserProfile, getUserDisplayName, type UserProfile } from "../../lib/user-utils";
 

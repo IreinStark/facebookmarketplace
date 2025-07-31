@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { db } from "@/firebase";
+import { db } from "@/app/firebase";
 import { Input } from "@components/ui/input";
 import { Button } from "@components/ui/button";
 import { Label } from "@components/ui/label";

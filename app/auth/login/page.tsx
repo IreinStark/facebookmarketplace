@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth"
-import { auth } from "@/firebase" // Make sure this file exists and is correctly configured
+import { auth } from "@/app/firebase" // Make sure this file exists and is correctly configured
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -36,7 +36,7 @@ export default function LoginPage() {
         typeof err === "object" &&
         err !== null &&
         "code" in err &&
-        typeof (err as any).code === "string"
+        typeof (err as { code: unknown }).code === "string"
       ) {
         const code = (err as { code: string; message?: string }).code;
         if (
@@ -66,7 +66,7 @@ export default function LoginPage() {
       await signInWithPopup(auth, provider)
       localStorage.setItem("isLoggedIn", "true")
       router.push("/")
-    } catch (err) {
+    } catch {
       setError("Google sign-in failed.")
     } finally {
       setIsLoading(false)

@@ -1,6 +1,6 @@
 import { User } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { db } from "@/firebase";
+import { db } from "@/app/firebase";
 
 export interface UserProfile {
   uid: string;
