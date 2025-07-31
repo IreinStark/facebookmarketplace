@@ -612,5 +612,6 @@ export default function MarketplacePage() {
 				</SheetContent>
 			</Sheet>
 		</div>
+	</div>
 	)
 }
