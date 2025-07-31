@@ -54,6 +54,7 @@ interface ProductCardProduct {
 // Import components
 import { MarketplaceNav } from "@/components/marketplace-nav"
 import { MarketplaceBottomNav } from "@/components/marketplace-sidebar"
+import { MarketplaceSidebar } from "@/components/marketplace-sidebar"
 import { ProductCard } from "@/components/product-card"
 
 // Location data with coordinates (lat, lng)
@@ -343,7 +344,6 @@ export default function MarketplacePage() {
 				onMenuClick={() => setSidebarOpen(true)}
 				isMobile={isMobile}
 			/>
-
 			<div className="flex">
 				{/* Desktop Sidebar */}
 				{!isMobile && (
@@ -360,6 +360,8 @@ export default function MarketplacePage() {
 
 				{/* Main content */}
 				<div className="flex-1 p-4 md:p-6">
+					{/* Main content - full width now */}
+		<div className="p-4 md:p-6 pb-20">{/* Added bottom padding for bottom nav */}
 					{/* Mobile Filter Toggle */}
 					{isMobile && (
 						<div className="mb-4 flex items-center justify-between">
@@ -537,7 +539,6 @@ export default function MarketplacePage() {
 							</Pagination>
 						</div>
 					)}
-				</div>
 			</div>
 
 			{/* Mobile Bottom Navigation */}
@@ -553,6 +554,15 @@ export default function MarketplacePage() {
 					isMobile={isMobile}
 				/>
 			)}
+			{/* Bottom Navigation */}
+			<MarketplaceSidebar
+				selectedCategory={selectedCategory}
+				categories={categories}
+				onCategoryChange={setSelectedCategory}
+				onCreateListing={handleCreateListing}
+				selectedLocation={selectedLocation}
+				onLocationChange={setSelectedLocation}
+			/>
 
 			{/* Price range filter sheet */}
 			<Sheet open={showPriceFilter} onOpenChange={setShowPriceFilter}>

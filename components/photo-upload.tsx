@@ -71,6 +71,21 @@ async function uploadToCloudinary(file: File): Promise<string> {
     console.error('Cloudinary upload error:', error);
     throw new Error('Failed to upload image. Please try again.');
   }
+  const url = `https://api.cloudinary.com/v1_1/dhcdhsgax/image/upload`;
+  const unsigned_preset = 'ml_default'; // Using default unsigned preset
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', unsigned_preset);
+
+  const res = await fetch(url, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!res.ok) throw new Error('Cloudinary upload failed');
+  
+  const data = await res.json();
+  return data.secure_url;
 }
 
 export function PhotoUpload({ 
