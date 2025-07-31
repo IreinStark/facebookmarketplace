@@ -1,10 +1,7 @@
 "use client"
 
 import React, { useState } from 'react'
-import { MapPin, Filter, Grid3X3, List, Plus, Search, X, Navigation } from 'lucide-react'
-
-import React from 'react'
-import { Filter, Grid3X3, List, Plus, Clock, TrendingUp } from 'lucide-react'
+import { MapPin, Filter, Grid3X3, List, Plus, Search, X, Navigation, Clock, TrendingUp } from 'lucide-react'
 
 import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
@@ -17,6 +14,9 @@ interface MarketplaceSidebarProps {
   categories: string[]
   onCategoryChange: (category: string) => void
   onCreateListing?: () => void
+  // Added missing props
+  selectedLocation?: string
+  onLocationChange?: (location: string) => void
 }
 
 // Available locations with regions
@@ -40,7 +40,9 @@ export function MarketplaceSidebar({
   selectedCategory,
   categories,
   onCategoryChange,
-  onCreateListing
+  onCreateListing,
+  selectedLocation = "All Locations", // Added default value
+  onLocationChange = () => {} // Added default function
 }: MarketplaceSidebarProps) {
   const [showLocationSearch, setShowLocationSearch] = useState(false)
   const [locationSearchTerm, setLocationSearchTerm] = useState("")
@@ -74,6 +76,7 @@ export function MarketplaceSidebar({
       alert('Geolocation is not supported by this browser.')
     }
   }
+
   return (
     <div className="w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 h-screen sticky top-16 overflow-y-auto transition-colors">
       <div className="p-4 space-y-4">
@@ -120,9 +123,9 @@ export function MarketplaceSidebar({
               </Button>
 
               {showLocationSearch && (
-                <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
                   {/* Search input */}
-                  <div className="p-2 border-b border-gray-100">
+                  <div className="p-2 border-b border-gray-100 dark:border-gray-700">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <Input
@@ -130,7 +133,7 @@ export function MarketplaceSidebar({
                         placeholder="Search locations..."
                         value={locationSearchTerm}
                         onChange={(e) => setLocationSearchTerm(e.target.value)}
-                        className="pl-10 pr-8"
+                        className="pl-10 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                         autoFocus
                       />
                       {locationSearchTerm && (
@@ -151,15 +154,15 @@ export function MarketplaceSidebar({
                     {filteredLocations.map((location) => (
                       <button
                         key={location.name}
-                        className={`w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center justify-between ${
-                          selectedLocation === location.name ? 'bg-blue-50 text-blue-600' : ''
+                        className={`w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between transition-colors ${
+                          selectedLocation === location.name ? 'bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : 'dark:text-gray-100'
                         }`}
                         onClick={() => handleLocationSelect(location.name)}
                       >
                         <div>
                           <div className="font-medium">{location.name}</div>
                           {location.region && (
-                            <div className="text-xs text-gray-500">{location.region} region</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{location.region} region</div>
                           )}
                         </div>
                         {selectedLocation === location.name && (
@@ -169,7 +172,7 @@ export function MarketplaceSidebar({
                     ))}
 
                     {filteredLocations.length === 0 && (
-                      <div className="px-3 py-4 text-center text-gray-500">
+                      <div className="px-3 py-4 text-center text-gray-500 dark:text-gray-400">
                         No locations found
                       </div>
                     )}
@@ -183,7 +186,7 @@ export function MarketplaceSidebar({
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full text-gray-500 hover:text-gray-700"
+                className="w-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 onClick={() => handleLocationSelect("All Locations")}
               >
                 <X className="w-4 h-4 mr-1" />
@@ -192,7 +195,6 @@ export function MarketplaceSidebar({
             )}
           </CardContent>
         </Card>
-
 
         {/* Category filter */}
         <Card className="dark:bg-gray-800 dark:border-gray-700">
@@ -239,7 +241,6 @@ export function MarketplaceSidebar({
               <List className="w-4 h-4 mr-2" />
               Price: Low to high
             </Button>
-
             <Button variant="outline" className="w-full justify-start dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
               <TrendingUp className="w-4 h-4 mr-2" />
               Most popular

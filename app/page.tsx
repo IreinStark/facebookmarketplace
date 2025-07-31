@@ -14,20 +14,52 @@ import { Label } from "@components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@components/ui/pagination"
 import { Alert, AlertDescription } from "@components/ui/alert"
+import { Badge } from "@components/ui/badge"
+import { Input } from "@components/ui/input"
+import { MessageCircle, Plus, Filter, Search, MapPin } from "lucide-react"
+
+// Import hooks and utilities
 import { useSocket } from "../hooks/use-socket"
-
-// --- Import REAL Firebase product functions (from firebase-utils) ---
 import { subscribeToProducts as subscribeToRealProducts, deleteProduct, type Product } from "../lib/firebase-utils"
-
-// --- Import MOCK product functions (from a new mock-data file) ---
-import { subscribeMockProducts } from "../lib/mock-data-utils" // We'll create this file
-
+import { subscribeMockProducts } from "../lib/mock-data-utils"
 import { getUserProfile, type UserProfile } from "../lib/user-utils"
 
-// Import new components
+// Type definitions for component compatibility
+interface MarketplaceNavUser {
+	displayName?: string | undefined
+	photoURL?: string | undefined
+	email?: string | undefined
+}
+
+interface ProductCardProduct {
+	id: string
+	title: string
+	price: number
+	description: string
+	category: string
+	location: string
+	images?: string[]
+	seller?: string
+	userId: string
+	sellerId?: string // Add sellerId for backward compatibility
+	sellerName?: string
+	sellerAvatar?: string
+	sellerProfile?: {
+		displayName?: string
+		photoURL?: string
+	}
+	createdAt: {
+		toDate: () => Date
+		toMillis: () => number
+	}
+	views?: number
+	condition?: string
+	tags?: string[]
+}
+
+// Import components
 import { MarketplaceNav } from "../components/marketplace-nav"
-import { MarketplaceSidebar } from "../components/marketplace-sidebar"
-import { ProductCard } from "../components/product-card" // Fixed import path
+import { ProductCard } from "../components/product-card"
 
 // Location data with coordinates (lat, lng)
 const locationData = [
@@ -45,12 +77,118 @@ const locationData = [
 	{ name: "Yeni Iskele", lat: 35.2667, lng: 33.9333, region: "Eastern" },
 ]
 
-// Categories for filtering (matching the sell page categories)
+// Categories for filtering
 const categories = ["All", "Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"]
 
+// Simplified Sidebar Component
+const SimplifiedSidebar: React.FC<{
+	selectedCategory: string
+	onCategoryChange: (category: string) => void
+	onCreateListing: () => void
+	onOpenChat: () => void
+	selectedLocation: string
+	onLocationChange: (location: string) => void
+	onPriceFilterClick: () => void
+	sortBy: string
+	onSortChange: (sort: string) => void
+}> = ({ 
+	selectedCategory, 
+	onCategoryChange, 
+	onCreateListing, 
+	onOpenChat,
+	selectedLocation,
+	onLocationChange,
+	onPriceFilterClick,
+	sortBy,
+	onSortChange
+}) => {
+	return (
+		<div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 space-y-4">
+			{/* Quick Actions */}
+			<div className="space-y-2">
+				<Button onClick={onCreateListing} className="w-full" size="sm">
+					<Plus className="w-4 h-4 mr-2" />
+					Create Listing
+				</Button>
+				<Button onClick={onOpenChat} variant="outline" className="w-full" size="sm">
+					<MessageCircle className="w-4 h-4 mr-2" />
+					Open Chat
+				</Button>
+			</div>
+
+			{/* Categories */}
+			<div>
+				<h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-3">Categories</h3>
+				<div className="space-y-1">
+					{categories.map((category) => (
+						<button
+							key={category}
+							onClick={() => onCategoryChange(category)}
+							className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+								selectedCategory === category
+									? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+									: "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+							}`}
+						>
+							{category}
+						</button>
+					))}
+				</div>
+			</div>
+
+			{/* Location Filter */}
+			<div>
+				<h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-3">Location</h3>
+				<Select value={selectedLocation} onValueChange={onLocationChange}>
+					<SelectTrigger className="w-full">
+						<SelectValue placeholder="Select location" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="All Locations">All Locations</SelectItem>
+						{locationData.map((location) => (
+							<SelectItem key={location.name} value={location.name}>
+								{location.name}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+			</div>
+
+			{/* Sort Options */}
+			<div>
+				<h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-3">Sort By</h3>
+				<Select value={sortBy} onValueChange={onSortChange}>
+					<SelectTrigger className="w-full">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="newest">Newest First</SelectItem>
+						<SelectItem value="oldest">Oldest First</SelectItem>
+						<SelectItem value="priceAsc">Price: Low to High</SelectItem>
+						<SelectItem value="priceDesc">Price: High to Low</SelectItem>
+					</SelectContent>
+				</Select>
+			</div>
+
+			{/* Price Filter */}
+			<div>
+				<Button 
+					variant="outline" 
+					size="sm" 
+					onClick={onPriceFilterClick}
+					className="w-full"
+				>
+					<Filter className="w-4 h-4 mr-2" />
+					Price Filter
+				</Button>
+			</div>
+		</div>
+	)
+}
+
 export default function MarketplacePage() {
-	// --- CONFIGURATION: Set this to true to use mock products during development ---
-	const useMockProducts = true; // Set to `false` when you want to use real Firebase data for products
+	// Configuration: Set this to true to use mock products during development
+	const useMockProducts = true
 	
 	const router = useRouter()
 	
@@ -61,6 +199,7 @@ export default function MarketplacePage() {
 	const [sortBy, setSortBy] = useState("newest")
 	const [showPriceFilter, setShowPriceFilter] = useState(false)
 	const [priceRange, setPriceRange] = useState([0, 2000])
+	const [isChatOpen, setIsChatOpen] = useState(false)
 	
 	// Pagination state
 	const [currentPage, setCurrentPage] = useState(1)
@@ -75,7 +214,7 @@ export default function MarketplacePage() {
 	const [favorites, setFavorites] = useState<string[]>([])
 
 	// Products state
-	const [products, setProducts] = useState<Product[]>([])
+	const [products, setProducts] = useState<ProductCardProduct[]>([])
 	const [productsLoading, setProductsLoading] = useState(true)
 
 	// Initialize Socket.io for real-time chat
@@ -97,9 +236,6 @@ export default function MarketplacePage() {
 					const profile = await getUserProfile(firebaseUser)
 					setUserProfile(profile)
 
-					// If favorites are stored in user profile, set them here:
-					// setFavorites(profile?.favorites || []);
-
 					setError(null)
 				} else {
 					setUser(null)
@@ -108,6 +244,7 @@ export default function MarketplacePage() {
 					setFavorites([])
 				}
 			} catch (err: any) {
+				console.error("Auth error:", err)
 				setError("Failed to load user data: " + (err?.message || "Unknown error"))
 			} finally {
 				setLoading(false)
@@ -120,36 +257,58 @@ export default function MarketplacePage() {
 	useEffect(() => {
 		setProductsLoading(true)
 
-		let unsubscribe: () => void;
+		let unsubscribe: () => void
 
 		if (useMockProducts) {
-			// Use mock data for products
-			console.log('Using mock products...');
+			console.log('Using mock products...')
 			unsubscribe = subscribeMockProducts((mockProducts) => {
-				console.log('Received mock products:', mockProducts.length, 'products');
-				setProducts(mockProducts as Product[]);
-				setProductsLoading(false);
-			});
+				console.log('Received mock products:', mockProducts.length, 'products')
+				// Transform mock products to match ProductCardProduct interface
+				const transformedProducts: ProductCardProduct[] = mockProducts.map(product => ({
+					...product,
+					userId: product.sellerId,
+					seller: product.sellerName,
+					sellerProfile: {
+						displayName: product.sellerName,
+						photoURL: product.sellerAvatar
+					},
+					createdAt: {
+						toDate: () => new Date(),
+						toMillis: () => Date.now()
+					}
+				}))
+				setProducts(transformedProducts)
+				setProductsLoading(false)
+			})
 		} else {
-			// Use real Firebase data for products
-			console.log('Using real Firebase products...');
+			console.log('Using real Firebase products...')
 			unsubscribe = subscribeToRealProducts((firebaseProducts) => {
-				console.log('Received real products from Firebase:', firebaseProducts.length, 'products');
-				setProducts(firebaseProducts);
-				setProductsLoading(false);
-			});
+				console.log('Received real products from Firebase:', firebaseProducts.length, 'products')
+				// Transform Firebase products to match ProductCardProduct interface
+				const transformedProducts: ProductCardProduct[] = firebaseProducts.map(product => ({
+					...product,
+					userId: product.seller || product.sellerId || '',
+					sellerId: product.seller || product.sellerId,
+					sellerProfile: product.sellerProfile ? {
+						displayName: product.sellerProfile.displayName,
+						photoURL: product.sellerProfile.avatar
+					} : undefined
+				}))
+				setProducts(transformedProducts)
+				setProductsLoading(false)
+			})
 		}
 
-		// Cleanup subscription on unmount
-		return () => unsubscribe();
-	}, [useMockProducts]);
+		return () => unsubscribe()
+	}, [useMockProducts])
 
 	// Filter and sort products based on user selections
 	const filteredProducts = products.filter((product) => {
 		const matchesCategory = selectedCategory === "All" || product.category === selectedCategory
 		const matchesLocation = selectedLocation === "All Locations" || product.location === selectedLocation
-		const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-		                     product.description.toLowerCase().includes(searchTerm.toLowerCase())
+		const matchesSearch = searchTerm === "" || 
+			product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			product.description.toLowerCase().includes(searchTerm.toLowerCase())
 		const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1]
 
 		return matchesCategory && matchesLocation && matchesSearch && matchesPrice
@@ -183,7 +342,7 @@ export default function MarketplacePage() {
 	// Handle actions
 	const handleProductClick = (productId: string) => {
 		console.log('Product clicked:', productId)
-		router.push(`/product/${productId}`)
+		router.push(`/products/${productId}`)
 	}
 
 	const handleFavoriteClick = (productId: string) => {
@@ -197,12 +356,18 @@ export default function MarketplacePage() {
 
 	const handleMessageClick = (productId: string) => {
 		console.log('Message clicked:', productId)
+		setIsChatOpen(true)
+		// You can pass the productId to the chat interface
 		router.push(`/messages?product=${productId}`)
 	}
 
 	const handleDeleteProduct = async (productId: string) => {
 		if (!user) {
 			console.error('User not authenticated')
+			return
+		}
+		
+		if (!window.confirm('Are you sure you want to delete this listing?')) {
 			return
 		}
 		
@@ -227,20 +392,19 @@ export default function MarketplacePage() {
 		}
 	}
 
-	// Refresh user profile and favorites periodically
-	useEffect(() => {
-		const interval = setInterval(() => {
-			if (isLoggedIn && user) {
-				getUserProfile(user).then((profile) => {
-					setUserProfile(profile)
-				}).catch((err) => {
-					console.error("Error fetching user profile: ", err)
-				})
-			}
-		}, 5 * 60 * 1000) // Refresh every 5 minutes
+	const handleOpenChat = () => {
+		if (isLoggedIn) {
+			setIsChatOpen(true)
+			router.push('/messages')
+		} else {
+			router.push('/auth/login')
+		}
+	}
 
-		return () => clearInterval(interval)
-	}, [isLoggedIn, user])
+	// Reset to first page when filters change
+	useEffect(() => {
+		setCurrentPage(1)
+	}, [selectedCategory, selectedLocation, searchTerm, priceRange, sortBy])
 
 	// Show loading state while initializing
 	if (loading) {
@@ -261,6 +425,14 @@ export default function MarketplacePage() {
 				<Alert className="max-w-md">
 					<AlertDescription>
 						{error}
+						<Button 
+							variant="outline" 
+							size="sm" 
+							className="mt-2"
+							onClick={() => window.location.reload()}
+						>
+							Retry
+						</Button>
 					</AlertDescription>
 				</Alert>
 			</div>
@@ -279,33 +451,70 @@ export default function MarketplacePage() {
 			/>
 
 			<div className="flex">
-				{/* Sidebar */}
-				<MarketplaceSidebar
+				{/* Simplified Sidebar */}
+				<SimplifiedSidebar
 					selectedCategory={selectedCategory}
-					categories={categories}
 					onCategoryChange={setSelectedCategory}
 					onCreateListing={handleCreateListing}
+					onOpenChat={handleOpenChat}
+					selectedLocation={selectedLocation}
+					onLocationChange={setSelectedLocation}
+					onPriceFilterClick={() => setShowPriceFilter(true)}
+					sortBy={sortBy}
+					onSortChange={setSortBy}
 				/>
 
 				{/* Main content */}
 				<div className="flex-1 p-6">
+					{/* Search bar for mobile */}
+					<div className="md:hidden mb-4">
+						<div className="relative">
+							<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+							<Input
+								type="text"
+								placeholder="Search products..."
+								value={searchTerm}
+								onChange={(e) => setSearchTerm(e.target.value)}
+								className="pl-10"
+							/>
+						</div>
+					</div>
+
 					{/* Results header */}
 					<div className="mb-6">
-						<h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-							{selectedCategory === "All" ? "All listings" : selectedCategory}
-						</h2>
-						<p className="text-gray-600 dark:text-gray-400">
-							{productsLoading ? (
-								"Loading products..."
-							) : (
-								<>
-									{sortedProducts.length} listing{sortedProducts.length !== 1 ? 's' : ''} found
-									{selectedLocation !== "All Locations" && ` in ${selectedLocation}`}
-									{searchTerm && ` matching "${searchTerm}"`}
-									{totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
-								</>
+						<div className="flex items-center justify-between">
+							<div>
+								<h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+									{selectedCategory === "All" ? "All listings" : selectedCategory}
+								</h2>
+								<p className="text-gray-600 dark:text-gray-400">
+									{productsLoading ? (
+										"Loading products..."
+									) : (
+										<>
+											{sortedProducts.length} listing{sortedProducts.length !== 1 ? 's' : ''} found
+											{selectedLocation !== "All Locations" && (
+												<Badge variant="secondary" className="ml-2">
+													📍 {selectedLocation}
+												</Badge>
+											)}
+											{searchTerm && (
+												<Badge variant="secondary" className="ml-2">
+													🔍 "{searchTerm}"
+												</Badge>
+											)}
+										</>
+									)}
+								</p>
+							</div>
+							
+							{/* Page indicator */}
+							{totalPages > 1 && (
+								<div className="text-sm text-gray-500 dark:text-gray-400">
+									Page {currentPage} of {totalPages}
+								</div>
 							)}
-						</p>
+						</div>
 					</div>
 
 					{/* Products grid */}
@@ -334,11 +543,26 @@ export default function MarketplacePage() {
 									: "Be the first to list an item in this marketplace!"
 								}
 							</p>
-							{filteredProducts.length !== products.length && (
-								<p className="text-sm text-gray-500 dark:text-gray-400">
-									Total products: {products.length}, Filtered: {filteredProducts.length}
-								</p>
-							)}
+							<div className="flex gap-2 justify-center">
+								<Button onClick={handleCreateListing} size="sm">
+									<Plus className="w-4 h-4 mr-2" />
+									Create Listing
+								</Button>
+								{(searchTerm || selectedLocation !== "All Locations" || selectedCategory !== "All") && (
+									<Button 
+										variant="outline" 
+										size="sm"
+										onClick={() => {
+											setSearchTerm("")
+											setSelectedLocation("All Locations")
+											setSelectedCategory("All")
+											setPriceRange([0, 2000])
+										}}
+									>
+										Clear Filters
+									</Button>
+								)}
+							</div>
 						</div>
 					) : (
 						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -353,7 +577,7 @@ export default function MarketplacePage() {
 									onDeleteClick={handleDeleteProduct}
 									onUserClick={handleUserClick}
 									isFavorited={favorites.includes(product.id)}
-									showDeleteButton={user?.uid === product.sellerId}
+									showDeleteButton={user?.uid === (product.sellerId || product.userId)}
 								/>
 							))}
 						</div>
@@ -361,17 +585,17 @@ export default function MarketplacePage() {
 
 					{/* Pagination */}
 					{totalPages > 1 && (
-						<div className="mt-8">
+						<div className="mt-8 flex justify-center">
 							<Pagination>
 								<PaginationContent>
 									<PaginationItem>
 										<PaginationPrevious 
 											href="#" 
-											onClick={(e) => {
+											onClick={(e: React.MouseEvent) => {
 												e.preventDefault();
 												if (currentPage > 1) handlePageChange(currentPage - 1);
 											}}
-											className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+											className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
 										/>
 									</PaginationItem>
 									{Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
@@ -389,11 +613,12 @@ export default function MarketplacePage() {
 											<PaginationItem key={page}>
 												<PaginationLink
 													href="#"
-													onClick={(e) => {
+													onClick={(e: React.MouseEvent) => {
 														e.preventDefault();
 														handlePageChange(page);
 													}}
 													isActive={currentPage === page}
+													className="cursor-pointer"
 												>
 													{page}
 												</PaginationLink>
@@ -403,11 +628,11 @@ export default function MarketplacePage() {
 									<PaginationItem>
 										<PaginationNext 
 											href="#" 
-											onClick={(e) => {
+											onClick={(e: React.MouseEvent) => {
 												e.preventDefault();
 												if (currentPage < totalPages) handlePageChange(currentPage + 1);
 											}}
-											className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+											className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
 										/>
 									</PaginationItem>
 								</PaginationContent>
@@ -423,33 +648,38 @@ export default function MarketplacePage() {
 					<SheetHeader>
 						<SheetTitle>Filter by Price</SheetTitle>
 					</SheetHeader>
-					<div className="p-4">
-						<Label htmlFor="price-range" className="block text-sm font-medium text-gray-700 mb-4">
-							Price range: ${priceRange[0]} - ${priceRange[1]}
-						</Label>
-						<Slider
-							id="price-range"
-							value={priceRange}
-							onValueChange={setPriceRange}
-							min={0}
-							max={2000}
-							step={10}
-							className="mt-2"
-						/>
-						<div className="flex justify-between text-xs text-gray-500 mt-2">
-							<span>$0</span>
-							<span>$2000</span>
+					<div className="p-4 space-y-6">
+						<div>
+							<Label htmlFor="price-range" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+								Price range: ${priceRange[0]} - ${priceRange[1]}
+							</Label>
+							<Slider
+								id="price-range"
+								value={priceRange}
+								onValueChange={setPriceRange}
+								min={0}
+								max={2000}
+								step={10}
+								className="mt-2"
+							/>
+							<div className="flex justify-between text-xs text-gray-500 mt-2">
+								<span>$0</span>
+								<span>$2000</span>
+							</div>
 						</div>
 					</div>
 					<div className="flex justify-end p-4 gap-2">
 						<Button 
 							variant="outline" 
-							onClick={() => setShowPriceFilter(false)}
+							onClick={() => {
+								setPriceRange([0, 2000])
+								setShowPriceFilter(false)
+							}}
 						>
-							Cancel
+							Reset
 						</Button>
 						<Button onClick={() => setShowPriceFilter(false)}>
-							Apply
+							Apply Filter
 						</Button>
 					</div>
 				</SheetContent>

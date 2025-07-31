@@ -1,318 +1,454 @@
+// lib/mock-data-utils.ts
 import { Timestamp } from "firebase/firestore"
 
-// Mock user profiles for sellers
-export const mockUserProfiles = [
+// Enhanced user profile interface
+export interface UserProfile {
+  uid: string
+  displayName: string
+  email: string
+  location: string
+  joinedAt: Date
+  avatar?: string
+  rating?: number
+  totalSales?: number
+}
+
+// Enhanced product interface combining both approaches
+export interface MockProduct {
+  id: string
+  title: string
+  description: string
+  price: number
+  category: string
+  location: string
+  images: string[]
+  sellerId: string
+  seller: string // Display name for quick access
+  sellerProfile: UserProfile // Full profile object
+  condition: string // From File 1
+  tags: string[] // From File 1
+  createdAt: Timestamp // From File 2
+  updatedAt: Timestamp // From File 2
+  status: 'active' | 'sold' | 'inactive' // From File 2
+}
+
+// Enhanced mock user profiles with additional fields
+export const mockUserProfiles: UserProfile[] = [
   {
     uid: "user1",
     displayName: "Ahmed Hassan",
     email: "ahmed@example.com",
     location: "Lefkosa",
-    joinedAt: new Date("2024-01-15")
+    joinedAt: new Date("2024-01-15"),
+    avatar: "https://picsum.photos/100/100?random=10",
+    rating: 4.8,
+    totalSales: 23
   },
   {
     uid: "user2",
     displayName: "Maria Georgiou",
     email: "maria@example.com",
     location: "Girne",
-    joinedAt: new Date("2024-02-20")
+    joinedAt: new Date("2024-02-20"),
+    avatar: "https://picsum.photos/100/100?random=11",
+    rating: 4.9,
+    totalSales: 31
   },
   {
     uid: "user3",
     displayName: "John Smith",
     email: "john@example.com",
     location: "Famagusta",
-    joinedAt: new Date("2024-03-10")
+    joinedAt: new Date("2024-03-10"),
+    avatar: "https://picsum.photos/100/100?random=12",
+    rating: 4.6,
+    totalSales: 18
   },
   {
     uid: "user4",
     displayName: "Ayşe Özkan",
     email: "ayse@example.com",
     location: "Iskele",
-    joinedAt: new Date("2024-01-25")
+    joinedAt: new Date("2024-01-25"),
+    avatar: "https://picsum.photos/100/100?random=13",
+    rating: 4.7,
+    totalSales: 27
   },
   {
     uid: "user5",
     displayName: "Chris Wilson",
     email: "chris@example.com",
     location: "Guzelyurt",
-    joinedAt: new Date("2024-02-05")
+    joinedAt: new Date("2024-02-05"),
+    avatar: "https://picsum.photos/100/100?random=14",
+    rating: 4.5,
+    totalSales: 15
+  },
+  {
+    uid: "user6",
+    displayName: "Elena Popov",
+    email: "elena@example.com",
+    location: "Lapta",
+    joinedAt: new Date("2024-03-20"),
+    avatar: "https://picsum.photos/100/100?random=15",
+    rating: 4.9,
+    totalSales: 42
+  },
+  {
+    uid: "user7",
+    displayName: "Mehmet Yılmaz",
+    email: "mehmet@example.com",
+    location: "Alsancak",
+    joinedAt: new Date("2024-01-08"),
+    avatar: "https://picsum.photos/100/100?random=16",
+    rating: 4.4,
+    totalSales: 12
   }
 ]
 
-// Mock product data that matches your Product interface
-// Ensure this structure matches the 'Product' type from your 'firebase-utils'
-export const mockProducts = [
+// Categories and locations for consistency
+export const categories = [
+  "All", "Electronics", "Furniture", "Sports", "Clothing", 
+  "Books", "Home & Garden", "Automotive", "Other"
+]
+
+export const locations = [
+  "Lefkosa", "Girne", "Famagusta", "Iskele", "Guzelyurt", 
+  "Lapta", "Alsancak", "Catalkoy", "Esentepe", "Bogaz"
+]
+
+export const conditions = ["New", "Like New", "Good", "Fair", "Poor"]
+
+// Enhanced mock products combining best features from both files
+export const mockProducts: MockProduct[] = [
   {
     id: "prod1",
-    title: "iPhone 14 Pro - Like New",
-    description: "Barely used iPhone 14 Pro in excellent condition. Comes with original box, charger, and protective case. No scratches or dents.",
-    price: 850,
+    title: "iPhone 14 Pro Max - 256GB",
+    description: "Excellent condition iPhone 14 Pro Max, 256GB, Space Black. Includes original box, charger, and protective case. No scratches or dents.",
+    price: 1200,
     category: "Electronics",
     location: "Lefkosa",
+    images: ["https://picsum.photos/400/400?random=1", "https://picsum.photos/400/400?random=2"],
     sellerId: "user1",
     seller: "Ahmed Hassan",
     sellerProfile: mockUserProfiles[0],
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)), // 2 days ago
+    condition: "Like New",
+    tags: ["phone", "apple", "iphone", "smartphone"],
+    createdAt: Timestamp.fromDate(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)),
     updatedAt: Timestamp.fromDate(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)),
-    status: "active",
-    images: ["https://example.com/iphone1.jpg"]
+    status: "active"
   },
   {
     id: "prod2",
-    title: "Vintage Wooden Dining Table",
-    description: "Beautiful handcrafted wooden dining table that seats 6 people. Perfect for family gatherings. Minor wear consistent with age.",
-    price: 320,
+    title: "Modern Sofa Set - 3 Piece",
+    description: "Beautiful 3-piece modern sofa set in gray fabric. Perfect for living room. Comfortable and stylish, seats up to 6 people.",
+    price: 800,
     category: "Furniture",
     location: "Girne",
+    images: ["https://picsum.photos/400/400?random=3"],
     sellerId: "user2",
     seller: "Maria Georgiou",
     sellerProfile: mockUserProfiles[1],
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)), // 5 days ago
+    condition: "Good",
+    tags: ["sofa", "furniture", "living room", "gray"],
+    createdAt: Timestamp.fromDate(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)),
     updatedAt: Timestamp.fromDate(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)),
-    status: "active",
-    images: ["https://example.com/table1.jpg", "https://example.com/table2.jpg"]
+    status: "active"
   },
   {
     id: "prod3",
-    title: "Mountain Bike - Trek X-Caliber",
-    description: "Well-maintained Trek mountain bike, perfect for trails and city riding. Recently serviced with new tires and brake pads.",
+    title: "Trek Mountain Bike X-Caliber",
+    description: "Well-maintained Trek mountain bike, perfect for trails and city riding. Recently serviced with new tires and brake pads. 21-speed aluminum frame.",
     price: 450,
     category: "Sports",
     location: "Famagusta",
+    images: ["https://picsum.photos/400/400?random=4", "https://picsum.photos/400/400?random=5"],
     sellerId: "user3",
     seller: "John Smith",
     sellerProfile: mockUserProfiles[2],
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)), // 1 day ago
+    condition: "Good",
+    tags: ["bike", "mountain", "sports", "trek", "cycling"],
+    createdAt: Timestamp.fromDate(new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)),
     updatedAt: Timestamp.fromDate(new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)),
-    status: "active",
-    images: ["https://example.com/bike1.jpg"]
+    status: "active"
   },
   {
     id: "prod4",
-    title: "Designer Winter Coat - Size M",
-    description: "Luxury winter coat from premium brand. Worn only a few times, excellent condition. Perfect for cold weather.",
-    price: 180,
+    title: "Vintage Leather Jacket - Size M",
+    description: "Genuine leather jacket, vintage style. Size M. Perfect for winter. High-quality leather with classic design.",
+    price: 120,
     category: "Clothing",
     location: "Lefkosa",
+    images: ["https://picsum.photos/400/400?random=6"],
     sellerId: "user4",
     seller: "Ayşe Özkan",
     sellerProfile: mockUserProfiles[3],
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)), // 1 week ago
+    condition: "Good",
+    tags: ["jacket", "leather", "vintage", "winter", "fashion"],
+    createdAt: Timestamp.fromDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
     updatedAt: Timestamp.fromDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)),
-    status: "active",
-    images: ["https://example.com/coat1.jpg", "https://example.com/coat2.jpg"]
+    status: "active"
   },
   {
     id: "prod5",
     title: "Programming Books Collection",
-    description: "Collection of 8 programming books including React, Node.js, and Python guides. Great for students and developers.",
-    price: 65,
+    description: "Collection of 10 programming books including JavaScript, Python, React, and Node.js. Great for students and developers.",
+    price: 80,
     category: "Books",
-    location: "Iskele",
+    location: "Girne",
+    images: ["https://picsum.photos/400/400?random=7"],
     sellerId: "user5",
     seller: "Chris Wilson",
     sellerProfile: mockUserProfiles[4],
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)), // 3 days ago
+    condition: "Good",
+    tags: ["books", "programming", "education", "javascript", "python"],
+    createdAt: Timestamp.fromDate(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)),
     updatedAt: Timestamp.fromDate(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)),
-    status: "active",
-    images: ["https://example.com/books1.jpg"]
+    status: "active"
   },
   {
     id: "prod6",
-    title: "Samsung 55\" 4K Smart TV",
-    description: "Excellent condition Samsung Smart TV with 4K resolution. Perfect for streaming and gaming. Includes remote and all cables.",
-    price: 520,
+    title: "Gaming Setup - Complete RGB",
+    description: "Complete gaming setup with RGB mechanical keyboard, gaming mouse, headset, and large mousepad. Perfect for competitive gaming.",
+    price: 300,
     category: "Electronics",
-    location: "Guzelyurt",
-    sellerId: "user1",
-    seller: "Ahmed Hassan",
-    sellerProfile: mockUserProfiles[0],
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 4 * 24 * 60 * 60 * 1000)), // 4 days ago
+    location: "Iskele",
+    images: ["https://picsum.photos/400/400?random=8", "https://picsum.photos/400/400?random=9"],
+    sellerId: "user6",
+    seller: "Elena Popov",
+    sellerProfile: mockUserProfiles[5],
+    condition: "Like New",
+    tags: ["gaming", "keyboard", "mouse", "rgb", "setup"],
+    createdAt: Timestamp.fromDate(new Date(Date.now() - 4 * 24 * 60 * 60 * 1000)),
     updatedAt: Timestamp.fromDate(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)),
-    status: "active",
-    images: ["https://example.com/tv1.jpg", "https://example.com/tv2.jpg"]
+    status: "active"
   },
   {
     id: "prod7",
-    title: "Comfortable Office Chair",
-    description: "Ergonomic office chair with lumbar support. Perfect for working from home. Adjustable height and armrests.",
-    price: 150,
-    category: "Furniture",
-    location: "Girne",
-    sellerId: "user2",
-    seller: "Maria Georgiou",
-    sellerProfile: mockUserProfiles[1],
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)), // 6 days ago
-    updatedAt: Timestamp.fromDate(new Date(Date.now() - 4 * 24 * 60 * 60 * 1000)),
-    status: "active",
-    images: ["https://example.com/chair1.jpg"]
-  },
-  {
-    id: "prod8",
-    title: "Tennis Racket - Wilson Pro Staff",
-    description: "Professional tennis racket in great condition. Comes with protective cover and extra grip tape.",
-    price: 95,
-    category: "Sports",
-    location: "Famagusta",
-    sellerId: "user3",
-    seller: "John Smith",
-    sellerProfile: mockUserProfiles[2],
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 8 * 24 * 60 * 60 * 1000)), // 8 days ago
-    updatedAt: Timestamp.fromDate(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)),
-    status: "active",
-    images: ["https://example.com/racket1.jpg"]
-  },
-  {
-    id: "prod9",
-    title: "Vintage Leather Jacket - Size L",
-    description: "Authentic vintage leather jacket with classic design. Well-preserved and stylish. Perfect for casual wear.",
-    price: 220,
-    category: "Clothing",
-    location: "Lefkosa",
-    sellerId: "user4",
-    seller: "Ayşe Özkan",
-    sellerProfile: mockUserProfiles[3],
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)), // 10 days ago
-    updatedAt: Timestamp.fromDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
-    status: "active",
-    images: ["https://example.com/jacket1.jpg", "https://example.com/jacket2.jpg"]
-  },
-  {
-    id: "prod10",
-    title: "Garden Tools Set",
-    description: "Complete garden tools set including spade, rake, pruning shears, and watering can. Perfect for home gardening.",
-    price: 75,
-    category: "Home & Garden",
-    location: "Iskele",
-    sellerId: "user5",
-    seller: "Chris Wilson",
-    sellerProfile: mockUserProfiles[4],
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 12 * 24 * 60 * 60 * 1000)), // 12 days ago
-    updatedAt: Timestamp.fromDate(new Date(Date.now() - 8 * 24 * 60 * 60 * 1000)),
-    status: "active",
-    images: ["https://example.com/tools1.jpg"]
-  },
-  {
-    id: "prod11",
-    title: "MacBook Air M1 - 256GB",
-    description: "Apple MacBook Air with M1 chip, 8GB RAM, 256GB storage. Excellent performance for work and creative tasks. Minor signs of use.",
-    price: 750,
+    title: "Samsung 55\" 4K Smart TV",
+    description: "Excellent condition Samsung Smart TV with 4K resolution and HDR support. Perfect for streaming and gaming. Includes remote and all cables.",
+    price: 520,
     category: "Electronics",
     location: "Guzelyurt",
+    images: ["https://picsum.photos/400/400?random=10"],
     sellerId: "user1",
     seller: "Ahmed Hassan",
     sellerProfile: mockUserProfiles[0],
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)), // 2 weeks ago
-    updatedAt: Timestamp.fromDate(new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)),
-    status: "active",
-    images: ["https://example.com/macbook1.jpg", "https://example.com/macbook2.jpg"]
+    condition: "Like New",
+    tags: ["tv", "samsung", "4k", "smart tv", "entertainment"],
+    createdAt: Timestamp.fromDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)),
+    updatedAt: Timestamp.fromDate(new Date(Date.now() - 4 * 24 * 60 * 60 * 1000)),
+    status: "active"
   },
   {
-    id: "prod12",
-    title: "Modern Coffee Table - Glass Top",
-    description: "Sleek modern coffee table with tempered glass top and chrome legs. Perfect for contemporary living rooms.",
-    price: 180,
-    category: "Furniture",
-    location: "Girne",
+    id: "prod8",
+    title: "Garden Tools Set - Professional",
+    description: "Complete set of professional garden tools including shovel, rake, pruners, watering can, and hand tools. Perfect for home gardening.",
+    price: 60,
+    category: "Home & Garden",
+    location: "Guzelyurt",
+    images: ["https://picsum.photos/400/400?random=11"],
+    sellerId: "user7",
+    seller: "Mehmet Yılmaz",
+    sellerProfile: mockUserProfiles[6],
+    condition: "Good",
+    tags: ["garden", "tools", "outdoor", "gardening", "professional"],
+    createdAt: Timestamp.fromDate(new Date(Date.now() - 8 * 24 * 60 * 60 * 1000)),
+    updatedAt: Timestamp.fromDate(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)),
+    status: "active"
+  },
+  {
+    id: "prod9",
+    title: "MacBook Air M1 - 256GB",
+    description: "Apple MacBook Air with M1 chip, 8GB RAM, 256GB storage. Excellent performance for work and creative tasks. Includes charger and box.",
+    price: 750,
+    category: "Electronics",
+    location: "Lapta",
+    images: ["https://picsum.photos/400/400?random=12", "https://picsum.photos/400/400?random=13"],
     sellerId: "user2",
     seller: "Maria Georgiou",
     sellerProfile: mockUserProfiles[1],
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 9 * 24 * 60 * 60 * 1000)), // 9 days ago
-    updatedAt: Timestamp.fromDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)),
-    status: "active",
-    images: ["https://example.com/coffeetable1.jpg"]
+    condition: "Good",
+    tags: ["laptop", "apple", "macbook", "m1", "computer"],
+    createdAt: Timestamp.fromDate(new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)),
+    updatedAt: Timestamp.fromDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+    status: "active"
   },
   {
-    id: "prod13",
-    title: "Gaming Headset - SteelSeries",
-    description: "High-quality gaming headset with surround sound and noise-canceling microphone. Perfect for gaming and calls.",
-    price: 85,
-    category: "Electronics",
-    location: "Famagusta",
-    sellerId: "user3",
-    seller: "John Smith",
-    sellerProfile: mockUserProfiles[2],
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 11 * 24 * 60 * 60 * 1000)), // 11 days ago
-    updatedAt: Timestamp.fromDate(new Date(Date.now() - 9 * 24 * 60 * 60 * 1000)),
-    status: "active",
-    images: ["https://example.com/headset1.jpg"]
-  },
-  {
-    id: "prod14",
-    title: "Car Tire Set - 205/55R16",
-    description: "Set of 4 car tires in good condition with plenty of tread remaining. Suitable for most compact and mid-size cars.",
-    price: 280,
+    id: "prod10",
+    title: "Car Tires - Set of 4 (205/55R16)",
+    description: "Brand new set of 4 summer tires, 205/55R16. Never used, still have manufacturer stickers. Perfect for compact cars.",
+    price: 400,
     category: "Automotive",
-    location: "Lefkosa",
+    location: "Alsancak",
+    images: ["https://picsum.photos/400/400?random=14"],
     sellerId: "user4",
     seller: "Ayşe Özkan",
     sellerProfile: mockUserProfiles[3],
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 15 * 24 * 60 * 60 * 1000)), // 15 days ago
-    updatedAt: Timestamp.fromDate(new Date(Date.now() - 12 * 24 * 60 * 60 * 1000)),
-    status: "active",
-    images: ["https://example.com/tires1.jpg", "https://example.com/tires2.jpg"]
+    condition: "New",
+    tags: ["tires", "car", "automotive", "summer", "new"],
+    createdAt: Timestamp.fromDate(new Date(Date.now() - 12 * 24 * 60 * 60 * 1000)),
+    updatedAt: Timestamp.fromDate(new Date(Date.now() - 8 * 24 * 60 * 60 * 1000)),
+    status: "active"
   },
   {
-    id: "prod15",
-    title: "Vintage Camera - Canon AE-1",
-    description: "Classic Canon AE-1 film camera in working condition. Great for photography enthusiasts and collectors. Includes original lens.",
-    price: 195,
+    id: "prod11",
+    title: "Professional Camera - Canon EOS R5",
+    description: "Canon EOS R5 with 24-70mm lens and accessories. Perfect for professional photography and videography. Includes battery grip and extra batteries.",
+    price: 2200,
     category: "Electronics",
-    location: "Iskele",
+    location: "Catalkoy",
+    images: ["https://picsum.photos/400/400?random=15", "https://picsum.photos/400/400?random=16"],
+    sellerId: "user3",
+    seller: "John Smith",
+    sellerProfile: mockUserProfiles[2],
+    condition: "Like New",
+    tags: ["camera", "photography", "canon", "professional", "lens"],
+    createdAt: Timestamp.fromDate(new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)),
+    updatedAt: Timestamp.fromDate(new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)),
+    status: "active"
+  },
+  {
+    id: "prod12",
+    title: "Electric Scooter - Xiaomi Pro 2",
+    description: "Xiaomi electric scooter in great condition. Range up to 25km, foldable design. Perfect for city commuting.",
+    price: 350,
+    category: "Sports",
+    location: "Bogaz",
+    images: ["https://picsum.photos/400/400?random=17"],
     sellerId: "user5",
     seller: "Chris Wilson",
     sellerProfile: mockUserProfiles[4],
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 13 * 24 * 60 * 60 * 1000)), // 13 days ago
-    updatedAt: Timestamp.fromDate(new Date(Date.now() - 11 * 24 * 60 * 60 * 1000)),
-    status: "active",
-    images: ["https://example.com/camera1.jpg"]
+    condition: "Good",
+    tags: ["scooter", "electric", "transport", "xiaomi", "commute"],
+    createdAt: Timestamp.fromDate(new Date(Date.now() - 9 * 24 * 60 * 60 * 1000)),
+    updatedAt: Timestamp.fromDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)),
+    status: "active"
   }
 ]
 
-// Function to simulate real-time subscription for mock products
-export const subscribeMockProducts = (callback: (products: any[]) => void) => {
-  let currentProducts = [...mockProducts]; // Use a mutable copy
-
-  // Initial load
+// Enhanced subscription function with better real-time simulation
+export function subscribeMockProducts(callback: (products: MockProduct[]) => void): () => void {
+  let currentProducts = [...mockProducts]
+  
+  // Initial data load with realistic delay
   setTimeout(() => {
-    callback(currentProducts);
-  }, 500); // Shorter delay for mock data
+    callback(currentProducts)
+  }, 300)
 
-  // Simulate real-time updates (optional)
+  // Simulate realistic real-time updates
   const interval = setInterval(() => {
-    const shouldUpdate = Math.random() < 0.2; // Higher chance for visible updates
-    if (shouldUpdate) {
-      // Create a new product to add
-      const newProductId = `prod${currentProducts.length + 1}`;
-      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-      const randomLocation = locationData[Math.floor(Math.random() * locationData.length)].name;
-      const randomSellerProfile = mockUserProfiles[Math.floor(Math.random() * mockUserProfiles.length)];
-
-      const newProduct = {
-        id: newProductId,
-        title: `Newly Added Product ${newProductId}`,
-        description: `This is a new product added at ${new Date().toLocaleTimeString()}.`,
-        price: Math.floor(Math.random() * 500) + 50, // Price between 50 and 550
-        category: randomCategory === "All" ? "Other" : randomCategory, // Avoid "All" category
-        location: randomLocation,
-        sellerId: randomSellerProfile.uid,
-        seller: randomSellerProfile.displayName,
-        sellerProfile: randomSellerProfile,
-        createdAt: Timestamp.fromDate(new Date()),
-        updatedAt: Timestamp.fromDate(new Date()),
-        status: "active",
-        images: ["https://via.placeholder.com/150"] // Placeholder image
-      };
-
-      // Add the new product to the beginning (to show up as "newest")
-      currentProducts = [newProduct, ...currentProducts];
-      callback(currentProducts);
+    const updateType = Math.random()
+    
+    if (updateType < 0.3) {
+      // 30% chance: Add new product
+      const newProduct = generateRandomProduct(currentProducts.length + 1)
+      currentProducts = [newProduct, ...currentProducts]
+      callback(currentProducts)
+    } else if (updateType < 0.5 && currentProducts.length > 0) {
+      // 20% chance: Mark random product as sold
+      const randomIndex = Math.floor(Math.random() * currentProducts.length)
+      currentProducts[randomIndex] = {
+        ...currentProducts[randomIndex],
+        status: 'sold' as const,
+        updatedAt: Timestamp.fromDate(new Date())
+      }
+      callback(currentProducts)
+    } else if (updateType < 0.7 && currentProducts.length > 0) {
+      // 20% chance: Update price on random product
+      const randomIndex = Math.floor(Math.random() * currentProducts.length)
+      if (currentProducts[randomIndex].status === 'active') {
+        const priceChange = Math.random() < 0.5 ? -0.1 : 0.1 // 10% price change
+        currentProducts[randomIndex] = {
+          ...currentProducts[randomIndex],
+          price: Math.round(currentProducts[randomIndex].price * (1 + priceChange)),
+          updatedAt: Timestamp.fromDate(new Date())
+        }
+        callback(currentProducts)
+      }
     }
-  }, 10000); // Simulate updates every 10 seconds
+    // 30% chance: No update (realistic)
+  }, 15000) // Update every 15 seconds
 
   // Return cleanup function
-  return () => clearInterval(interval);
+  return () => clearInterval(interval)
 }
 
-// Just to make sure 'categories' is defined for the mock-data-utils
-const categories = ["All", "Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"];
+// Helper function to generate random products for real-time simulation
+function generateRandomProduct(id: number): MockProduct {
+  const randomCategory = categories.filter(c => c !== "All")[Math.floor(Math.random() * (categories.length - 1))]
+  const randomLocation = locations[Math.floor(Math.random() * locations.length)]
+  const randomSeller = mockUserProfiles[Math.floor(Math.random() * mockUserProfiles.length)]
+  const randomCondition = conditions[Math.floor(Math.random() * conditions.length)]
+  
+  const productTitles = [
+    "Wireless Headphones", "Office Desk", "Running Shoes", "Vintage Watch",
+    "Coffee Machine", "Board Game", "Plant Pot", "Wall Mirror", "Cookbook",
+    "Exercise Bike", "Tablet Stand", "Winter Coat", "Guitar", "Backpack"
+  ]
+  
+  const randomTitle = productTitles[Math.floor(Math.random() * productTitles.length)]
+  
+  return {
+    id: `prod${id}`,
+    title: `${randomTitle} - ${randomCondition}`,
+    description: `Recently added ${randomTitle.toLowerCase()} in ${randomCondition.toLowerCase()} condition. Added at ${new Date().toLocaleTimeString()}.`,
+    price: Math.floor(Math.random() * 500) + 50,
+    category: randomCategory,
+    location: randomLocation,
+    images: [`https://picsum.photos/400/400?random=${50 + id}`],
+    sellerId: randomSeller.uid,
+    seller: randomSeller.displayName,
+    sellerProfile: randomSeller,
+    condition: randomCondition,
+    tags: [randomTitle.toLowerCase().split(' ')[0], randomCategory.toLowerCase(), randomCondition.toLowerCase()],
+    createdAt: Timestamp.fromDate(new Date()),
+    updatedAt: Timestamp.fromDate(new Date()),
+    status: 'active'
+  }
+}
+
+// Utility functions for filtering and searching
+export function filterProductsByCategory(products: MockProduct[], category: string): MockProduct[] {
+  if (category === "All") return products
+  return products.filter(product => product.category === category)
+}
+
+export function filterProductsByLocation(products: MockProduct[], location: string): MockProduct[] {
+  if (!location) return products
+  return products.filter(product => product.location === location)
+}
+
+export function filterProductsByCondition(products: MockProduct[], condition: string): MockProduct[] {
+  if (!condition) return products
+  return products.filter(product => product.condition === condition)
+}
+
+export function searchProducts(products: MockProduct[], query: string): MockProduct[] {
+  if (!query.trim()) return products
+  
+  const searchTerm = query.toLowerCase()
+  return products.filter(product => 
+    product.title.toLowerCase().includes(searchTerm) ||
+    product.description.toLowerCase().includes(searchTerm) ||
+    product.tags.some(tag => tag.toLowerCase().includes(searchTerm)) ||
+    product.seller.toLowerCase().includes(searchTerm)
+  )
+}
+
+export function sortProducts(products: MockProduct[], sortBy: 'newest' | 'oldest' | 'price_low' | 'price_high'): MockProduct[] {
+  const sorted = [...products]
+  
+  switch (sortBy) {
+    case 'newest':
+      return sorted.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())
+    case 'oldest':
+      return sorted.sort((a, b) => a.createdAt.toMillis() - b.createdAt.toMillis())
+    case 'price_low':
+      return sorted.sort((a, b) => a.price - b.price)
+    case 'price_high':
+      return sorted.sort((a, b) => b.price - a.price)
+    default:
+      return sorted
+  }
+}
