@@ -344,7 +344,7 @@ export default function MarketplacePage() {
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-50 dark:bg-gray-50 transition-colors">
+		<div className="min-h-screen bg-gray-50 transition-colors">
 			{/* Navigation */}
 			<MarketplaceNav 
 				user={user}
@@ -355,94 +355,94 @@ export default function MarketplacePage() {
 				onMenuClick={() => setSidebarOpen(true)}
 				isMobile={isMobile}
 			/>
-			<div className="flex">
-				{/* Desktop Sidebar */}
-				{!isMobile && (
-					<MarketplaceBottomNav
-						selectedCategory={selectedCategory}
-						onCategoryChange={setSelectedCategory}
-						onCreateListing={handleCreateListing}
-						selectedLocation={selectedLocation}
-						onLocationChange={setSelectedLocation}
-						user={user}
-						isMobile={isMobile}
-					/>
-				)}
+			
+			{/* Desktop Horizontal Navigation Bar */}
+			{!isMobile && (
+				<MarketplaceBottomNav
+					selectedCategory={selectedCategory}
+					categories={categories}
+					onCategoryChange={setSelectedCategory}
+					onCreateListing={handleCreateListing}
+					selectedLocation={selectedLocation}
+					onLocationChange={setSelectedLocation}
+					user={user}
+					isMobile={isMobile}
+				/>
+			)}
 
-				{/* Main content */}
-				<div className="flex-1 p-4 md:p-6">
-					{/* Main content - full width now */}
-					<div className="pb-20">{/* Added bottom padding for bottom nav */}
-					{/* Mobile Filter Toggle */}
-					{isMobile && (
-						<div className="mb-4 flex items-center justify-between">
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={() => setSidebarOpen(true)}
-								className="border-gray-300 dark:border-gray-300"
-							>
-								<Menu className="h-4 w-4 mr-2" />
-								Filters
-							</Button>
-							<div className="text-sm text-gray-500 dark:text-gray-500">
-								{sortedProducts.length} results
-							</div>
-						</div>
-					)}
-
-					{/* Search bar for mobile */}
-					{isMobile && (
-						<div className="mb-4">
-							<div className="relative">
-								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-								<Input
-									type="text"
-									placeholder="Search products..."
-									value={searchTerm}
-									onChange={(e) => setSearchTerm(e.target.value)}
-									className="pl-10 border-gray-300 dark:border-gray-300"
-								/>
-							</div>
-						</div>
-					)}
-
-					{/* Results header */}
-					<div className="mb-6">
-						<div className="flex items-center justify-between">
-							<div>
-								<h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-900 mb-2">
-									{selectedCategory === "All" ? "All listings" : selectedCategory}
-								</h2>
-								<p className="text-gray-600 dark:text-gray-600 text-sm md:text-base">
-									{productsLoading ? (
-										"Loading products..."
-									) : (
-										<>
-											{sortedProducts.length} listing{sortedProducts.length !== 1 ? 's' : ''} found
-											{selectedLocation !== "All Locations" && (
-												<Badge variant="secondary" className="ml-2 bg-blue-100 dark:bg-blue-100 text-blue-800 dark:text-blue-800">
-													📍 {selectedLocation}
-												</Badge>
-											)}
-											{searchTerm && (
-												<Badge variant="secondary" className="ml-2 bg-blue-100 dark:bg-blue-100 text-blue-800 dark:text-blue-800">
-													🔍 &quot;{searchTerm}&quot;
-												</Badge>
-											)}
-										</>
-									)}
-								</p>
-							</div>
-							
-							{/* Page indicator */}
-							{totalPages > 1 && !isMobile && (
-								<div className="text-sm text-gray-500 dark:text-gray-500">
-									Page {currentPage} of {totalPages}
-								</div>
-							)}
+			{/* Main content - full width without sidebar */}
+			<div className="container mx-auto px-4 py-6">
+				<div className="pb-20"> {/* Added bottom padding for mobile bottom nav */}
+				{/* Mobile Filter Toggle */}
+				{isMobile && (
+					<div className="mb-4 flex items-center justify-between">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => setSidebarOpen(true)}
+							className="border-gray-300"
+						>
+							<Menu className="h-4 w-4 mr-2" />
+							Filters
+						</Button>
+						<div className="text-sm text-gray-500">
+							{sortedProducts.length} results
 						</div>
 					</div>
+				)}
+
+				{/* Search bar for mobile */}
+				{isMobile && (
+					<div className="mb-4">
+						<div className="relative">
+							<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+							<Input
+								type="text"
+								placeholder="Search products..."
+								value={searchTerm}
+								onChange={(e) => setSearchTerm(e.target.value)}
+								className="pl-10 border-gray-300"
+							/>
+						</div>
+					</div>
+				)}
+
+				{/* Results header */}
+				<div className="mb-6">
+					<div className="flex items-center justify-between">
+						<div>
+							<h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
+								{selectedCategory === "All" ? "All listings" : selectedCategory}
+							</h2>
+							<p className="text-gray-600 text-sm md:text-base">
+								{productsLoading ? (
+									"Loading products..."
+								) : (
+									<>
+										{sortedProducts.length} listing{sortedProducts.length !== 1 ? 's' : ''} found
+										{selectedLocation !== "All Locations" && (
+											<Badge variant="secondary" className="ml-2 bg-blue-100 text-blue-800">
+												📍 {selectedLocation}
+											</Badge>
+										)}
+										{searchTerm && (
+											<Badge variant="secondary" className="ml-2 bg-blue-100 text-blue-800">
+												🔍 &quot;{searchTerm}&quot;
+											</Badge>
+										)}
+									</>
+								)}
+							</p>
+						</div>
+						
+						{/* Page indicator */}
+						{totalPages > 1 && !isMobile && (
+							<div className="text-sm text-gray-500">
+								Page {currentPage} of {totalPages}
+							</div>
+						)}
+					</div>
+				</div>
 
 					{/* Products grid */}
 					{productsLoading ? (
