@@ -222,12 +222,6 @@ export function MarketplaceNav({
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/photos" className="flex items-center cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Photo Gallery</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
                     <Link href="/messages" className="flex items-center cursor-pointer">
                       <MessageCircle className="mr-2 h-4 w-4" />
                       <span>Messages</span>
