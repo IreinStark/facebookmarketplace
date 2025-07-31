@@ -23,7 +23,6 @@ import {
   Settings,
   LogOut,
   Menu,
-  Camera,
   MapPin,
   Sun,
   Moon
@@ -144,13 +143,6 @@ export function MarketplaceNav({
           {/* Quick Actions for Desktop */}
           {!isMobile && (
             <>
-              <Link href="/photos">
-                <Button variant="ghost" size="sm" className="hidden md:flex">
-                  <Camera className="w-4 h-4 mr-2" />
-                  Photos
-                </Button>
-              </Link>
-
               <Link href="/sell">
                 <Button 
                   size="sm" 
@@ -228,12 +220,6 @@ export function MarketplaceNav({
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/photos" className="flex items-center cursor-pointer">
-                      <Camera className="mr-2 h-4 w-4" />
-                      <span>Photo Gallery</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
                     <Link href="/messages" className="flex items-center cursor-pointer">
                       <MessageCircle className="mr-2 h-4 w-4" />
                       <span>Messages</span>
@@ -285,12 +271,6 @@ export function MarketplaceNav({
               <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2">
                 <Plus className="h-4 w-4" />
                 <span className="text-xs">Sell</span>
-              </Button>
-            </Link>
-            <Link href="/photos">
-              <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2">
-                <Camera className="h-4 w-4" />
-                <span className="text-xs">Photos</span>
               </Button>
             </Link>
             <Link href="/messages">
