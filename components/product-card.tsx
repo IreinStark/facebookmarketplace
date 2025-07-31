@@ -148,7 +148,7 @@ export function ProductCard({
   }
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-200 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
+    <Card className="group hover:shadow-lg transition-all duration-200 border border-gray-200 dark:border-gray-200 bg-white dark:bg-white overflow-hidden">
       {/* Image Container */}
       <div 
         className="relative aspect-square cursor-pointer overflow-hidden"
@@ -156,7 +156,7 @@ export function ProductCard({
       >
         {/* Loading Skeleton */}
         {isLoading && (
-          <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse" />
+          <div className="absolute inset-0 bg-gray-200 dark:bg-gray-200 animate-pulse" />
         )}
 
         {/* Product Image */}
@@ -165,7 +165,7 @@ export function ProductCard({
             src={getMainImage()}
             alt={product.title}
             fill
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             className={`object-cover group-hover:scale-105 transition-transform duration-200 ${
               isLoading ? 'opacity-0' : 'opacity-100'
             }`}
@@ -173,9 +173,9 @@ export function ProductCard({
             onError={handleImageError}
           />
         ) : (
-          <div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-            <div className="text-center text-gray-400 dark:text-gray-500">
-              <div className="w-16 h-16 mx-auto mb-2 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+          <div className="w-full h-full bg-gray-100 dark:bg-gray-100 flex items-center justify-center">
+            <div className="text-center text-gray-400 dark:text-gray-400">
+              <div className="w-16 h-16 mx-auto mb-2 bg-gray-200 dark:bg-gray-200 rounded-lg flex items-center justify-center">
                 <span className="text-2xl">📦</span>
               </div>
               <p className="text-xs">No image</p>
@@ -187,7 +187,7 @@ export function ProductCard({
         <Button
           variant="ghost"
           size="sm"
-          className={`absolute top-2 right-2 w-8 h-8 p-0 rounded-full bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 transition-all ${
+          className={`absolute top-2 right-2 w-8 h-8 p-0 rounded-full bg-white/90 dark:bg-white/90 hover:bg-white dark:hover:bg-white transition-all ${
             isFavorited ? 'text-red-500 hover:text-red-600' : 'text-gray-600 hover:text-red-500'
           }`}
           onClick={handleFavoriteClick}
@@ -197,7 +197,7 @@ export function ProductCard({
 
         {/* Category Badge */}
         <Badge 
-          className="absolute top-2 left-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800 text-xs"
+          className="absolute top-2 left-2 bg-blue-100 dark:bg-blue-100 text-blue-800 dark:text-blue-800 border-blue-200 dark:border-blue-200 text-xs"
         >
           {product.category}
         </Badge>
@@ -206,7 +206,7 @@ export function ProductCard({
         {product.condition && (
           <Badge 
             variant="secondary" 
-            className="absolute bottom-2 left-2 bg-white/90 dark:bg-gray-800/90 text-xs"
+            className="absolute bottom-2 left-2 bg-white/90 dark:bg-white/90 text-xs"
           >
             {product.condition}
           </Badge>
@@ -215,7 +215,7 @@ export function ProductCard({
         {/* Negotiable Badge */}
         {product.isNegotiable && (
           <Badge 
-            className="absolute bottom-2 right-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs"
+            className="absolute bottom-2 right-2 bg-green-100 dark:bg-green-100 text-green-800 dark:text-green-800 text-xs"
           >
             Negotiable
           </Badge>
@@ -227,12 +227,12 @@ export function ProductCard({
             <Button
               variant="ghost"
               size="sm"
-              className="absolute top-2 right-12 w-8 h-8 p-0 rounded-full bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 opacity-0 group-hover:opacity-100 transition-all"
+              className="absolute top-2 right-12 w-8 h-8 p-0 rounded-full bg-white/90 dark:bg-white/90 hover:bg-white dark:hover:bg-white opacity-0 group-hover:opacity-100 transition-all"
             >
               <MoreVertical className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <DropdownMenuContent className="bg-white dark:bg-white border-gray-200 dark:border-gray-200">
             <DropdownMenuItem onClick={handleShareClick}>
               <Share2 className="w-4 h-4 mr-2" />
               Share
@@ -243,7 +243,7 @@ export function ProductCard({
                   <Edit className="w-4 h-4 mr-2" />
                   Edit Listing
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleDeleteClick} className="text-red-600 dark:text-red-400">
+                <DropdownMenuItem onClick={handleDeleteClick} className="text-red-600 dark:text-red-600">
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete
                 </DropdownMenuItem>
@@ -266,15 +266,15 @@ export function ProductCard({
           className="cursor-pointer mb-2" 
           onClick={handleProductClick}
         >
-          <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100 line-clamp-2 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+          <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-900 line-clamp-2 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-600 transition-colors">
             {product.title}
           </h3>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-lg font-bold text-green-600 dark:text-green-400">
+            <p className="text-lg font-bold text-green-600 dark:text-green-600">
               ${product.price.toLocaleString()}
             </p>
             {product.views && (
-              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center text-xs text-gray-500 dark:text-gray-500">
                 <Eye className="w-3 h-3 mr-1" />
                 {product.views}
               </div>
@@ -283,7 +283,7 @@ export function ProductCard({
         </div>
 
         {/* Location and Time */}
-        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-3">
+        <div className="flex items-center text-xs text-gray-500 dark:text-gray-500 mb-3">
           <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
           <span className="truncate mr-2">{product.location}</span>
           <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
@@ -294,16 +294,16 @@ export function ProductCard({
 
         {/* Seller Info */}
         <div 
-          className="flex items-center space-x-2 mb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded p-1 -m-1 transition-colors"
+          className="flex items-center space-x-2 mb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-50 rounded p-1 -m-1 transition-colors"
           onClick={handleUserClick}
         >
           <Avatar className="h-6 w-6">
             <AvatarImage src={getSellerAvatar()} alt={getSellerName()} />
-            <AvatarFallback className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+            <AvatarFallback className="text-xs bg-blue-100 dark:bg-blue-100 text-blue-700 dark:text-blue-700">
               {getSellerName()[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <span className="text-xs text-gray-600 dark:text-gray-400 truncate">
+          <span className="text-xs text-gray-600 dark:text-gray-600 truncate">
             {getSellerName()}
           </span>
         </div>

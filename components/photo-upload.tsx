@@ -39,8 +39,38 @@ interface UploadState {
   };
 }
 
+import { getCloudinaryUploadUrl, getCloudinaryConfig } from '../lib/cloudinary-config';
+
 // Cloudinary upload function
 async function uploadToCloudinary(file: File): Promise<string> {
+  const { cloudName, uploadPreset } = getCloudinaryConfig();
+  
+  if (cloudName === 'your-cloud-name' || uploadPreset === 'your-upload-preset') {
+    throw new Error('Please configure your Cloudinary credentials in lib/cloudinary-config.ts');
+  }
+  
+  const url = getCloudinaryUploadUrl();
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', uploadPreset);
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(`Cloudinary upload failed: ${errorData.error?.message || res.statusText}`);
+    }
+    
+    const data = await res.json();
+    return data.secure_url; // The hosted image URL
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    throw new Error('Failed to upload image. Please try again.');
+  }
   const url = `https://api.cloudinary.com/v1_1/dhcdhsgax/image/upload`;
   const unsigned_preset = 'ml_default'; // Using default unsigned preset
   const formData = new FormData();
