@@ -5,24 +5,24 @@ import { onAuthStateChanged, type User } from "firebase/auth"
 import { useRouter } from "next/navigation"
 
 import { auth } from "@/firebase"
-import { Button } from "@components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card"
-import { Avatar, AvatarFallback } from "@components/ui/avatar"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@components/ui/sheet"
-import { Slider } from "@components/ui/slider"
-import { Label } from "@components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select"
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@components/ui/pagination"
-import { Alert, AlertDescription } from "@components/ui/alert"
-import { Badge } from "@components/ui/badge"
-import { Input } from "@components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Slider } from "@/components/ui/slider"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { MessageCircle, Plus, Filter, Search, MapPin, Menu, X } from "lucide-react"
 
 // Import hooks and utilities
-import { useSocket } from "../hooks/use-socket"
-import { subscribeToProducts as subscribeToRealProducts, deleteProduct, type Product } from "../lib/firebase-utils"
-import { subscribeMockProducts } from "../lib/mock-data-utils"
-import { getUserProfile, type UserProfile } from "../lib/user-utils"
+import { useSocket } from "@/hooks/use-socket"
+import { subscribeToProducts as subscribeToRealProducts, deleteProduct, type Product } from "@/lib/firebase-utils"
+import { subscribeMockProducts } from "@/lib/mock-data-utils"
+import { getUserProfile, type UserProfile } from "@/lib/user-utils"
 
 // Type definitions for component compatibility
 interface MarketplaceNavUser {
@@ -58,8 +58,8 @@ interface ProductCardProduct {
 }
 
 // Import components
-import { MarketplaceNav } from "../components/marketplace-nav"
-import { ProductCard } from "../components/product-card"
+import { MarketplaceNav } from "@/components/marketplace-nav"
+import { ProductCard } from "@/components/product-card"
 
 // Location data with coordinates (lat, lng)
 const locationData = [
