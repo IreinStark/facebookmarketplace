@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { onAuthStateChanged, type User } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/app/firebase'
-import { ChatInterface } from '@/components/chat-interface-mock'
+import { ChatInterfaceMock as ChatInterface } from '@/components/chat-interface-mock'
 import { MarketplaceNav } from '@/components/marketplace-nav'
 import { MarketplaceBottomNav } from '@/components/marketplace-sidebar'
 
