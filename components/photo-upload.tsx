@@ -2,14 +2,14 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
-import { Progress } from './ui/progress';
-import { Alert, AlertDescription } from './ui/alert';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Slider } from './ui/slider';
-import { Badge } from './ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
 // REMOVE: import { uploadPhoto, type Photo } from '../lib/firebase-utils';
 import { Upload, X, Image as ImageIcon, CheckCircle, AlertCircle, Camera, MapPin, Navigation, Globe } from 'lucide-react';
 import { Timestamp } from "firebase/firestore";
