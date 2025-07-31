@@ -2,9 +2,9 @@
 // Replace these values with your actual Cloudinary credentials
 
 export const cloudinaryConfig = {
-  cloudName: 'your-cloud-name', // Replace with your Cloudinary cloud name
-  uploadPreset: 'your-upload-preset', // Replace with your unsigned upload preset
-  apiKey: 'your-api-key', // Optional: Only needed for server-side uploads
+  cloudName: 'dhcdhsgax', // Your Cloudinary cloud name
+  uploadPreset: 'ml_default', // Default unsigned upload preset
+  apiKey: '272862423432328', // Your API key
   apiSecret: 'your-api-secret', // Optional: Only needed for server-side uploads
 }
 
