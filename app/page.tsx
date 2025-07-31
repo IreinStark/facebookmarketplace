@@ -553,28 +553,29 @@ export default function MarketplacePage() {
 			</div>
 		</div>
 
-			{/* Mobile Bottom Navigation */}
-			{isMobile && (
-				<MarketplaceBottomNav
-					selectedCategory={selectedCategory}
-					categories={categories}
-					onCategoryChange={setSelectedCategory}
-					onCreateListing={handleCreateListing}
-					selectedLocation={selectedLocation}
-					onLocationChange={setSelectedLocation}
-					user={user}
-					isMobile={isMobile}
-				/>
-			)}
-			{/* Bottom Navigation */}
-			<MarketplaceSidebar
+		{/* Mobile Bottom Navigation */}
+		{isMobile && (
+			<MarketplaceBottomNav
 				selectedCategory={selectedCategory}
 				categories={categories}
 				onCategoryChange={setSelectedCategory}
 				onCreateListing={handleCreateListing}
 				selectedLocation={selectedLocation}
 				onLocationChange={setSelectedLocation}
+				user={user}
+				isMobile={isMobile}
 			/>
+		)}
+		
+		{/* Bottom Navigation */}
+		<MarketplaceSidebar
+			selectedCategory={selectedCategory}
+			categories={categories}
+			onCategoryChange={setSelectedCategory}
+			onCreateListing={handleCreateListing}
+			selectedLocation={selectedLocation}
+			onLocationChange={setSelectedLocation}
+		/>
 
 			{/* Price range filter sheet */}
 			<Sheet open={showPriceFilter} onOpenChange={setShowPriceFilter}>
