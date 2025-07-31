@@ -73,26 +73,26 @@ export function MarketplaceNav({
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-50/60">
+    <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="container flex h-14 md:h-16 items-center px-4">
         {/* Mobile Menu Button */}
         {isMobile && (
           <Button
             variant="ghost"
             size="sm"
-            className="mr-2 md:hidden"
+            className="mr-2 md:hidden h-8 w-8 md:h-10 md:w-10 p-0"
             onClick={onMenuClick}
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
         )}
 
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">M</span>
+          <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-xs md:text-sm">M</span>
           </div>
-          <span className="hidden sm:inline-block font-bold text-lg text-gray-900 dark:text-gray-900">
+          <span className="hidden sm:inline-block font-bold text-base md:text-lg text-gray-900">
             Marketplace
           </span>
         </Link>
@@ -107,7 +107,7 @@ export function MarketplaceNav({
                 placeholder="Search products..."
                 value={searchValue}
                 onChange={(e) => onSearch?.(e.target.value)}
-                className="pl-10 w-full border-gray-300 dark:border-gray-300 focus:border-blue-500 dark:focus:border-blue-400"
+                className="pl-10 w-full border-gray-300 focus:border-blue-500 bg-white"
               />
             </div>
           </div>
@@ -117,7 +117,7 @@ export function MarketplaceNav({
         {!isMobile && selectedLocation !== 'All Locations' && (
           <Badge 
             variant="secondary" 
-            className="mr-4 bg-blue-100 dark:bg-blue-100 text-blue-800 dark:text-blue-800 border-blue-200 dark:border-blue-200"
+            className="mr-4 bg-blue-100 text-blue-800 border-blue-200"
           >
             <MapPin className="w-3 h-3 mr-1" />
             {selectedLocation}
@@ -125,13 +125,13 @@ export function MarketplaceNav({
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1 md:space-x-2">
           {/* Theme Toggle */}
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="w-9 h-9 p-0"
+            className="w-8 h-8 md:w-9 md:h-9 p-0"
           >
             {theme === 'dark' ? (
               <Sun className="h-4 w-4" />
@@ -146,9 +146,9 @@ export function MarketplaceNav({
               <Link href="/sell">
                 <Button 
                   size="sm" 
-                  className="hidden md:flex bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                  className="hidden md:flex bg-blue-600 hover:bg-blue-700 text-white h-8 md:h-9 px-2 md:px-4 text-xs md:text-sm"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                   Sell
                 </Button>
               </Link>
@@ -159,18 +159,18 @@ export function MarketplaceNav({
             <>
               {/* Messages */}
               <Link href="/messages">
-                <Button variant="ghost" size="sm" className="relative w-9 h-9 p-0">
+                <Button variant="ghost" size="sm" className="relative w-8 h-8 md:w-9 md:h-9 p-0">
                   <MessageCircle className="h-4 w-4" />
                 </Button>
               </Link>
 
               {/* Notifications */}
               <Link href="/notifications">
-                <Button variant="ghost" size="sm" className="relative w-9 h-9 p-0">
+                <Button variant="ghost" size="sm" className="relative w-8 h-8 md:w-9 md:h-9 p-0">
                   <Bell className="h-4 w-4" />
                   {notifications > 0 && (
                     <Badge 
-                      className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center text-xs bg-red-500 hover:bg-red-500"
+                      className="absolute -top-1 -right-1 w-4 h-4 md:w-5 md:h-5 p-0 flex items-center justify-center text-xs bg-red-500 hover:bg-red-500"
                     >
                       {notifications}
                     </Badge>
@@ -181,62 +181,62 @@ export function MarketplaceNav({
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                    <Avatar className="h-8 w-8">
+                  <Button variant="ghost" className="relative h-8 w-8 md:h-9 md:w-9 rounded-full">
+                    <Avatar className="h-7 w-7 md:h-8 md:w-8">
                       <AvatarImage 
                         src={user.photoURL || '/placeholder-user.png'} 
                         alt={user.displayName || user.email} 
                       />
-                      <AvatarFallback className="bg-blue-100 dark:bg-blue-100 text-blue-700 dark:text-blue-700">
+                      <AvatarFallback className="bg-blue-100 text-blue-700 text-xs md:text-sm">
                         {getUserInitials()}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
-                  className="w-56 bg-white dark:bg-white border-gray-200 dark:border-gray-200" 
+                  className="w-48 md:w-56 bg-white border-gray-200" 
                   align="end" 
                   forceMount
                 >
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium text-gray-900 dark:text-gray-900">
+                      <p className="font-medium text-gray-900 text-sm md:text-base">
                         {user.displayName || 'User'}
                       </p>
-                      <p className="w-[200px] truncate text-sm text-gray-600 dark:text-gray-600">
+                      <p className="w-[180px] md:w-[200px] truncate text-xs md:text-sm text-gray-600">
                         {user.email}
                       </p>
                     </div>
                   </div>
-                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-200" />
+                  <DropdownMenuSeparator className="bg-gray-200" />
                   <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center cursor-pointer">
+                    <Link href="/profile" className="flex items-center cursor-pointer text-sm md:text-base">
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/sell" className="flex items-center cursor-pointer">
+                    <Link href="/sell" className="flex items-center cursor-pointer text-sm md:text-base">
                       <Plus className="mr-2 h-4 w-4" />
                       <span>Create Listing</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/messages" className="flex items-center cursor-pointer">
+                    <Link href="/messages" className="flex items-center cursor-pointer text-sm md:text-base">
                       <MessageCircle className="mr-2 h-4 w-4" />
                       <span>Messages</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-200" />
+                  <DropdownMenuSeparator className="bg-gray-200" />
                   <DropdownMenuItem asChild>
-                    <Link href="/profile?tab=settings" className="flex items-center cursor-pointer">
+                    <Link href="/profile?tab=settings" className="flex items-center cursor-pointer text-sm md:text-base">
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-200" />
+                  <DropdownMenuSeparator className="bg-gray-200" />
                   <DropdownMenuItem 
-                    className="flex items-center cursor-pointer text-red-600 dark:text-red-600 focus:text-red-600 dark:focus:text-red-600" 
+                    className="flex items-center cursor-pointer text-red-600 focus:text-red-600 text-sm md:text-base" 
                     onClick={handleSignOut}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
@@ -248,14 +248,14 @@ export function MarketplaceNav({
           ) : (
             <>
               <Link href="/auth/login">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="text-xs md:text-sm h-8 md:h-9 px-2 md:px-4">
                   Sign In
                 </Button>
               </Link>
               <Link href="/auth/register">
                 <Button 
                   size="sm" 
-                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs md:text-sm h-8 md:h-9 px-2 md:px-4"
                 >
                   Sign Up
                 </Button>
@@ -267,22 +267,22 @@ export function MarketplaceNav({
 
       {/* Mobile Quick Actions Bar */}
       {isMobile && user && (
-        <div className="border-t border-gray-200 dark:border-gray-200 bg-white dark:bg-white px-4 py-2">
+        <div className="border-t border-gray-200 bg-white px-4 py-2">
           <div className="flex items-center justify-around">
             <Link href="/sell">
-              <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2">
+              <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2 min-h-[44px] min-w-[44px]">
                 <Plus className="h-4 w-4" />
                 <span className="text-xs">Sell</span>
               </Button>
             </Link>
             <Link href="/messages">
-              <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2 relative">
+              <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2 relative min-h-[44px] min-w-[44px]">
                 <MessageCircle className="h-4 w-4" />
                 <span className="text-xs">Messages</span>
               </Button>
             </Link>
             <Link href="/profile">
-              <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2">
+              <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2 min-h-[44px] min-w-[44px]">
                 <User className="h-4 w-4" />
                 <span className="text-xs">Profile</span>
               </Button>
