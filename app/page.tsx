@@ -245,9 +245,20 @@ export default function MarketplacePage() {
 			router.push('/auth/login')
 			return
 		}
-		console.log('Message clicked:', productId)
-		setIsChatOpen(true)
-		router.push(`/messages?product=${productId}`)
+		// Find the product to get seller information
+		const product = products.find(p => p.id === productId)
+		if (product && product.userId !== user?.uid) {
+			// Navigate to messages with conversation context
+			const sellerId = product.userId
+			const sellerName = product.sellerProfile?.displayName || product.sellerName || product.seller || 'Anonymous'
+			const queryParams = new URLSearchParams({
+				recipientId: sellerId,
+				recipientName: sellerName,
+				productId: productId,
+				productTitle: product.title
+			})
+			router.push(`/messages?${queryParams.toString()}`)
+		}
 	}
 
 	const handleDeleteProduct = async (productId: string) => {
