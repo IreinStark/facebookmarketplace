@@ -23,7 +23,6 @@ import {
   Settings,
   LogOut,
   Menu,
-  Camera,
   MapPin,
   Sun,
   Moon
@@ -74,7 +73,7 @@ export function MarketplaceNav({
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-800/60">
+    <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-50/60">
       <div className="container flex h-14 md:h-16 items-center px-4">
         {/* Mobile Menu Button */}
         {isMobile && (
@@ -93,7 +92,7 @@ export function MarketplaceNav({
           <div className="w-8 h-8 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">M</span>
           </div>
-          <span className="hidden sm:inline-block font-bold text-lg text-gray-900 dark:text-gray-100">
+          <span className="hidden sm:inline-block font-bold text-lg text-gray-900 dark:text-gray-900">
             Marketplace
           </span>
         </Link>
@@ -108,7 +107,7 @@ export function MarketplaceNav({
                 placeholder="Search products..."
                 value={searchValue}
                 onChange={(e) => onSearch?.(e.target.value)}
-                className="pl-10 w-full border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+                className="pl-10 w-full border-gray-300 dark:border-gray-300 focus:border-blue-500 dark:focus:border-blue-400"
               />
             </div>
           </div>
@@ -118,7 +117,7 @@ export function MarketplaceNav({
         {!isMobile && selectedLocation !== 'All Locations' && (
           <Badge 
             variant="secondary" 
-            className="mr-4 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+            className="mr-4 bg-blue-100 dark:bg-blue-100 text-blue-800 dark:text-blue-800 border-blue-200 dark:border-blue-200"
           >
             <MapPin className="w-3 h-3 mr-1" />
             {selectedLocation}
@@ -144,13 +143,6 @@ export function MarketplaceNav({
           {/* Quick Actions for Desktop */}
           {!isMobile && (
             <>
-              <Link href="/photos">
-                <Button variant="ghost" size="sm" className="hidden md:flex">
-                  <Camera className="w-4 h-4 mr-2" />
-                  Photos
-                </Button>
-              </Link>
-
               <Link href="/sell">
                 <Button 
                   size="sm" 
@@ -173,16 +165,18 @@ export function MarketplaceNav({
               </Link>
 
               {/* Notifications */}
-              <Button variant="ghost" size="sm" className="relative w-9 h-9 p-0">
-                <Bell className="h-4 w-4" />
-                {notifications > 0 && (
-                  <Badge 
-                    className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center text-xs bg-red-500 hover:bg-red-500"
-                  >
-                    {notifications}
-                  </Badge>
-                )}
-              </Button>
+              <Link href="/notifications">
+                <Button variant="ghost" size="sm" className="relative w-9 h-9 p-0">
+                  <Bell className="h-4 w-4" />
+                  {notifications > 0 && (
+                    <Badge 
+                      className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center text-xs bg-red-500 hover:bg-red-500"
+                    >
+                      {notifications}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
 
               {/* User Menu */}
               <DropdownMenu>
@@ -193,28 +187,28 @@ export function MarketplaceNav({
                         src={user.photoURL || '/placeholder-user.png'} 
                         alt={user.displayName || user.email} 
                       />
-                      <AvatarFallback className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                      <AvatarFallback className="bg-blue-100 dark:bg-blue-100 text-blue-700 dark:text-blue-700">
                         {getUserInitials()}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
-                  className="w-56 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" 
+                  className="w-56 bg-white dark:bg-white border-gray-200 dark:border-gray-200" 
                   align="end" 
                   forceMount
                 >
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                      <p className="font-medium text-gray-900 dark:text-gray-900">
                         {user.displayName || 'User'}
                       </p>
-                      <p className="w-[200px] truncate text-sm text-gray-600 dark:text-gray-400">
+                      <p className="w-[200px] truncate text-sm text-gray-600 dark:text-gray-600">
                         {user.email}
                       </p>
                     </div>
                   </div>
-                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
+                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-200" />
                   <DropdownMenuItem asChild>
                     <Link href="/profile" className="flex items-center cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
@@ -229,7 +223,7 @@ export function MarketplaceNav({
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/photos" className="flex items-center cursor-pointer">
-                      <Camera className="mr-2 h-4 w-4" />
+                      <User className="mr-2 h-4 w-4" />
                       <span>Photo Gallery</span>
                     </Link>
                   </DropdownMenuItem>
@@ -239,16 +233,16 @@ export function MarketplaceNav({
                       <span>Messages</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
+                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-200" />
                   <DropdownMenuItem asChild>
                     <Link href="/profile?tab=settings" className="flex items-center cursor-pointer">
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
+                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-200" />
                   <DropdownMenuItem 
-                    className="flex items-center cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400" 
+                    className="flex items-center cursor-pointer text-red-600 dark:text-red-600 focus:text-red-600 dark:focus:text-red-600" 
                     onClick={handleSignOut}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
@@ -279,18 +273,12 @@ export function MarketplaceNav({
 
       {/* Mobile Quick Actions Bar */}
       {isMobile && user && (
-        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2">
+        <div className="border-t border-gray-200 dark:border-gray-200 bg-white dark:bg-white px-4 py-2">
           <div className="flex items-center justify-around">
             <Link href="/sell">
               <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2">
                 <Plus className="h-4 w-4" />
                 <span className="text-xs">Sell</span>
-              </Button>
-            </Link>
-            <Link href="/photos">
-              <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2">
-                <Camera className="h-4 w-4" />
-                <span className="text-xs">Photos</span>
               </Button>
             </Link>
             <Link href="/messages">
