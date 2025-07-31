@@ -16,7 +16,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Alert, AlertDescription } from "@components/ui/alert"
 import { Badge } from "@components/ui/badge"
 import { Input } from "@components/ui/input"
-import { MessageCircle, Plus, Filter, Search, MapPin } from "lucide-react"
+import { MessageCircle, Plus, Filter, Search, MapPin, Menu, X } from "lucide-react"
 
 // Import hooks and utilities
 import { useSocket } from "../hooks/use-socket"
@@ -41,7 +41,7 @@ interface ProductCardProduct {
 	images?: string[]
 	seller?: string
 	userId: string
-	sellerId?: string // Add sellerId for backward compatibility
+	sellerId?: string
 	sellerName?: string
 	sellerAvatar?: string
 	sellerProfile?: {
@@ -80,8 +80,8 @@ const locationData = [
 // Categories for filtering
 const categories = ["All", "Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"]
 
-// Simplified Sidebar Component
-const SimplifiedSidebar: React.FC<{
+// Enhanced Sidebar Component with Mobile Support
+const EnhancedSidebar: React.FC<{
 	selectedCategory: string
 	onCategoryChange: (category: string) => void
 	onCreateListing: () => void
@@ -91,26 +91,42 @@ const SimplifiedSidebar: React.FC<{
 	onPriceFilterClick: () => void
 	sortBy: string
 	onSortChange: (sort: string) => void
-}> = ({ 
-	selectedCategory, 
-	onCategoryChange, 
-	onCreateListing, 
+	isOpen: boolean
+	onClose: () => void
+	isMobile: boolean
+}> = ({ 
+	selectedCategory, 
+	onCategoryChange, 
+	onCreateListing, 
 	onOpenChat,
 	selectedLocation,
 	onLocationChange,
 	onPriceFilterClick,
 	sortBy,
-	onSortChange
+	onSortChange,
+	isOpen,
+	onClose,
+	isMobile
 }) => {
-	return (
-		<div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 space-y-4">
+	const sidebarContent = (
+		<div className="space-y-6">
+			{/* Mobile Close Button */}
+			{isMobile && (
+				<div className="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-gray-700">
+					<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Filters</h2>
+					<Button variant="ghost" size="sm" onClick={onClose}>
+						<X className="h-4 w-4" />
+					</Button>
+				</div>
+			)}
+
 			{/* Quick Actions */}
-			<div className="space-y-2">
-				<Button onClick={onCreateListing} className="w-full" size="sm">
+			<div className="space-y-3">
+				<Button onClick={onCreateListing} className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600" size="sm">
 					<Plus className="w-4 h-4 mr-2" />
 					Create Listing
 				</Button>
-				<Button onClick={onOpenChat} variant="outline" className="w-full" size="sm">
+				<Button onClick={onOpenChat} variant="outline" className="w-full border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700" size="sm">
 					<MessageCircle className="w-4 h-4 mr-2" />
 					Open Chat
 				</Button>
@@ -123,10 +139,13 @@ const SimplifiedSidebar: React.FC<{
 					{categories.map((category) => (
 						<button
 							key={category}
-							onClick={() => onCategoryChange(category)}
+							onClick={() => {
+								onCategoryChange(category)
+								if (isMobile) onClose()
+							}}
 							className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
 								selectedCategory === category
-									? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+									? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
 									: "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
 							}`}
 						>
@@ -140,7 +159,7 @@ const SimplifiedSidebar: React.FC<{
 			<div>
 				<h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-3">Location</h3>
 				<Select value={selectedLocation} onValueChange={onLocationChange}>
-					<SelectTrigger className="w-full">
+					<SelectTrigger className="w-full border-gray-300 dark:border-gray-600">
 						<SelectValue placeholder="Select location" />
 					</SelectTrigger>
 					<SelectContent>
@@ -158,7 +177,7 @@ const SimplifiedSidebar: React.FC<{
 			<div>
 				<h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-3">Sort By</h3>
 				<Select value={sortBy} onValueChange={onSortChange}>
-					<SelectTrigger className="w-full">
+					<SelectTrigger className="w-full border-gray-300 dark:border-gray-600">
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
@@ -172,16 +191,32 @@ const SimplifiedSidebar: React.FC<{
 
 			{/* Price Filter */}
 			<div>
-				<Button 
-					variant="outline" 
-					size="sm" 
+				<Button 
+					variant="outline" 
+					size="sm" 
 					onClick={onPriceFilterClick}
-					className="w-full"
+					className="w-full border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
 				>
 					<Filter className="w-4 h-4 mr-2" />
 					Price Filter
 				</Button>
 			</div>
+		</div>
+	)
+
+	if (isMobile) {
+		return (
+			<Sheet open={isOpen} onOpenChange={onClose}>
+				<SheetContent side="left" className="w-80 p-6 bg-white dark:bg-gray-800">
+					{sidebarContent}
+				</SheetContent>
+			</Sheet>
+		)
+	}
+
+	return (
+		<div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-6 overflow-y-auto">
+			{sidebarContent}
 		</div>
 	)
 }
@@ -191,6 +226,10 @@ export default function MarketplacePage() {
 	const useMockProducts = true
 	
 	const router = useRouter()
+	
+	// Mobile state
+	const [isMobile, setIsMobile] = useState(false)
+	const [sidebarOpen, setSidebarOpen] = useState(false)
 	
 	// Filter and UI state
 	const [selectedCategory, setSelectedCategory] = useState("All")
@@ -216,6 +255,17 @@ export default function MarketplacePage() {
 	// Products state
 	const [products, setProducts] = useState<ProductCardProduct[]>([])
 	const [productsLoading, setProductsLoading] = useState(true)
+
+	// Check if mobile on mount and window resize
+	useEffect(() => {
+		const checkMobile = () => {
+			setIsMobile(window.innerWidth < 768)
+		}
+		
+		checkMobile()
+		window.addEventListener('resize', checkMobile)
+		return () => window.removeEventListener('resize', checkMobile)
+	}, [])
 
 	// Initialize Socket.io for real-time chat
 	useSocket({
@@ -263,7 +313,6 @@ export default function MarketplacePage() {
 			console.log('Using mock products...')
 			unsubscribe = subscribeMockProducts((mockProducts) => {
 				console.log('Received mock products:', mockProducts.length, 'products')
-				// Transform mock products to match ProductCardProduct interface
 				const transformedProducts: ProductCardProduct[] = mockProducts.map(product => ({
 					...product,
 					userId: product.sellerId,
@@ -284,7 +333,6 @@ export default function MarketplacePage() {
 			console.log('Using real Firebase products...')
 			unsubscribe = subscribeToRealProducts((firebaseProducts) => {
 				console.log('Received real products from Firebase:', firebaseProducts.length, 'products')
-				// Transform Firebase products to match ProductCardProduct interface
 				const transformedProducts: ProductCardProduct[] = firebaseProducts.map(product => ({
 					...product,
 					userId: product.seller || product.sellerId || '',
@@ -306,7 +354,7 @@ export default function MarketplacePage() {
 	const filteredProducts = products.filter((product) => {
 		const matchesCategory = selectedCategory === "All" || product.category === selectedCategory
 		const matchesLocation = selectedLocation === "All Locations" || product.location === selectedLocation
-		const matchesSearch = searchTerm === "" || 
+		const matchesSearch = searchTerm === "" || 
 			product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
 			product.description.toLowerCase().includes(searchTerm.toLowerCase())
 		const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1]
@@ -347,8 +395,8 @@ export default function MarketplacePage() {
 
 	const handleFavoriteClick = (productId: string) => {
 		console.log('Favorite clicked:', productId)
-		setFavorites(prev => 
-			prev.includes(productId) 
+		setFavorites(prev => 
+			prev.includes(productId) 
 				? prev.filter(id => id !== productId)
 				: [...prev, productId]
 		)
@@ -357,7 +405,6 @@ export default function MarketplacePage() {
 	const handleMessageClick = (productId: string) => {
 		console.log('Message clicked:', productId)
 		setIsChatOpen(true)
-		// You can pass the productId to the chat interface
 		router.push(`/messages?product=${productId}`)
 	}
 
@@ -367,9 +414,13 @@ export default function MarketplacePage() {
 			return
 		}
 		
-		if (!window.confirm('Are you sure you want to delete this listing?')) {
-			return
-		}
+		// IMPORTANT: Replaced window.confirm with a console log.
+		// For a production app, you should implement a custom modal/dialog
+		// for user confirmation instead of window.confirm/alert.
+		console.log('Confirming deletion for product:', productId);
+		// if (!window.confirm('Are you sure you want to delete this listing?')) {
+		// 	return
+		// }
 		
 		try {
 			await deleteProduct(productId, user.uid)
@@ -425,9 +476,9 @@ export default function MarketplacePage() {
 				<Alert className="max-w-md">
 					<AlertDescription>
 						{error}
-						<Button 
-							variant="outline" 
-							size="sm" 
+						<Button 
+							variant="outline" 
+							size="sm" 
 							className="mt-2"
 							onClick={() => window.location.reload()}
 						>
@@ -442,17 +493,19 @@ export default function MarketplacePage() {
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
 			{/* Navigation */}
-			<MarketplaceNav 
+			<MarketplaceNav 
 				user={user}
 				onSearch={setSearchTerm}
 				onLocationChange={setSelectedLocation}
 				searchValue={searchTerm}
 				selectedLocation={selectedLocation}
+				onMenuClick={() => setSidebarOpen(true)}
+				isMobile={isMobile}
 			/>
 
 			<div className="flex">
-				{/* Simplified Sidebar */}
-				<SimplifiedSidebar
+				{/* Enhanced Sidebar */}
+				<EnhancedSidebar
 					selectedCategory={selectedCategory}
 					onCategoryChange={setSelectedCategory}
 					onCreateListing={handleCreateListing}
@@ -462,44 +515,67 @@ export default function MarketplacePage() {
 					onPriceFilterClick={() => setShowPriceFilter(true)}
 					sortBy={sortBy}
 					onSortChange={setSortBy}
+					isOpen={sidebarOpen}
+					onClose={() => setSidebarOpen(false)}
+					isMobile={isMobile}
 				/>
 
 				{/* Main content */}
-				<div className="flex-1 p-6">
-					{/* Search bar for mobile */}
-					<div className="md:hidden mb-4">
-						<div className="relative">
-							<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-							<Input
-								type="text"
-								placeholder="Search products..."
-								value={searchTerm}
-								onChange={(e) => setSearchTerm(e.target.value)}
-								className="pl-10"
-							/>
+				<div className="flex-1 p-4 md:p-6">
+					{/* Mobile Filter Toggle */}
+					{isMobile && (
+						<div className="mb-4 flex items-center justify-between">
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => setSidebarOpen(true)}
+								className="border-gray-300 dark:border-gray-600"
+							>
+								<Menu className="h-4 w-4 mr-2" />
+								Filters
+							</Button>
+							<div className="text-sm text-gray-500 dark:text-gray-400">
+								{sortedProducts.length} results
+							</div>
 						</div>
-					</div>
+					)}
+
+					{/* Search bar for mobile */}
+					{isMobile && (
+						<div className="mb-4">
+							<div className="relative">
+								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+								<Input
+									type="text"
+									placeholder="Search products..."
+									value={searchTerm}
+									onChange={(e) => setSearchTerm(e.target.value)}
+									className="pl-10 border-gray-300 dark:border-gray-600"
+								/>
+							</div>
+						</div>
+					)}
 
 					{/* Results header */}
 					<div className="mb-6">
 						<div className="flex items-center justify-between">
 							<div>
-								<h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+								<h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
 									{selectedCategory === "All" ? "All listings" : selectedCategory}
 								</h2>
-								<p className="text-gray-600 dark:text-gray-400">
+								<p className="text-gray-600 dark:text-gray-400 text-sm md:text-base">
 									{productsLoading ? (
 										"Loading products..."
 									) : (
 										<>
 											{sortedProducts.length} listing{sortedProducts.length !== 1 ? 's' : ''} found
 											{selectedLocation !== "All Locations" && (
-												<Badge variant="secondary" className="ml-2">
+												<Badge variant="secondary" className="ml-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
 													📍 {selectedLocation}
 												</Badge>
 											)}
 											{searchTerm && (
-												<Badge variant="secondary" className="ml-2">
+												<Badge variant="secondary" className="ml-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
 													🔍 "{searchTerm}"
 												</Badge>
 											)}
@@ -509,7 +585,7 @@ export default function MarketplacePage() {
 							</div>
 							
 							{/* Page indicator */}
-							{totalPages > 1 && (
+							{totalPages > 1 && !isMobile && (
 								<div className="text-sm text-gray-500 dark:text-gray-400">
 									Page {currentPage} of {totalPages}
 								</div>
@@ -519,9 +595,9 @@ export default function MarketplacePage() {
 
 					{/* Products grid */}
 					{productsLoading ? (
-						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
 							{Array.from({ length: 10 }).map((_, index) => (
-								<div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-4 animate-pulse">
+								<div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-4 animate-pulse border border-gray-200 dark:border-gray-700">
 									<div className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-lg mb-3"></div>
 									<div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
 									<div className="h-3 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-3/4"></div>
@@ -532,26 +608,27 @@ export default function MarketplacePage() {
 					) : sortedProducts.length === 0 ? (
 						<div className="text-center py-12">
 							<div className="text-gray-400 dark:text-gray-500 mb-4">
-								<div className="w-24 h-24 mx-auto mb-4 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
-									<span className="text-4xl">📦</span>
+								<div className="w-20 md:w-24 h-20 md:h-24 mx-auto mb-4 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+									<span className="text-3xl md:text-4xl">📦</span>
 								</div>
 							</div>
-							<h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No listings found</h3>
-							<p className="text-gray-600 dark:text-gray-400 mb-4">
+							<h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No listings found</h3>
+							<p className="text-gray-600 dark:text-gray-400 mb-4 text-sm md:text-base">
 								{searchTerm || selectedLocation !== "All Locations" || selectedCategory !== "All"
 									? "Try adjusting your filters or search terms"
 									: "Be the first to list an item in this marketplace!"
 								}
 							</p>
-							<div className="flex gap-2 justify-center">
-								<Button onClick={handleCreateListing} size="sm">
+							<div className="flex flex-col sm:flex-row gap-2 justify-center items-center">
+								<Button onClick={handleCreateListing} size="sm" className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">
 									<Plus className="w-4 h-4 mr-2" />
 									Create Listing
 								</Button>
 								{(searchTerm || selectedLocation !== "All Locations" || selectedCategory !== "All") && (
-									<Button 
-										variant="outline" 
+									<Button 
+										variant="outline" 
 										size="sm"
+										className="border-gray-300 dark:border-gray-600"
 										onClick={() => {
 											setSearchTerm("")
 											setSelectedLocation("All Locations")
@@ -565,7 +642,7 @@ export default function MarketplacePage() {
 							</div>
 						</div>
 					) : (
-						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
 							{paginatedProducts.map((product) => (
 								<ProductCard
 									key={product.id}
@@ -589,8 +666,8 @@ export default function MarketplacePage() {
 							<Pagination>
 								<PaginationContent>
 									<PaginationItem>
-										<PaginationPrevious 
-											href="#" 
+										<PaginationPrevious 
+											href="#" 
 											onClick={(e: React.MouseEvent) => {
 												e.preventDefault();
 												if (currentPage > 1) handlePageChange(currentPage - 1);
@@ -626,8 +703,8 @@ export default function MarketplacePage() {
 										);
 									})}
 									<PaginationItem>
-										<PaginationNext 
-											href="#" 
+										<PaginationNext 
+											href="#" 
 											onClick={(e: React.MouseEvent) => {
 												e.preventDefault();
 												if (currentPage < totalPages) handlePageChange(currentPage + 1);
@@ -644,9 +721,9 @@ export default function MarketplacePage() {
 
 			{/* Price range filter sheet */}
 			<Sheet open={showPriceFilter} onOpenChange={setShowPriceFilter}>
-				<SheetContent>
+				<SheetContent className="bg-white dark:bg-gray-800">
 					<SheetHeader>
-						<SheetTitle>Filter by Price</SheetTitle>
+						<SheetTitle className="text-gray-900 dark:text-gray-100">Filter by Price</SheetTitle>
 					</SheetHeader>
 					<div className="p-4 space-y-6">
 						<div>
@@ -669,8 +746,9 @@ export default function MarketplacePage() {
 						</div>
 					</div>
 					<div className="flex justify-end p-4 gap-2">
-						<Button 
-							variant="outline" 
+						<Button 
+							variant="outline" 
+							className="border-gray-300 dark:border-gray-600"
 							onClick={() => {
 								setPriceRange([0, 2000])
 								setShowPriceFilter(false)
@@ -678,7 +756,10 @@ export default function MarketplacePage() {
 						>
 							Reset
 						</Button>
-						<Button onClick={() => setShowPriceFilter(false)}>
+						<Button
+							onClick={() => setShowPriceFilter(false)}
+							className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+						>
 							Apply Filter
 						</Button>
 					</div>

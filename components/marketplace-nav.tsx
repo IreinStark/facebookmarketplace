@@ -1,243 +1,313 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
-import { Search, MessageCircle, Bell, User, ShoppingBag, Menu, MapPin, X } from 'lucide-react'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import React, { useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { Button } from '@components/ui/button'
+import { Input } from '@components/ui/input'
+import { Avatar, AvatarFallback, AvatarImage } from '@components/ui/avatar'
+import { Badge } from '@components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from './ui/dropdown-menu'
+  DropdownMenuSeparator,
+} from '@components/ui/dropdown-menu'
+import {
+  Search,
+  Plus,
+  MessageCircle,
+  Bell,
+  User,
+  Settings,
+  LogOut,
+  Menu,
+  Camera,
+  MapPin,
+  Sun,
+  Moon
+} from 'lucide-react'
 import { useTheme } from 'next-themes'
-
-// Location data
-const locations = [
-  { name: "All Locations", region: "" },
-  { name: "Lefkosa", region: "Central" },
-  { name: "Girne", region: "Northern" },
-  { name: "Famagusta", region: "Eastern" },
-  { name: "Iskele", region: "Eastern" },
-  { name: "Guzelyurt", region: "Western" },
-  { name: "Lapta", region: "Northern" },
-  { name: "Alsancak", region: "Northern" },
-  { name: "Catalkoy", region: "Northern" },
-  { name: "Esentepe", region: "Northern" },
-  { name: "Bogaz", region: "Northern" },
-  { name: "Dipkarpaz", region: "Karpaz" },
-  { name: "Yeni Iskele", region: "Eastern" },
-]
+import { auth } from '@/firebase'
 
 interface MarketplaceNavProps {
-  user?: {
-    displayName?: string
-    photoURL?: string
-    email?: string
-  } | null
-  onSearch?: (query: string) => void
+  user?: any
+  onSearch?: (searchTerm: string) => void
   onLocationChange?: (location: string) => void
   searchValue?: string
   selectedLocation?: string
+  onMenuClick?: () => void
+  isMobile?: boolean
 }
 
-export function MarketplaceNav({ 
-  user, 
-  onSearch, 
-  onLocationChange, 
-  searchValue, 
-  selectedLocation = "All Locations" 
+export function MarketplaceNav({
+  user,
+  onSearch,
+  onLocationChange,
+  searchValue = '',
+  selectedLocation = 'All Locations',
+  onMenuClick,
+  isMobile = false
 }: MarketplaceNavProps) {
-  const [showLocationDropdown, setShowLocationDropdown] = useState(false)
-  const [locationSearch, setLocationSearch] = useState("")
-  const { theme } = useTheme()
+  const router = useRouter()
+  const { theme, setTheme } = useTheme()
+  const [notifications] = useState(3) // Mock notification count
 
-  // Filter locations based on search
-  const filteredLocations = locations.filter(location =>
-    location.name.toLowerCase().includes(locationSearch.toLowerCase()) ||
-    location.region.toLowerCase().includes(locationSearch.toLowerCase())
-  )
-
-  const handleLocationSelect = (location: string) => {
-    onLocationChange?.(location)
-    setShowLocationDropdown(false)
-    setLocationSearch("")
-  }
-
-  const clearLocation = () => {
-    onLocationChange?.("All Locations")
-  }
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element
-      if (!target.closest('.location-dropdown')) {
-        setShowLocationDropdown(false)
-      }
+  const handleSignOut = async () => {
+    try {
+      await auth.signOut()
+      router.push('/auth/login')
+    } catch (error) {
+      console.error('Error signing out:', error)
     }
+  }
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  const getUserInitials = () => {
+    if (user?.displayName) {
+      return user.displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase()
+    }
+    if (user?.email) {
+      return user.email[0].toUpperCase()
+    }
+    return 'U'
+  }
 
   return (
-    <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 sticky top-0 z-50 transition-colors">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Left section - Logo and Marketplace */}
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center transition-colors">
-              <ShoppingBag className="w-6 h-6 text-white" />
+    <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-800/60">
+      <div className="container flex h-14 md:h-16 items-center px-4">
+        {/* Mobile Menu Button */}
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mr-2 md:hidden"
+            onClick={onMenuClick}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        )}
+
+        {/* Logo */}
+        <Link href="/" className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">M</span>
+          </div>
+          <span className="hidden sm:inline-block font-bold text-lg text-gray-900 dark:text-gray-100">
+            Marketplace
+          </span>
+        </Link>
+
+        {/* Desktop Search */}
+        {!isMobile && (
+          <div className="flex-1 max-w-md mx-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Search products..."
+                value={searchValue}
+                onChange={(e) => onSearch?.(e.target.value)}
+                className="pl-10 w-full border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+              />
             </div>
-            <div className="hidden md:block">
-              <h1 className="text-2xl font-bold text-blue-600 dark:text-white transition-colors">
-
-                NEAR ME
-              </h1>
-             
-              
-            </div>
           </div>
-        </div>
+        )}
 
-        {/* Center section - Search and Location */}
-        <div className="flex-1 max-w-2xl mx-4 space-y-2 md:space-y-0 md:flex md:space-x-2">
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <Input
-              type="text"
-              placeholder="Search Marketplace"
-              value={searchValue || ''}
-              onChange={(e) => onSearch?.(e.target.value)}
-              className="pl-10 pr-4 py-2 w-full bg-gray-100 dark:bg-gray-800 border-none rounded-full focus:bg-white dark:focus:bg-gray-700 focus:shadow-md transition-all"
-            />
-          </div>
+        {/* Desktop Location Badge */}
+        {!isMobile && selectedLocation !== 'All Locations' && (
+          <Badge 
+            variant="secondary" 
+            className="mr-4 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+          >
+            <MapPin className="w-3 h-3 mr-1" />
+            {selectedLocation}
+          </Badge>
+        )}
 
-          {/* Location Filter */}
-          <div className="relative location-dropdown">
-            <Button
-              variant="outline"
-              className="w-full md:w-auto justify-start bg-gray-100 dark:bg-gray-800 border-none rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              onClick={() => setShowLocationDropdown(!showLocationDropdown)}
-            >
-              <MapPin className="w-4 h-4 mr-2" />
-              <span className="truncate max-w-32">
-                {selectedLocation}
-              </span>
-              {selectedLocation !== "All Locations" && (
-                <X 
-                  className="w-4 h-4 ml-2 hover:text-red-500" 
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    clearLocation()
-                  }}
-                />
-              )}
-            </Button>
-
-            {showLocationDropdown && (
-              <div className="absolute top-full left-0 right-0 md:left-auto md:right-auto md:w-72 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
-                <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-                  <Input
-                    type="text"
-                    placeholder="Search locations..."
-                    value={locationSearch}
-                    onChange={(e) => setLocationSearch(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-                <div className="max-h-60 overflow-y-auto">
-                  {filteredLocations.map((location) => (
-                    <button
-                      key={location.name}
-                      className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between transition-colors"
-                      onClick={() => handleLocationSelect(location.name)}
-                    >
-                      <div>
-                        <div className="font-medium text-gray-900 dark:text-gray-100">
-                          {location.name}
-                        </div>
-                        {location.region && (
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {location.region} Region
-                          </div>
-                        )}
-                      </div>
-                      {selectedLocation === location.name && (
-                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right section - User actions */}
+        {/* Action Buttons */}
         <div className="flex items-center space-x-2">
-          {/* Mobile menu button */}
-          <Button variant="ghost" size="sm" className="md:hidden">
-            <Menu className="w-5 h-5" />
+          {/* Theme Toggle */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="w-9 h-9 p-0"
+          >
+            {theme === 'dark' ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
           </Button>
 
-          {/* Desktop actions */}
-          <div className="hidden md:flex items-center space-x-2">
-            <Button variant="ghost" size="sm" className="rounded-full p-2">
-              <MessageCircle className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="sm" className="rounded-full p-2">
-              <Bell className="w-5 h-5" />
-            </Button>
-          </div>
-
-          {/* User profile */}
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.photoURL || ''} alt={user.displayName || ''} />
-                    <AvatarFallback>
-                      {user.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
+          {/* Quick Actions for Desktop */}
+          {!isMobile && (
+            <>
+              <Link href="/photos">
+                <Button variant="ghost" size="sm" className="hidden md:flex">
+                  <Camera className="w-4 h-4 mr-2" />
+                  Photos
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+              </Link>
+
+              <Link href="/sell">
+                <Button 
+                  size="sm" 
+                  className="hidden md:flex bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Sell
+                </Button>
+              </Link>
+            </>
+          )}
+
+          {user ? (
+            <>
+              {/* Messages */}
+              <Link href="/messages">
+                <Button variant="ghost" size="sm" className="relative w-9 h-9 p-0">
+                  <MessageCircle className="h-4 w-4" />
+                </Button>
+              </Link>
+
+              {/* Notifications */}
+              <Button variant="ghost" size="sm" className="relative w-9 h-9 p-0">
+                <Bell className="h-4 w-4" />
+                {notifications > 0 && (
+                  <Badge 
+                    className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center text-xs bg-red-500 hover:bg-red-500"
+                  >
+                    {notifications}
+                  </Badge>
+                )}
+              </Button>
+
+              {/* User Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage 
+                        src={user.photoURL || '/placeholder-user.png'} 
+                        alt={user.displayName || user.email} 
+                      />
+                      <AvatarFallback className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                        {getUserInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  className="w-56 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" 
+                  align="end" 
+                  forceMount
+                >
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                        {user.displayName || 'User'}
+                      </p>
+                      <p className="w-[200px] truncate text-sm text-gray-600 dark:text-gray-400">
+                        {user.email}
+                      </p>
+                    </div>
                   </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <ShoppingBag className="mr-2 h-4 w-4" />
-                  <span>Your listings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="flex items-center cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/sell" className="flex items-center cursor-pointer">
+                      <Plus className="mr-2 h-4 w-4" />
+                      <span>Create Listing</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/photos" className="flex items-center cursor-pointer">
+                      <Camera className="mr-2 h-4 w-4" />
+                      <span>Photo Gallery</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/messages" className="flex items-center cursor-pointer">
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      <span>Messages</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile?tab=settings" className="flex items-center cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
+                  <DropdownMenuItem 
+                    className="flex items-center cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400" 
+                    onClick={handleSignOut}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           ) : (
-            <Button variant="outline" size="sm">
-              Sign in
-            </Button>
+            <>
+              <Link href="/auth/login">
+                <Button variant="ghost" size="sm">
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/auth/register">
+                <Button 
+                  size="sm" 
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                >
+                  Sign Up
+                </Button>
+              </Link>
+            </>
           )}
         </div>
       </div>
-    </nav>
+
+      {/* Mobile Quick Actions Bar */}
+      {isMobile && user && (
+        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2">
+          <div className="flex items-center justify-around">
+            <Link href="/sell">
+              <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2">
+                <Plus className="h-4 w-4" />
+                <span className="text-xs">Sell</span>
+              </Button>
+            </Link>
+            <Link href="/photos">
+              <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2">
+                <Camera className="h-4 w-4" />
+                <span className="text-xs">Photos</span>
+              </Button>
+            </Link>
+            <Link href="/messages">
+              <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2 relative">
+                <MessageCircle className="h-4 w-4" />
+                <span className="text-xs">Messages</span>
+              </Button>
+            </Link>
+            <Link href="/profile">
+              <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2">
+                <User className="h-4 w-4" />
+                <span className="text-xs">Profile</span>
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
+    </header>
   )
 }

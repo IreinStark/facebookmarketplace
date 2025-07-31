@@ -1,21 +1,28 @@
 "use client"
 
 import React, { useState } from 'react'
-import { MapPin, Heart, MessageCircle, Eye, Clock, Trash2, User } from 'lucide-react'
-import { Card, CardContent } from './ui/card'
-import { Button } from './ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { Badge } from './ui/badge'
+import { Card, CardContent } from '@components/ui/card'
+import { Button } from '@components/ui/button'
+import { Badge } from '@components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from '@components/ui/avatar'
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from './ui/alert-dialog'
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@components/ui/dropdown-menu'
+import {
+  Heart,
+  MessageCircle,
+  MapPin,
+  Eye,
+  Clock,
+  MoreVertical,
+  Edit,
+  Trash2,
+  Flag,
+  Share2
+} from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
 interface ProductCardProps {
@@ -29,219 +36,300 @@ interface ProductCardProps {
     images?: string[]
     seller?: string
     userId: string
+    sellerId?: string
+    sellerName?: string
+    sellerAvatar?: string
     sellerProfile?: {
       displayName?: string
       photoURL?: string
     }
     createdAt: {
       toDate: () => Date
+      toMillis: () => number
     }
     views?: number
+    condition?: string
+    tags?: string[]
+    isNegotiable?: boolean
   }
   currentUserId?: string
-  onProductClick?: (productId: string) => void
-  onFavoriteClick?: (productId: string) => void
-  onMessageClick?: (productId: string) => void
+  onProductClick: (productId: string) => void
+  onFavoriteClick: (productId: string) => void
+  onMessageClick: (productId: string) => void
   onDeleteClick?: (productId: string) => void
-  onUserClick?: (userId: string) => void
-  isFavorited?: boolean
+  onUserClick: (userId: string) => void
+  isFavorited: boolean
   showDeleteButton?: boolean
 }
 
-export function ProductCard({ 
-  product, 
+export function ProductCard({
+  product,
   currentUserId,
-  onProductClick, 
-  onFavoriteClick, 
-  onMessageClick, 
+  onProductClick,
+  onFavoriteClick,
+  onMessageClick,
   onDeleteClick,
   onUserClick,
-  isFavorited = false,
+  isFavorited,
   showDeleteButton = false
 }: ProductCardProps) {
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  
-  const isOwner = currentUserId === product.userId
-  const shouldShowDelete = showDeleteButton && isOwner
+  const [imageError, setImageError] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const handleCardClick = () => {
-    onProductClick?.(product.id)
+  const handleImageLoad = () => {
+    setIsLoading(false)
+  }
+
+  const handleImageError = () => {
+    setImageError(true)
+    setIsLoading(false)
+  }
+
+  const handleProductClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    onProductClick(product.id)
   }
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    onFavoriteClick?.(product.id)
+    e.preventDefault()
+    onFavoriteClick(product.id)
   }
 
   const handleMessageClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    onMessageClick?.(product.id)
-  }
-
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setShowDeleteDialog(true)
-  }
-
-  const handleConfirmDelete = () => {
-    onDeleteClick?.(product.id)
-    setShowDeleteDialog(false)
+    e.preventDefault()
+    onMessageClick(product.id)
   }
 
   const handleUserClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    onUserClick?.(product.userId)
+    e.preventDefault()
+    onUserClick(product.userId || product.sellerId || '')
+  }
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (onDeleteClick) {
+      onDeleteClick(product.id)
+    }
+  }
+
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (navigator.share) {
+      navigator.share({
+        title: product.title,
+        text: `Check out this ${product.category.toLowerCase()}: ${product.title}`,
+        url: `${window.location.origin}/products/${product.id}`
+      })
+    } else {
+      // Fallback to clipboard
+      navigator.clipboard.writeText(`${window.location.origin}/products/${product.id}`)
+    }
+  }
+
+  const getSellerName = () => {
+    return product.sellerProfile?.displayName || product.sellerName || product.seller || 'Anonymous'
+  }
+
+  const getSellerAvatar = () => {
+    return product.sellerProfile?.photoURL || product.sellerAvatar
+  }
+
+  const getMainImage = () => {
+    if (product.images && product.images.length > 0) {
+      return product.images[0]
+    }
+    return '/placeholder.svg?height=200&width=200'
   }
 
   return (
-    <>
-      <Card 
-        className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-0 bg-white dark:bg-gray-800 rounded-lg overflow-hidden"
-        onClick={handleCardClick}
+    <Card className="group hover:shadow-lg transition-all duration-200 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
+      {/* Image Container */}
+      <div 
+        className="relative aspect-square cursor-pointer overflow-hidden"
+        onClick={handleProductClick}
       >
-        <div className="relative">
-          {/* Product image */}
-          <div className="aspect-square bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
-            {product.images && product.images.length > 0 ? (
-              <img
-                src={product.images[0]}
-                alt={product.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-600">
-                <div className="text-gray-400 dark:text-gray-500 text-center">
-                  <div className="w-12 h-12 mx-auto mb-2 bg-gray-300 dark:bg-gray-500 rounded-lg"></div>
-                  <p className="text-sm">No image</p>
-                </div>
+        {/* Loading Skeleton */}
+        {isLoading && (
+          <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse" />
+        )}
+
+        {/* Product Image */}
+        {!imageError ? (
+          <img
+            src={getMainImage()}
+            alt={product.title}
+            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 ${
+              isLoading ? 'opacity-0' : 'opacity-100'
+            }`}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+            <div className="text-center text-gray-400 dark:text-gray-500">
+              <div className="w-16 h-16 mx-auto mb-2 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                <span className="text-2xl">📦</span>
               </div>
-            )}
-            
-            {/* Action buttons overlay */}
-            <div className="absolute top-2 right-2 flex flex-col space-y-2">
-              {/* Favorite button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`rounded-full p-2 ${
-                  isFavorited 
-                    ? 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800' 
-                    : 'bg-white/80 dark:bg-gray-800/80 text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700'
-                }`}
-                onClick={handleFavoriteClick}
-              >
-                <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
-              </Button>
-
-              {/* Delete button (only for owner) */}
-              {shouldShowDelete && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="rounded-full p-2 bg-white/80 dark:bg-gray-800/80 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900"
-                  onClick={handleDeleteClick}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              )}
+              <p className="text-xs">No image</p>
             </div>
+          </div>
+        )}
 
-            {/* Views counter */}
+        {/* Favorite Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`absolute top-2 right-2 w-8 h-8 p-0 rounded-full bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 transition-all ${
+            isFavorited ? 'text-red-500 hover:text-red-600' : 'text-gray-600 hover:text-red-500'
+          }`}
+          onClick={handleFavoriteClick}
+        >
+          <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
+        </Button>
+
+        {/* Category Badge */}
+        <Badge 
+          className="absolute top-2 left-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800 text-xs"
+        >
+          {product.category}
+        </Badge>
+
+        {/* Condition Badge */}
+        {product.condition && (
+          <Badge 
+            variant="secondary" 
+            className="absolute bottom-2 left-2 bg-white/90 dark:bg-gray-800/90 text-xs"
+          >
+            {product.condition}
+          </Badge>
+        )}
+
+        {/* Negotiable Badge */}
+        {product.isNegotiable && (
+          <Badge 
+            className="absolute bottom-2 right-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs"
+          >
+            Negotiable
+          </Badge>
+        )}
+
+        {/* Options Menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-2 right-12 w-8 h-8 p-0 rounded-full bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 opacity-0 group-hover:opacity-100 transition-all"
+            >
+              <MoreVertical className="w-4 h-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+            <DropdownMenuItem onClick={handleShareClick}>
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
+            </DropdownMenuItem>
+            {showDeleteButton && (
+              <>
+                <DropdownMenuItem onClick={() => window.open(`/products/${product.id}/edit`, '_blank')}>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Listing
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDeleteClick} className="text-red-600 dark:text-red-400">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </>
+            )}
+            {!showDeleteButton && (
+              <DropdownMenuItem>
+                <Flag className="w-4 h-4 mr-2" />
+                Report
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Content */}
+      <CardContent className="p-3">
+        {/* Title and Price */}
+        <div 
+          className="cursor-pointer mb-2" 
+          onClick={handleProductClick}
+        >
+          <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100 line-clamp-2 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+            {product.title}
+          </h3>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-lg font-bold text-green-600 dark:text-green-400">
+              ${product.price.toLocaleString()}
+            </p>
             {product.views && (
-              <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center">
+              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                 <Eye className="w-3 h-3 mr-1" />
                 {product.views}
               </div>
             )}
-
-            {/* Category badge */}
-            <Badge 
-              variant="secondary" 
-              className="absolute top-2 left-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 border-0"
-            >
-              {product.category}
-            </Badge>
           </div>
         </div>
 
-        <CardContent className="p-4">
-          {/* Price */}
-          <div className="mb-2">
-            <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              ${Number(product.price).toLocaleString()}
-            </p>
-          </div>
+        {/* Location and Time */}
+        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-3">
+          <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+          <span className="truncate mr-2">{product.location}</span>
+          <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
+          <span className="truncate">
+            {formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true })}
+          </span>
+        </div>
 
-          {/* Title */}
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-            {product.title}
-          </h3>
+        {/* Seller Info */}
+        <div 
+          className="flex items-center space-x-2 mb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded p-1 -m-1 transition-colors"
+          onClick={handleUserClick}
+        >
+          <Avatar className="h-6 w-6">
+            <AvatarImage src={getSellerAvatar()} alt={getSellerName()} />
+            <AvatarFallback className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+              {getSellerName()[0]?.toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-xs text-gray-600 dark:text-gray-400 truncate">
+            {getSellerName()}
+          </span>
+        </div>
 
-          {/* Location and time */}
-          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
-            <MapPin className="w-4 h-4 mr-1" />
-            <span className="mr-2">{product.location}</span>
-            <Clock className="w-4 h-4 mr-1" />
-            <span>{formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true })}</span>
-          </div>
-
-          {/* Seller info and actions */}
-          <div className="flex items-center justify-between">
-            <div 
-              className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-1 -m-1 transition-colors"
-              onClick={handleUserClick}
-            >
-              <Avatar className="h-8 w-8 mr-2">
-                <AvatarImage 
-                  src={product.sellerProfile?.photoURL} 
-                  alt={product.sellerProfile?.displayName || product.seller} 
-                />
-                <AvatarFallback className="text-xs">
-                  {product.sellerProfile?.displayName?.[0]?.toUpperCase() || 
-                   product.seller?.[0]?.toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm text-gray-600 dark:text-gray-300 truncate max-w-24">
-                {product.sellerProfile?.displayName || product.seller || 'Seller'}
-              </span>
-            </div>
-
-            {/* Message button (only if not owner) */}
-            {!isOwner && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900"
-                onClick={handleMessageClick}
-              >
-                <MessageCircle className="w-4 h-4 mr-1" />
-                Message
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Listing</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{product.title}"? This action cannot be undone and will permanently remove your listing from the marketplace.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleConfirmDelete}
-              className="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
-            >
-              Delete Listing
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+        {/* Action Buttons */}
+        <div className="flex space-x-2">
+          <Button
+            size="sm"
+            onClick={handleMessageClick}
+            className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+            disabled={currentUserId === (product.userId || product.sellerId)}
+          >
+            <MessageCircle className="w-3 h-3 mr-1" />
+            Message
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleFavoriteClick}
+            className={`w-8 h-8 p-0 ${
+              isFavorited 
+                ? 'text-red-500 hover:text-red-600' 
+                : 'text-gray-400 hover:text-red-500'
+            }`}
+          >
+            <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
