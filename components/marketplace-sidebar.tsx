@@ -351,6 +351,8 @@ export function MarketplaceBottomNav({
                           <div className="font-medium">{location.name}</div>
                           {location.region && (
                             <div className="text-xs text-gray-500 dark:text-gray-500">{location.region} region</div>
+                          )}
+                        </div>
                 {/* Location search/select */}
                 <div className="relative">
                   <Button
