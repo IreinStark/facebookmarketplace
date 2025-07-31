@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { onAuthStateChanged, type User } from 'firebase/auth'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { auth } from '@/app/firebase'
 import { ChatInterface } from '@/components/chat-interface'
 import { MarketplaceNav } from '@/components/marketplace-nav'
@@ -13,6 +13,13 @@ export default function MessagesPage() {
   const [loading, setLoading] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Get conversation parameters from URL
+  const recipientId = searchParams.get('recipientId')
+  const recipientName = searchParams.get('recipientName')
+  const productId = searchParams.get('productId')
+  const productTitle = searchParams.get('productTitle')
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -67,6 +74,10 @@ export default function MessagesPage() {
               currentUserName={user.displayName || user.email || 'User'}
               isOpen={true}
               onClose={() => router.push('/')}
+              initialRecipientId={recipientId || undefined}
+              initialRecipientName={recipientName || undefined}
+              productId={productId || undefined}
+              productTitle={productTitle || undefined}
             />
           </div>
         </div>
