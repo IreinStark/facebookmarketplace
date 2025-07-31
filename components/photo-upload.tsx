@@ -72,15 +72,6 @@ async function uploadToCloudinary(file: File): Promise<string> {
     throw new Error('Failed to upload image. Please try again.');
   }
 }
-    method: 'POST',
-    body: formData,
-  });
-
-  if (!res.ok) throw new Error('Cloudinary upload failed');
-  
-  const data = await res.json();
-  return data.secure_url;
-}
 
 export function PhotoUpload({ 
   onPhotosUploaded, 
