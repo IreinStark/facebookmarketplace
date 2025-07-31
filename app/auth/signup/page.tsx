@@ -14,7 +14,7 @@ import { serverTimestamp } from "firebase/firestore";
 // Import Firebase Auth & Firestore
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth"
 import { setDoc, doc } from "firebase/firestore"
-import { auth, db } from "@/firebase" // Adjust the path as needed
+import { auth, db } from "@/app/firebase" // Adjust the path as needed
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -70,7 +70,7 @@ export default function SignupPage() {
         typeof err === "object" &&
         err !== null &&
         "code" in err &&
-        typeof (err as any).code === "string"
+        typeof (err as { code: unknown }).code === "string"
       ) {
         const code = (err as { code: string; message?: string }).code;
         if (code === "auth/invalid-email") {

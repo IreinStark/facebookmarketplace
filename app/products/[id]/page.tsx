@@ -2,12 +2,11 @@
 
 import React, { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Heart, MessageCircle, Share2, MapPin, Clock, Eye, Flag, Shield } from 'lucide-react'
+import { ArrowLeft, Heart, MessageCircle, Share2, MapPin, Clock, Flag, Shield } from 'lucide-react'
 import { Button } from '../../../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar'
 import { Badge } from '../../../components/ui/badge'
-import { Separator } from '../../../components/ui/separator'
 import { formatDistanceToNow } from 'date-fns'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../firebase'
@@ -293,7 +292,7 @@ export default function ProductDetailPage() {
                     <ul className="text-sm text-yellow-700 dark:text-yellow-400 space-y-1">
                       <li>• Meet in a public place</li>
                       <li>• Inspect the item before paying</li>
-                      <li>• Don't send money in advance</li>
+                      <li>• Don&apos;t send money in advance</li>
                       <li>• Trust your instincts</li>
                     </ul>
                   </div>

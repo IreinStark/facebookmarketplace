@@ -2,6 +2,9 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
+
+// Force dynamic rendering to avoid prerendering issues with auth
+export const dynamic = 'force-dynamic';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,28 +13,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Upload, X, MapPin, DollarSign, Tag, FileText, Camera, ImageIcon } from "lucide-react";
+import { ArrowLeft, MapPin, DollarSign, Tag, FileText, Camera, ImageIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { auth, db } from "@/firebase";
+import { auth } from "@/app/firebase";
 import { PhotoUpload } from "@/components/photo-upload";
 import { type Photo, createProduct } from "@/lib/firebase-utils";
 import { getUserProfile, getUserDisplayName, type UserProfile } from "@/lib/user-utils";
 
-interface MockPhoto {
-  id: string;
-  url: string;
-  fileName: string;
-  size: number;
-  uploadedAt: Date;
-  userId: string;
-  location?: {
-    latitude: number;
-    longitude: number;
-    address?: string;
-    radius: number;
-  };
-}
+
 
 const categories = ["Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"];
 const conditions = ["New", "Like New", "Good", "Fair", "Poor"];

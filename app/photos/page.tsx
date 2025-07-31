@@ -10,8 +10,9 @@ import Link from "next/link";
 import { PhotoUpload } from "../../components/photo-upload";
 import { PhotoGallery } from "../../components/photo-gallery";
 import { type Photo } from "../../lib/firebase-utils";
-import { auth } from "@/firebase";
+import { auth } from "@/app/firebase";
 import { Timestamp } from "firebase/firestore";
+import { type User } from "firebase/auth";
 
 // Mock photos for demonstration
 const mockPhotos: Photo[] = [
@@ -73,14 +74,14 @@ export default function PhotosPage() {
   const [photos, setPhotos] = useState<Photo[]>(mockPhotos);
   const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>(mockPhotos);
   const [showUpload, setShowUpload] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((firebaseUser: any) => {
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser: User | null) => {
       setUser(firebaseUser);
       setLoading(false);
     });

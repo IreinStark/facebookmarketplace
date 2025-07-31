@@ -4,10 +4,9 @@ import React, { useState, useEffect } from "react"
 import { onAuthStateChanged, type User } from "firebase/auth"
 import { useRouter } from "next/navigation"
 
-import { auth } from "@/firebase"
+import { auth } from "@/app/firebase"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
@@ -16,20 +15,15 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { MessageCircle, Plus, Filter, Search, MapPin, Menu, X } from "lucide-react"
+import { MessageCircle, Plus, Filter, Search, Menu, X } from "lucide-react"
 
 // Import hooks and utilities
 import { useSocket } from "@/hooks/use-socket"
-import { subscribeToProducts as subscribeToRealProducts, deleteProduct, type Product } from "@/lib/firebase-utils"
+import { subscribeToProducts as subscribeToRealProducts, deleteProduct } from "@/lib/firebase-utils"
 import { subscribeMockProducts } from "@/lib/mock-data-utils"
 import { getUserProfile, type UserProfile } from "@/lib/user-utils"
 
 // Type definitions for component compatibility
-interface MarketplaceNavUser {
-	displayName?: string | undefined
-	photoURL?: string | undefined
-	email?: string | undefined
-}
 
 interface ProductCardProduct {
 	id: string
@@ -293,9 +287,9 @@ export default function MarketplacePage() {
 					setIsLoggedIn(false)
 					setFavorites([])
 				}
-			} catch (err: any) {
-				console.error("Auth error:", err)
-				setError("Failed to load user data: " + (err?.message || "Unknown error"))
+					} catch (err: unknown) {
+			console.error("Auth error:", err)
+			setError("Failed to load user data: " + (err instanceof Error ? err.message : "Unknown error"))
 			} finally {
 				setLoading(false)
 			}
@@ -425,7 +419,7 @@ export default function MarketplacePage() {
 		try {
 			await deleteProduct(productId, user.uid)
 			console.log('Product deleted successfully')
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Failed to delete product:', error.message)
 			setError('Failed to delete listing: ' + error.message)
 		}
@@ -576,7 +570,7 @@ export default function MarketplacePage() {
 											)}
 											{searchTerm && (
 												<Badge variant="secondary" className="ml-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-													🔍 "{searchTerm}"
+													🔍 &quot;{searchTerm}&quot;
 												</Badge>
 											)}
 										</>

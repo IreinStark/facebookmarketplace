@@ -29,7 +29,7 @@ import {
   Moon
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { auth } from '@/firebase'
+import { auth } from '@/app/firebase'
 
 interface MarketplaceNavProps {
   user?: any

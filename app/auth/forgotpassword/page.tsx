@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { sendPasswordResetEmail } from "firebase/auth"
-import { auth } from "@/firebase"
+import { auth } from "@/app/firebase"
 import { Input } from "@components/ui/input"
 import { Button } from "@components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card"
@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
       await sendPasswordResetEmail(auth, email)
       setMessage("Password reset email sent. Check your inbox.")
     } catch (err) {
-      const errorCode = (err as any)?.code
+      const errorCode = (err as { code?: string })?.code
       if (errorCode === "auth/user-not-found") {
         setError("No account found with this email.")
       } else if (errorCode === "auth/invalid-email") {
