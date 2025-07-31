@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth"
-import { auth } from "@/firebase" // Make sure this file exists and is correctly configured
+import { auth } from "@/app/firebase" // Make sure this file exists and is correctly configured
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"

@@ -4,10 +4,8 @@ import React, { useState, useEffect } from "react"
 import { onAuthStateChanged, type User } from "firebase/auth"
 import { useRouter } from "next/navigation"
 
-import { auth } from "@/firebase"
+import { auth } from "@/app/firebase"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
@@ -16,21 +14,15 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { MessageCircle, Plus, Filter, Search, MapPin, Menu, X } from "lucide-react"
+import { MessageCircle, Plus, Filter, Search, Menu, X } from "lucide-react"
 
 // Import hooks and utilities
 import { useSocket } from "@/hooks/use-socket"
-import { subscribeToProducts as subscribeToRealProducts, deleteProduct, type Product } from "@/lib/firebase-utils"
+import { subscribeToProducts as subscribeToRealProducts, deleteProduct } from "@/lib/firebase-utils"
 import { subscribeMockProducts } from "@/lib/mock-data-utils"
 import { getUserProfile, type UserProfile } from "@/lib/user-utils"
 
 // Type definitions for component compatibility
-interface MarketplaceNavUser {
-	displayName?: string | undefined
-	photoURL?: string | undefined
-	email?: string | undefined
-}
-
 interface ProductCardProduct {
 	id: string
 	title: string
@@ -238,7 +230,7 @@ export default function MarketplacePage() {
 	const [sortBy, setSortBy] = useState("newest")
 	const [showPriceFilter, setShowPriceFilter] = useState(false)
 	const [priceRange, setPriceRange] = useState([0, 2000])
-	const [isChatOpen, setIsChatOpen] = useState(false)
+
 	
 	// Pagination state
 	const [currentPage, setCurrentPage] = useState(1)
@@ -293,9 +285,10 @@ export default function MarketplacePage() {
 					setIsLoggedIn(false)
 					setFavorites([])
 				}
-			} catch (err: any) {
+			} catch (err: unknown) {
+				const errorMessage = err instanceof Error ? err.message : 'Unknown error'
 				console.error("Auth error:", err)
-				setError("Failed to load user data: " + (err?.message || "Unknown error"))
+				setError("Failed to load user data: " + errorMessage)
 			} finally {
 				setLoading(false)
 			}
@@ -404,7 +397,6 @@ export default function MarketplacePage() {
 
 	const handleMessageClick = (productId: string) => {
 		console.log('Message clicked:', productId)
-		setIsChatOpen(true)
 		router.push(`/messages?product=${productId}`)
 	}
 
@@ -425,9 +417,10 @@ export default function MarketplacePage() {
 		try {
 			await deleteProduct(productId, user.uid)
 			console.log('Product deleted successfully')
-		} catch (error: any) {
-			console.error('Failed to delete product:', error.message)
-			setError('Failed to delete listing: ' + error.message)
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+			console.error('Failed to delete product:', errorMessage)
+			setError('Failed to delete listing: ' + errorMessage)
 		}
 	}
 
@@ -445,7 +438,6 @@ export default function MarketplacePage() {
 
 	const handleOpenChat = () => {
 		if (isLoggedIn) {
-			setIsChatOpen(true)
 			router.push('/messages')
 		} else {
 			router.push('/auth/login')
