@@ -41,21 +41,21 @@ interface UploadState {
 
 // Cloudinary upload function
 async function uploadToCloudinary(file: File): Promise<string> {
-  const url = `https://api.cloudinary.com/v1_1/dhcdhsgax/image/upload`;// <-- Insert your Cloudinary cloud name
-  const unsigned_preset = 'unsigned_preset'; // <-- Insert your unsigned upload preset 
+  const url = `https://api.cloudinary.com/v1_1/dhcdhsgax/image/upload`;
+  const unsigned_preset = 'ml_default'; // Using default unsigned preset
   const formData = new FormData();
   formData.append('file', file);
-
-  formData.append('upload_preset', unsigned_preset); // <-- Insert your unsigned upload preset
-
+  formData.append('upload_preset', unsigned_preset);
 
   const res = await fetch(url, {
     method: 'POST',
     body: formData,
   });
+
   if (!res.ok) throw new Error('Cloudinary upload failed');
+  
   const data = await res.json();
-  return data.secure_url; // The hosted image URL
+  return data.secure_url;
 }
 
 export function PhotoUpload({ 
