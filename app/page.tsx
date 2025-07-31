@@ -540,6 +540,7 @@ export default function MarketplacePage() {
 						</div>
 					)}
 			</div>
+		</div>
 
 			{/* Mobile Bottom Navigation */}
 			{isMobile && (
