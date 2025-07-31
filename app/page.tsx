@@ -361,7 +361,7 @@ export default function MarketplacePage() {
 				{/* Main content */}
 				<div className="flex-1 p-4 md:p-6">
 					{/* Main content - full width now */}
-		<div className="p-4 md:p-6 pb-20">{/* Added bottom padding for bottom nav */}
+					<div className="pb-20">{/* Added bottom padding for bottom nav */}
 					{/* Mobile Filter Toggle */}
 					{isMobile && (
 						<div className="mb-4 flex items-center justify-between">
