@@ -581,18 +581,8 @@ export default function MarketplacePage() {
 			/>
 		)}
 		
-		{/* Bottom Navigation */}
-		<MarketplaceSidebar
-			selectedCategory={selectedCategory}
-			categories={categories}
-			onCategoryChange={setSelectedCategory}
-			onCreateListing={handleCreateListing}
-			selectedLocation={selectedLocation}
-			onLocationChange={setSelectedLocation}
-		/>
-
-			{/* Price range filter sheet */}
-			<Sheet open={showPriceFilter} onOpenChange={setShowPriceFilter}>
+		{/* Price range filter sheet */}
+		<Sheet open={showPriceFilter} onOpenChange={setShowPriceFilter}>
 				<SheetContent className="bg-white dark:bg-white">
 					<SheetHeader>
 						<SheetTitle className="text-gray-900 dark:text-gray-900">Filter by Price</SheetTitle>
