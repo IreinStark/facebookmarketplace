@@ -41,35 +41,52 @@ interface UploadState {
 
 import { getCloudinaryUploadUrl, getCloudinaryConfig } from '../lib/cloudinary-config';
 
-// Cloudinary upload function
+// Cloudinary upload function with Firebase Storage fallback
 async function uploadToCloudinary(file: File): Promise<string> {
   const { cloudName, uploadPreset } = getCloudinaryConfig();
   
-  if (cloudName === 'your-cloud-name' || uploadPreset === 'your-upload-preset') {
-    throw new Error('Please configure your Cloudinary credentials in lib/cloudinary-config.ts');
+  // First try Cloudinary if properly configured
+  if (cloudName !== 'dhcdhsgax' && uploadPreset !== 'ml_default') {
+    const url = getCloudinaryUploadUrl();
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!res.ok) {
+        throw new Error(`Cloudinary upload failed with status: ${res.status}`);
+      }
+      
+      const data = await res.json();
+      console.log('Cloudinary upload successful:', data.secure_url);
+      return data.secure_url;
+    } catch (error) {
+      console.warn('Cloudinary upload failed, trying Firebase Storage fallback:', error);
+      // Fall through to Firebase Storage
+    }
   }
   
-  const url = getCloudinaryUploadUrl();
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', uploadPreset);
-
+  // Fallback to Firebase Storage
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      body: formData,
-    });
+    const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+    const { storage } = await import('../app/firebase');
     
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(`Cloudinary upload failed: ${errorData.error?.message || res.statusText}`);
-    }
+    const filename = `${Date.now()}-${file.name}`;
+    const storageRef = ref(storage, `photos/${filename}`);
     
-    const data = await res.json();
-    return data.secure_url; // The hosted image URL
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    
+    console.log('Firebase Storage upload successful:', downloadURL);
+    return downloadURL;
   } catch (error) {
-    console.error('Cloudinary upload error:', error);
-    throw new Error('Failed to upload image. Please try again.');
+    console.error('Both Cloudinary and Firebase Storage failed:', error);
+    throw new Error('Failed to upload image. Please check your internet connection and try again.');
   }
 }
 
