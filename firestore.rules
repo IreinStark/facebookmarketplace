@@ -94,18 +94,18 @@ service cloud.firestore {
         resource.data.userId == request.auth.uid;
     }
     
-    // CHATS COLLECTION (for buyer-seller communication)
-    match /chats/{chatId} {
-      // Only participants can read the chat
+    // CONVERSATIONS COLLECTION (for buyer-seller communication)
+    match /conversations/{conversationId} {
+      // Only participants can read the conversation
       allow read: if isAuthenticated() && 
         request.auth.uid in resource.data.participants;
       
-      // Users can create chats if they're one of the participants
+      // Users can create conversations if they're one of the participants
       allow create: if isAuthenticated() && 
         request.auth.uid in request.resource.data.participants &&
         request.resource.data.participants.size() == 2;
       
-      // Participants can update chat metadata (like last message time)
+      // Participants can update conversation metadata (like last message time)
       allow update: if isAuthenticated() && 
         request.auth.uid in resource.data.participants &&
         // Prevent changing participants list
@@ -113,77 +113,27 @@ service cloud.firestore {
       
       // Messages subcollection
       match /messages/{messageId} {
-        // Only chat participants can read messages
+        // Only conversation participants can read messages
         allow read: if isAuthenticated() && 
-          request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
         
         // Users can create messages if they're a participant and the author
         allow create: if isAuthenticated() && 
-          request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants &&
-          request.resource.data.authorId == request.auth.uid &&
-          request.resource.data.timestamp == request.time;
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants &&
+          request.resource.data.senderId == request.auth.uid;
         
-        // Messages cannot be updated or deleted (immutable)
-        allow update, delete: if false;
+        // Messages can be marked as read
+        allow update: if isAuthenticated() && 
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+        
+        // Messages cannot be deleted (immutable)
+        allow delete: if false;
       }
     }
     
-    // TRANSACTIONS COLLECTION (for purchase records)
-    match /transactions/{transactionId} {
-      // Only buyer and seller can read transaction
-      allow read: if isAuthenticated() && 
-        (request.auth.uid == resource.data.buyerId || 
-         request.auth.uid == resource.data.sellerId);
-      
-      // Transactions are typically created by server-side functions
-      // but if created client-side, ensure proper ownership
-      allow create: if isAuthenticated() && 
-        request.auth.uid == request.resource.data.buyerId &&
-        request.resource.data.timestamp == request.time;
-      
-      // Only allow status updates by participants (e.g., marking as completed)
-      allow update: if isAuthenticated() && 
-        (request.auth.uid == resource.data.buyerId || 
-         request.auth.uid == resource.data.sellerId) &&
-        // Only allow changing status field
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']) &&
-        request.resource.data.updatedAt == request.time;
-      
-      allow delete: if false; // Transactions should not be deleted
-    }
-    
-    // REVIEWS COLLECTION
-    match /reviews/{reviewId} {
-      // Anyone can read reviews
-      allow read: if true;
-      
-      // Only buyers can create reviews for purchases they made
-      allow create: if isAuthenticated() && 
-        request.resource.data.reviewerId == request.auth.uid &&
-        // Verify the reviewer actually bought from this seller
-        exists(/databases/$(database)/documents/transactions/$(request.resource.data.transactionId)) &&
-        get(/databases/$(database)/documents/transactions/$(request.resource.data.transactionId)).data.buyerId == request.auth.uid &&
-        request.resource.data.createdAt == request.time;
-      
-      // Reviewers can update their own reviews within a time limit
-      allow update: if isAuthenticated() && 
-        resource.data.reviewerId == request.auth.uid &&
-        // Allow updates within 24 hours of creation
-        request.time < resource.data.createdAt + duration.value(24, 'h') &&
-        request.resource.data.updatedAt == request.time;
-      
-      // Reviews cannot be deleted (for trust and transparency)
-      allow delete: if false;
-    }
-    
-    // ADMIN COLLECTION (for app configuration, reports, etc.)
-    match /admin/{document} {
-      allow read, write: if isAdmin();
-    }
-    
-    // Deny access to any other collections by default
+    // Allow any other collection access for development - REMOVE IN PRODUCTION
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if isAuthenticated();
     }
   }
 }
