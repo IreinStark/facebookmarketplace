@@ -150,20 +150,61 @@ export default function NotificationsPage() {
     }
   }
 
-  const markAsRead = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === notificationId 
-          ? { ...notification, read: true }
-          : notification
+  const markAsRead = async (notificationId: string) => {
+    try {
+      // Update in Firebase if it's a real notification (not a sample one)
+      if (!notificationId.startsWith('sample-')) {
+        const notificationRef = doc(db, 'notifications', notificationId);
+        await updateDoc(notificationRef, { read: true });
+      }
+      
+      // Update local state
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification.id === notificationId 
+            ? { ...notification, read: true }
+            : notification
+        )
       )
-    )
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      // Fallback to local state update only
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification.id === notificationId 
+            ? { ...notification, read: true }
+            : notification
+        )
+      )
+    }
   }
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    )
+  const markAllAsRead = async () => {
+    try {
+      // Update all unread real notifications in Firebase
+      const unreadNotifications = notifications.filter(n => !n.read && !n.id.startsWith('sample-'));
+      const batch = writeBatch(db);
+      
+      unreadNotifications.forEach(notification => {
+        const notificationRef = doc(db, 'notifications', notification.id);
+        batch.update(notificationRef, { read: true });
+      });
+      
+      if (unreadNotifications.length > 0) {
+        await batch.commit();
+      }
+      
+      // Update local state
+      setNotifications(prev => 
+        prev.map(notification => ({ ...notification, read: true }))
+      )
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      // Fallback to local state update only
+      setNotifications(prev => 
+        prev.map(notification => ({ ...notification, read: true }))
+      )
+    }
   }
 
   const getNotificationIcon = (type: Notification['type']) => {
