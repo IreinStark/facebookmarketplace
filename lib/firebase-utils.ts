@@ -505,3 +505,64 @@ export async function resetPassword(email: string): Promise<void> {
     throw error;
   }
 }
+
+// Notification Management Functions
+export interface NotificationData {
+  type: 'message' | 'favorite' | 'view' | 'sale' | 'system';
+  title: string;
+  message: string;
+  userId: string; // recipient
+  senderId?: string;
+  senderName?: string;
+  senderAvatar?: string;
+  relatedId?: string; // product ID, conversation ID, etc.
+}
+
+export async function createNotification(notificationData: NotificationData): Promise<void> {
+  try {
+    await addDoc(collection(db, 'notifications'), {
+      ...notificationData,
+      timestamp: serverTimestamp(),
+      read: false,
+    });
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    throw error;
+  }
+}
+
+export async function createMessageNotification(
+  recipientId: string,
+  senderId: string,
+  senderName: string,
+  productTitle?: string
+): Promise<void> {
+  const message = productTitle 
+    ? `${senderName} sent you a message about ${productTitle}`
+    : `${senderName} sent you a message`;
+    
+  await createNotification({
+    type: 'message',
+    title: 'New Message',
+    message,
+    userId: recipientId,
+    senderId,
+    senderName,
+  });
+}
+
+export async function createFavoriteNotification(
+  sellerId: string,
+  buyerName: string,
+  productTitle: string,
+  productId: string
+): Promise<void> {
+  await createNotification({
+    type: 'favorite',
+    title: 'New Favorite',
+    message: `${buyerName} favorited your ${productTitle} listing`,
+    userId: sellerId,
+    senderName: buyerName,
+    relatedId: productId,
+  });
+}
