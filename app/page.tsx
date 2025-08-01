@@ -24,7 +24,6 @@ import { subscribeMockProducts } from "@/lib/mock-data-utils"
 import { getUserProfile, type UserProfile } from "@/lib/user-utils"
 
 // Type definitions for component compatibility
-
 interface ProductCardProduct {
 	id: string
 	title: string
@@ -103,7 +102,9 @@ export default function MarketplacePage() {
 	const [productsLoading, setProductsLoading] = useState(true)
 
 	const router = useRouter()
-	const { socket } = useSocket()
+	
+	// Initialize socket only after user is loaded
+	const { socket, isConnected } = useSocket(user)
 
 	const isLoggedIn = !!user
 
@@ -271,16 +272,19 @@ export default function MarketplacePage() {
 		// For a production app, you should implement a custom modal/dialog
 		// for user confirmation instead of window.confirm/alert.
 		console.log('Confirming deletion for product:', productId);
-		// if (!window.confirm('Are you sure you want to delete this listing?')) {
-		// 	return
-		// }
+		
+		// Simple confirmation using confirm - you can replace with a custom modal
+		const confirmed = confirm('Are you sure you want to delete this listing?')
+		if (!confirmed) {
+			return
+		}
 		
 		try {
 			await deleteProduct(productId, user.uid)
 			console.log('Product deleted successfully')
-		} catch (error: unknown) {
-			console.error('Failed to delete product:', error.message)
-			setError('Failed to delete listing: ' + error.message)
+		} catch (error: any) {
+			console.error('Failed to delete product:', error?.message || error)
+			setError('Failed to delete listing: ' + (error?.message || 'Unknown error'))
 		}
 	}
 
@@ -333,7 +337,10 @@ export default function MarketplacePage() {
 							variant="outline" 
 							size="sm" 
 							className="mt-2"
-							onClick={() => window.location.reload()}
+							onClick={() => {
+								setError(null)
+								window.location.reload()
+							}}
 						>
 							Retry
 						</Button>
@@ -434,6 +441,13 @@ export default function MarketplacePage() {
 								)}
 							</p>
 						</div>
+						
+						{/* Socket connection status - for debugging */}
+						{user && (
+							<div className="text-xs text-gray-500">
+								Socket: {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
+							</div>
+						)}
 						
 						{/* Page indicator */}
 						{totalPages > 1 && !isMobile && (

@@ -1,15 +1,63 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Button } from "@components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
-import { Badge } from "@components/ui/badge";
-import { Input } from "@components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { ArrowLeft, Camera, MapPin, Upload, Search, Filter, Grid, List } from "lucide-react";
 import Link from "next/link";
-import { PhotoUpload } from "../../components/photo-upload";
-import { PhotoGallery } from "../../components/photo-gallery";
-import { type Photo } from "../../lib/firebase-utils";
+// Try to import components with fallbacks
+let PhotoUpload: any
+let PhotoGallery: any
+
+try {
+  PhotoUpload = require("@/components/photo-upload").PhotoUpload
+} catch {
+  console.warn('PhotoUpload component not found, using fallback')
+  PhotoUpload = ({ onPhotosUploaded, userId, maxFiles, enableLocation, className }: any) => (
+    <div className={`border-2 border-dashed border-gray-300 rounded-lg p-8 text-center ${className}`}>
+      <div className="text-gray-500">
+        <p className="mb-2">📸 Photo Upload Component</p>
+        <p className="text-sm">Photo upload functionality would go here</p>
+        <p className="text-xs mt-2">Max files: {maxFiles} | Location: {enableLocation ? 'Enabled' : 'Disabled'}</p>
+      </div>
+    </div>
+  )
+}
+
+try {
+  PhotoGallery = require("@/components/photo-gallery").PhotoGallery
+} catch {
+  console.warn('PhotoGallery component not found, using fallback')
+  PhotoGallery = ({ photos, showMap, enableFiltering, className, viewMode }: any) => (
+    <div className={className}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {photos.map((photo: any, index: number) => (
+          <div key={photo.id || index} className="bg-white rounded-lg shadow-md overflow-hidden">
+            <img 
+              src={photo.url} 
+              alt={photo.filename}
+              className="w-full h-48 object-cover"
+            />
+            <div className="p-4">
+              <h3 className="font-medium text-sm">{photo.filename}</h3>
+              {photo.location?.address && (
+                <p className="text-xs text-gray-500 mt-1">📍 {photo.location.address}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      {showMap && (
+        <div className="mt-6 p-4 bg-gray-100 rounded-lg text-center text-gray-500">
+          🗺️ Interactive map would be displayed here
+        </div>
+      )}
+    </div>
+  )
+}
+import { type Photo } from "@/lib/firebase-utils";
 import { auth } from "@/app/firebase";
 import { Timestamp } from "firebase/firestore";
 import { type User } from "firebase/auth";

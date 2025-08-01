@@ -7,15 +7,15 @@ import { doc, getDoc, collection, query, where, orderBy, getDocs, addDoc, server
 import { ArrowLeft, MapPin, Clock, Star, MessageCircle, Shield, Calendar, Package } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 
-import { auth, db } from "../../firebase"
-import { Button } from "../../../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "../../../components/ui/avatar"
-import { Badge } from "../../../components/ui/badge"
-import { Separator } from "../../../components/ui/separator"
-import { Textarea } from "../../../components/ui/textarea"
-import { ProductCard } from "../../../components/product-card"
-import { getUserProducts, type Product } from "../../../lib/firebase-utils"
+import { auth, db } from "@/app/firebase"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
+import { ProductCard } from "@/components/product-card"
+import { getUserProducts, type Product } from "@/lib/firebase-utils"
 
 interface UserProfile {
   id: string
@@ -104,24 +104,36 @@ export default function UserProfilePage() {
         
         setProfile(profileData)
         
-        // Fetch user's products
-        const userProducts = await getUserProducts(userId)
-        setProducts(userProducts)
+        // Fetch user's products with error handling
+        try {
+          const userProducts = await getUserProducts(userId)
+          setProducts(userProducts)
+        } catch (productError) {
+          console.error('Error fetching user products:', productError)
+          // Continue without products rather than failing entirely
+          setProducts([])
+        }
         
-        // Fetch reviews
-        const reviewsQuery = query(
-          collection(db, 'userReviews'),
-          where('userId', '==', userId),
-          orderBy('createdAt', 'desc')
-        )
-        
-        const reviewsSnap = await getDocs(reviewsQuery)
-        const reviewsData = reviewsSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data()
-        } as Review))
-        
-        setReviews(reviewsData)
+        // Fetch reviews with error handling
+        try {
+          const reviewsQuery = query(
+            collection(db, 'userReviews'),
+            where('userId', '==', userId),
+            orderBy('createdAt', 'desc')
+          )
+          
+          const reviewsSnap = await getDocs(reviewsQuery)
+          const reviewsData = reviewsSnap.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data()
+          } as Review))
+          
+          setReviews(reviewsData)
+        } catch (reviewError) {
+          console.error('Error fetching reviews:', reviewError)
+          // Continue without reviews rather than failing entirely
+          setReviews([])
+        }
         
       } catch (error: any) {
         console.error('Error fetching user data:', error)
@@ -148,7 +160,7 @@ export default function UserProfilePage() {
   }
 
   const handleProductClick = (productId: string) => {
-    router.push(`/product/${productId}`)
+    router.push(`/products/${productId}`)
   }
 
   const calculateAverageRating = (): number => {
@@ -163,7 +175,7 @@ export default function UserProfilePage() {
     }
 
     if (currentUser.uid === userId) {
-      alert("You can't review yourself!")
+      console.log("You can't review yourself!")
       return
     }
 
@@ -202,7 +214,7 @@ export default function UserProfilePage() {
       
     } catch (error) {
       console.error('Error submitting review:', error)
-      alert('Failed to submit review. Please try again.')
+      setError('Failed to submit review. Please try again.')
     } finally {
       setSubmittingReview(false)
     }
@@ -488,8 +500,14 @@ export default function UserProfilePage() {
                         <ProductCard
                           key={product.id}
                           product={transformedProduct}
-                          onProductClick={handleProductClick}
-                          currentUserId={currentUser?.uid}
+                          onClick={() => handleProductClick(product.id)}
+                          onFavoriteClick={() => console.log('Favorite clicked:', product.id)}
+                          onMessageClick={() => handleMessageUser()}
+                          onDeleteClick={() => console.log('Delete clicked:', product.id)}
+                          onUserClick={() => console.log('User clicked:', product.userId)}
+                          isOwner={currentUser?.uid === product.userId}
+                          isLoggedIn={!!currentUser}
+                          userProfile={null}
                         />
                       )
                     })}
