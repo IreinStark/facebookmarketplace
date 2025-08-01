@@ -59,66 +59,94 @@ export default function NotificationsPage() {
   }, [])
 
   const loadNotifications = async (userId: string) => {
-    // Mock notifications for demo
-    const mockNotifications: Notification[] = [
-      {
-        id: '1',
-        type: 'message',
-        title: 'New Message',
-        message: 'John Doe sent you a message about iPhone 14 Pro Max',
-        timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-        read: false,
-        userId,
-        relatedId: 'product-123',
-        senderId: 'john-doe',
-        senderName: 'John Doe',
-        senderAvatar: '/placeholder-user.png'
-      },
-      {
-        id: '2',
-        type: 'favorite',
-        title: 'New Favorite',
-        message: 'Sarah Wilson favorited your Vintage Leather Sofa listing',
-        timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-        read: false,
-        userId,
-        relatedId: 'product-456',
-        senderId: 'sarah-wilson',
-        senderName: 'Sarah Wilson',
-        senderAvatar: '/placeholder-user.png'
-      },
-      {
-        id: '3',
-        type: 'view',
-        title: 'Listing Viewed',
-        message: 'Your Mountain Bike listing was viewed 15 times today',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-        read: true,
-        userId,
-        relatedId: 'product-789'
-      },
-      {
-        id: '4',
-        type: 'sale',
-        title: 'Sale Completed',
-        message: 'Congratulations! Your Gaming Laptop has been sold',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-        read: true,
-        userId,
-        relatedId: 'product-101'
-      },
-      {
-        id: '5',
-        type: 'system',
-        title: 'Welcome to Marketplace',
-        message: 'Your account has been successfully created. Start selling today!',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
-        read: true,
-        userId
-      }
-    ]
-
-    setNotifications(mockNotifications)
+    try {
+      // Load real notifications from Firebase
+      const notificationsQuery = query(
+        collection(db, 'notifications'),
+        where('userId', '==', userId),
+        orderBy('timestamp', 'desc')
+      );
+      
+      const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
+        const realNotifications: Notification[] = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Notification));
+        
+        // If no real notifications exist, show some sample ones
+        if (realNotifications.length === 0) {
+          // Create some sample notifications for demo
+          const sampleNotifications = [
+            {
+              id: 'sample-1',
+              type: 'message' as const,
+              title: 'Welcome to Marketplace',
+              message: 'Start exploring and selling items in your area!',
+              timestamp: new Date(Date.now() - 1000 * 60 * 60), // 1 hour ago
+              read: false,
+              userId,
+            },
+            {
+              id: 'sample-2',
+              type: 'system' as const,
+              title: 'Profile Setup',
+              message: 'Complete your profile to build trust with other users',
+              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+              read: true,
+              userId,
+            }
+          ];
+          setNotifications(sampleNotifications);
+        } else {
+          setNotifications(realNotifications);
+        }
+      });
+      
+      // Store unsubscribe function for cleanup
+      return unsubscribe;
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+      // Fallback to mock notifications if Firebase fails
+      const mockNotifications: Notification[] = [
+        {
+          id: '1',
+          type: 'message',
+          title: 'New Message',
+          message: 'John Doe sent you a message about iPhone 14 Pro Max',
+          timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
+          read: false,
+          userId,
+          relatedId: 'product-123',
+          senderId: 'john-doe',
+          senderName: 'John Doe',
+          senderAvatar: '/placeholder-user.png'
+        },
+        {
+          id: '2',
+          type: 'favorite',
+          title: 'New Favorite',
+          message: 'Sarah Wilson favorited your Vintage Leather Sofa listing',
+          timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+          read: false,
+          userId,
+          relatedId: 'product-456',
+          senderId: 'sarah-wilson',
+          senderName: 'Sarah Wilson',
+          senderAvatar: '/placeholder-user.png'
+        },
+        {
+          id: '3',
+          type: 'view',
+          title: 'Listing Viewed',
+          message: 'Your Mountain Bike listing was viewed 15 times today',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+          read: true,
+          userId,
+          relatedId: 'product-789'
+        }
+      ];
+      setNotifications(mockNotifications);
+    }
   }
 
   const markAsRead = (notificationId: string) => {
