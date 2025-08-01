@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { onAuthStateChanged, type User } from 'firebase/auth'
-import { query, where, orderBy, collection, onSnapshot } from 'firebase/firestore'
+import { query, where, orderBy, collection, onSnapshot, doc, updateDoc, writeBatch } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { auth, db } from '@/app/firebase'
 import { MarketplaceNav } from '@/components/marketplace-nav'
