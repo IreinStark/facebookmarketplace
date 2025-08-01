@@ -13,77 +13,85 @@ service cloud.firestore {
     
     function isAdmin() {
       return isAuthenticated() && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+        exists(/databases/$(database)/documents/userProfiles/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.isAdmin == true;
     }
     
-    // USERS COLLECTION RULES
-    match /users/{userId} {
+    // USER PROFILES COLLECTION RULES
+    match /userProfiles/{userId} {
       // Anyone can read any user's basic public profile (e.g., for seller info)
-      // Consider limiting which fields are exposed to non-owners
       allow read: if true;
       
       // A user can only create their own user document (when they sign up)
-      // The document ID must match their authentication UID
       allow create: if isOwner(userId) &&
-        // Prevent users from setting themselves as admin during creation
-        (!('isAdmin' in request.resource.data) || request.resource.data.isAdmin == false) &&
-        // Require basic fields
-        request.resource.data.keys().hasAll(['email', 'displayName']) &&
-        request.resource.data.email == request.auth.token.email;
+        request.resource.data.keys().hasAll(['email', 'displayName']);
       
-      // A user can update their own profile, but with restrictions
-      allow update: if isOwner(userId) &&
-        // Prevent changing critical fields unless admin
-        (!('isAdmin' in request.resource.data) || 
-         resource.data.isAdmin == request.resource.data.isAdmin ||
-         isAdmin()) &&
-        // Prevent changing email unless it matches auth
-        (!('email' in request.resource.data) || 
-         request.resource.data.email == request.auth.token.email);
+      // A user can update their own profile
+      allow update: if isOwner(userId);
       
-      // Users cannot delete their own profiles directly via client-side rules
+      // Users cannot delete their own profiles directly
       allow delete: if false;
-      
-      // User subcollections (e.g., favorites, notifications)
-      match /favorites/{favoriteId} {
-        allow read, write: if isOwner(userId);
-      }
-      
-      match /notifications/{notificationId} {
-        allow read, write: if isOwner(userId);
-      }
     }
     
-    // LISTINGS COLLECTION RULES
-    match /listings/{listingId} {
-      // Anyone can read any listing, but only active ones for non-owners
-      allow read: if true; // You might want: resource.data.status == 'active' || resource.data.sellerId == request.auth.uid
+    // PRODUCTS COLLECTION RULES (changed from listings to products)
+    match /products/{productId} {
+      // Anyone can read any product
+      allow read: if true;
       
-      // Only logged-in users can create a new listing
+      // Only logged-in users can create a new product
       allow create: if isAuthenticated() && 
-        request.resource.data.sellerId == request.auth.uid &&
+        request.resource.data.userId == request.auth.uid &&
         // Validate required fields
-        request.resource.data.keys().hasAll(['title', 'description', 'price', 'sellerId']) &&
+        request.resource.data.keys().hasAll(['title', 'description', 'price', 'userId']) &&
         request.resource.data.price is number &&
         request.resource.data.price > 0 &&
         request.resource.data.title is string &&
-        request.resource.data.description is string &&
-        // Set creation timestamp
-        request.resource.data.createdAt == request.time;
+        request.resource.data.description is string;
       
-      // Only the seller can update their own listing
+      // Only the owner can update their own product
       allow update: if isAuthenticated() && 
-        resource.data.sellerId == request.auth.uid &&
-        // Prevent changing sellerId
-        request.resource.data.sellerId == resource.data.sellerId &&
-        // Prevent changing createdAt
-        request.resource.data.createdAt == resource.data.createdAt &&
-        // Update timestamp
-        request.resource.data.updatedAt == request.time;
+        resource.data.userId == request.auth.uid &&
+        // Prevent changing userId
+        request.resource.data.userId == resource.data.userId;
       
-      // Only the seller can delete their own listing
-      allow delete: if isAuthenticated() && resource.data.sellerId == request.auth.uid;
+      // Only the owner can delete their own product
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // PHOTOS COLLECTION RULES
+    match /photos/{photoId} {
+      // Anyone can read photos
+      allow read: if true;
+      
+      // Only authenticated users can create photos
+      allow create: if isAuthenticated() && 
+        request.resource.data.uploadedBy == request.auth.uid;
+      
+      // Only the uploader can update their photos
+      allow update: if isAuthenticated() && 
+        resource.data.uploadedBy == request.auth.uid;
+      
+      // Only the uploader can delete their photos
+      allow delete: if isAuthenticated() && 
+        resource.data.uploadedBy == request.auth.uid;
+    }
+    
+    // NOTIFICATIONS COLLECTION RULES
+    match /notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+      
+      // Users can create notifications (typically done by system)
+      allow create: if isAuthenticated();
+      
+      // Users can update their own notifications (mark as read, etc.)
+      allow update: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+      
+      // Users can delete their own notifications
+      allow delete: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
     }
     
     // CHATS COLLECTION (for buyer-seller communication)
