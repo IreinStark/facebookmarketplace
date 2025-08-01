@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react'
 import { onAuthStateChanged, type User } from 'firebase/auth'
+import { query, where, orderBy, collection, onSnapshot } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
-import { auth } from '@/app/firebase'
+import { auth, db } from '@/app/firebase'
 import { MarketplaceNav } from '@/components/marketplace-nav'
 import { MarketplaceBottomNav } from '@/components/marketplace-sidebar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
