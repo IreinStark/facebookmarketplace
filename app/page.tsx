@@ -116,7 +116,7 @@ export default function MarketplacePage() {
 				try {
 					const profile = await getUserProfile(user.uid)
 					setUserProfile(profile)
-				} catch (error) {
+				} catch (error: unknown) {
 					console.error('Failed to load user profile:', error)
 				}
 			} else {
@@ -152,17 +152,9 @@ export default function MarketplacePage() {
 					(products) => {
 						setProducts(products)
 						setProductsLoading(false)
-					},
-					(error) => {
-						console.error('Failed to subscribe to real products:', error)
-						// Fallback to mock products
-						subscribeMockProducts((mockProducts) => {
-							setProducts(mockProducts)
-							setProductsLoading(false)
-						})
 					}
 				)
-			} catch (error) {
+			} catch (error: unknown) {
 				console.error('Error subscribing to products:', error)
 				// Fallback to mock products
 				subscribeMockProducts((mockProducts) => {
@@ -282,9 +274,10 @@ export default function MarketplacePage() {
 		try {
 			await deleteProduct(productId, user.uid)
 			console.log('Product deleted successfully')
-		} catch (error: any) {
-			console.error('Failed to delete product:', error?.message || error)
-			setError('Failed to delete listing: ' + (error?.message || 'Unknown error'))
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+			console.error('Failed to delete product:', errorMessage)
+			setError('Failed to delete listing: ' + errorMessage)
 		}
 	}
 

@@ -500,14 +500,14 @@ export default function UserProfilePage() {
                         <ProductCard
                           key={product.id}
                           product={transformedProduct}
-                          onClick={() => handleProductClick(product.id)}
+                          currentUserId={currentUser?.uid}
+                          onProductClick={() => handleProductClick(product.id)}
                           onFavoriteClick={() => console.log('Favorite clicked:', product.id)}
                           onMessageClick={() => handleMessageUser()}
                           onDeleteClick={() => console.log('Delete clicked:', product.id)}
                           onUserClick={() => console.log('User clicked:', product.userId)}
-                          isOwner={currentUser?.uid === product.userId}
-                          isLoggedIn={!!currentUser}
-                          userProfile={null}
+                          isFavorited={false} // Placeholder, adjust as needed
+                          showDeleteButton={currentUser?.uid === product.userId}
                         />
                       )
                     })}

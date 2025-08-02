@@ -12,7 +12,7 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 // REMOVE: import { uploadPhoto, type Photo } from '../lib/firebase-utils';
 import { Upload, X, Image as ImageIcon, CheckCircle, AlertCircle, Camera, MapPin, Navigation, Globe } from 'lucide-react';
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, serverTimestamp } from "firebase/firestore";
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../app/firebase';
 
@@ -218,8 +218,8 @@ export function PhotoUpload({
         const photoData = {
           url: imageUrl,
           filename: file.name,
-          uploadedBy: userId,
-          uploadedAt: new Date(),
+          uploadedBy: currentUser.uid, // Use authenticated user's UID instead of userId prop
+          uploadedAt: serverTimestamp(), // Use serverTimestamp() instead of new Date()
           metadata: {
             size: file.size,
             type: file.type
@@ -326,11 +326,19 @@ export function PhotoUpload({
       ));
       
       // --- Store URL in Firestore ---
+      // Re-check authentication for retry
+      const { auth } = await import('../app/firebase');
+      const retryUser = auth.currentUser;
+      
+      if (!retryUser) {
+        throw new Error('Authentication lost during retry. Please sign in again.');
+      }
+      
       const photoData = {
         url: imageUrl,
         filename: upload.file.name,
-        uploadedBy: userId,
-        uploadedAt: new Date(),
+        uploadedBy: retryUser.uid, // Use authenticated user's UID instead of userId prop
+        uploadedAt: serverTimestamp(), // Use serverTimestamp() instead of new Date()
         metadata: {
           size: upload.file.size,
           type: upload.file.type
@@ -624,6 +632,7 @@ export function PhotoUpload({
           </div>
         </div>
       )}
+      
 
       {/* Success Message */}
       {hasSuccessfulUploads && (
