@@ -55,10 +55,12 @@ export default function SignupPage() {
         formData.password
       )
       // Save extra user info to Firestore
-      await setDoc(doc(db, "users", userCredential.user.uid), {
+      await setDoc(doc(db, "userProfiles", userCredential.user.uid), {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
+        displayName: `${formData.firstName} ${formData.lastName}`,
+        uid: userCredential.user.uid,
         createdAt: serverTimestamp()
       })
 
@@ -95,11 +97,13 @@ export default function SignupPage() {
       // Optionally save new users to Firestore
       if (result && result.user) {
         await setDoc(
-          doc(db, "users", result.user.uid),
+          doc(db, "userProfiles", result.user.uid),
           {
             firstName: result.user.displayName?.split(" ")[0] || "",
             lastName: result.user.displayName?.split(" ")[1] || "",
             email: result.user.email,
+            displayName: result.user.displayName || 'Anonymous User',
+            uid: result.user.uid,
             createdAt: serverTimestamp()
           },
           { merge: true }

@@ -41,52 +41,32 @@ interface UploadState {
 
 import { getCloudinaryUploadUrl, getCloudinaryConfig } from '../lib/cloudinary-config';
 
-// Cloudinary upload function with Firebase Storage fallback
+// Cloudinary upload function
 async function uploadToCloudinary(file: File): Promise<string> {
   const { cloudName, uploadPreset } = getCloudinaryConfig();
   
-  // First try Cloudinary if properly configured
-  if (cloudName !== 'dhcdhsgax' && uploadPreset !== 'ml_default') {
-    const url = getCloudinaryUploadUrl();
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', uploadPreset);
-
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!res.ok) {
-        throw new Error(`Cloudinary upload failed with status: ${res.status}`);
-      }
-      
-      const data = await res.json();
-      console.log('Cloudinary upload successful:', data.secure_url);
-      return data.secure_url;
-    } catch (error) {
-      console.warn('Cloudinary upload failed, trying Firebase Storage fallback:', error);
-      // Fall through to Firebase Storage
-    }
-  }
+  // Use Cloudinary for uploads
+  const url = getCloudinaryUploadUrl();
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', uploadPreset);
   
-  // Fallback to Firebase Storage
   try {
-    const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-    const { storage } = await import('../app/firebase');
+    const res = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    });
     
-    const filename = `${Date.now()}-${file.name}`;
-    const storageRef = ref(storage, `photos/${filename}`);
+    if (!res.ok) {
+      throw new Error(`Cloudinary upload failed with status: ${res.status}`);
+    }
     
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    
-    console.log('Firebase Storage upload successful:', downloadURL);
-    return downloadURL;
+    const data = await res.json();
+    console.log('Cloudinary upload successful:', data.secure_url);
+    return data.secure_url;
   } catch (error) {
-    console.error('Both Cloudinary and Firebase Storage failed:', error);
-    throw new Error('Failed to upload image. Please check your internet connection and try again.');
+    console.error('Cloudinary upload failed:', error);
+    throw new Error('Failed to upload image to Cloudinary.');
   }
 }
 
@@ -146,6 +126,17 @@ export function PhotoUpload({
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setGlobalError("");
     
+    // Check if user is authenticated
+    const { auth } = await import('../app/firebase');
+    const currentUser = auth.currentUser;
+    
+    if (!currentUser) {
+      setGlobalError('You must be logged in to upload photos. Please sign in and try again.');
+      return;
+    }
+    
+    console.log('Current user for upload:', currentUser.uid, currentUser.email);
+    
     // Validate file count
     const totalFiles = uploads.length + acceptedFiles.length;
     if (totalFiles > maxFiles) {
@@ -191,26 +182,44 @@ export function PhotoUpload({
 
     // Upload files
     const uploadPromises = validFiles.map(async (file, index) => {
+      const uploadIndex = uploads.length + index;
+      const currentUpload = newUploads[index];
+      let progressInterval: NodeJS.Timeout | null = null;
+      
       try {
-        const uploadIndex = uploads.length + index;
-        const currentUpload = newUploads[index];
-        // Simulate progress (optional, since Cloudinary doesn't provide progress)
-        const progressInterval = setInterval(() => {
-          setUploads(prev => prev.map((upload, i: number) => 
-            i === uploadIndex && upload.status === 'uploading'
-              ? { ...upload, progress: Math.min(upload.progress + 10, 90) }
-              : upload
-          ));
-        }, 200);
+        // Set initial progress
+        setUploads(prev => prev.map((upload, i: number) => 
+          i === uploadIndex && upload.status === 'uploading'
+            ? { ...upload, progress: 10 }
+            : upload
+        ));
+        
         // --- Cloudinary upload ---
+        console.log('Starting upload for:', file.name);
+        
+        // Update progress to 50% during upload
+        setUploads(prev => prev.map((upload, i: number) => 
+          i === uploadIndex && upload.status === 'uploading'
+            ? { ...upload, progress: 50 }
+            : upload
+        ));
+        
         const imageUrl = await uploadToCloudinary(file);
-        clearInterval(progressInterval);
+        console.log('Upload completed for:', file.name, 'URL:', imageUrl);
+        
+        // Update progress to 80% after upload
+        setUploads(prev => prev.map((upload, i: number) => 
+          i === uploadIndex
+            ? { ...upload, progress: 80 }
+            : upload
+        ));
+        
         // --- Store URL in Firestore ---
         const photoData = {
           url: imageUrl,
           filename: file.name,
           uploadedBy: userId,
-          uploadedAt: new Date(), // or serverTimestamp if using Firestore server-side
+          uploadedAt: new Date(),
           metadata: {
             size: file.size,
             type: file.type
@@ -218,21 +227,35 @@ export function PhotoUpload({
           ...(productId ? { productId } : {}),
           ...(currentUpload.location ? { location: currentUpload.location } : {})
         };
-        // Save to Firestore
+        
+        console.log('Saving to Firestore:', photoData);
         const docRef = await addDoc(collection(db, 'photos'), photoData);
         const photo = { id: docRef.id, ...photoData };
+        console.log('Saved to Firestore with ID:', docRef.id);
+        
+        // Update to 100% and success
         setUploads(prev => prev.map((upload, i) => 
           i === uploadIndex
             ? { ...upload, progress: 100, status: 'success' as const, photo }
             : upload
         ));
+        
         return photo;
       } catch (error) {
+        // Clear progress interval on error
+        if (progressInterval) {
+          clearInterval(progressInterval);
+          progressInterval = null;
+        }
+        
+        console.error('Upload error for file:', file.name, error);
+        
         setUploads(prev => prev.map((upload, i) => 
-          i === uploads.length + index
+          i === uploadIndex
             ? { 
                 ...upload, 
                 status: 'error' as const, 
+                progress: 0,
                 error: error instanceof Error ? error.message : 'Upload failed' 
               }
             : upload
@@ -269,20 +292,39 @@ export function PhotoUpload({
   const retryUpload = async (index: number) => {
     const upload = uploads[index];
     if (!upload || upload.status !== 'error') return;
+    
     setUploads(prev => prev.map((u, i) => 
       i === index ? { ...u, status: 'uploading', progress: 0, error: undefined } : u
     ));
+    
+    let progressInterval: NodeJS.Timeout | null = null;
+    
     try {
-      const progressInterval = setInterval(() => {
-        setUploads(prev => prev.map((u, i) => 
-          i === index && u.status === 'uploading'
-            ? { ...u, progress: Math.min(u.progress + 10, 90) }
-            : u
-        ));
-      }, 200);
+      // Set initial progress
+      setUploads(prev => prev.map((u, i) => 
+        i === index && u.status === 'uploading'
+          ? { ...u, progress: 10 }
+          : u
+      ));
+      
       // --- Cloudinary upload ---
+      console.log('Retrying upload for:', upload.file.name);
+      
+      // Update progress to 50% during upload
+      setUploads(prev => prev.map((u, i) => 
+        i === index && u.status === 'uploading'
+          ? { ...u, progress: 50 }
+          : u
+      ));
+      
       const imageUrl = await uploadToCloudinary(upload.file);
-      clearInterval(progressInterval);
+      console.log('Retry upload completed for:', upload.file.name, 'URL:', imageUrl);
+      
+      // Update progress to 80% after upload
+      setUploads(prev => prev.map((u, i) => 
+        i === index ? { ...u, progress: 80 } : u
+      ));
+      
       // --- Store URL in Firestore ---
       const photoData = {
         url: imageUrl,
@@ -296,19 +338,33 @@ export function PhotoUpload({
         ...(productId ? { productId } : {}),
         ...(upload.location ? { location: upload.location } : {})
       };
-      // Save to Firestore
+      
+      console.log('Saving retry to Firestore:', photoData);
       const docRef = await addDoc(collection(db, 'photos'), photoData);
       const photo = { id: docRef.id, ...photoData };
+      console.log('Retry saved to Firestore with ID:', docRef.id);
+      
+      // Update to 100% and success
       setUploads(prev => prev.map((u, i) => 
         i === index ? { ...u, progress: 100, status: 'success', photo } : u
       ));
+      
       onPhotosUploaded([photo]);
     } catch (error) {
+      // Clear progress interval on error
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
+      
+      console.error('Retry upload error for file:', upload.file.name, error);
+      
       setUploads(prev => prev.map((u, i) => 
         i === index 
           ? { 
               ...u, 
               status: 'error', 
+              progress: 0,
               error: error instanceof Error ? error.message : 'Upload failed' 
             }
           : u

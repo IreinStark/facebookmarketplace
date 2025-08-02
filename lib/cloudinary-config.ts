@@ -3,9 +3,9 @@
 
 export const cloudinaryConfig = {
   cloudName: 'dhcdhsgax', // Your Cloudinary cloud name
-  uploadPreset: 'ml_default', // Default unsigned upload preset
+  uploadPreset: 'unsigned_preset', // Default unsigned upload preset
   apiKey: '272862423432328', // Your API key
-  apiSecret: 'your-api-secret', // Optional: Only needed for server-side uploads
+  apiSecret: 'MicYZxYzSLh_3bWc7IXx4YOBzQ0', // Optional: Only needed for server-side uploads
 }
 
 // Example configuration (replace with your actual values):

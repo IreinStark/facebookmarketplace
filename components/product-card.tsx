@@ -186,8 +186,8 @@ export function ProductCard({
         {/* Favorite Button */}
         <Button
           variant="ghost"
-          size="sm"
-          className={`absolute top-2 right-2 w-8 h-8 p-0 rounded-full bg-white/90 dark:bg-white/90 hover:bg-white dark:hover:bg-white transition-all ${
+          size="icon-sm"
+          className={`absolute top-2 right-2 rounded-full bg-white/90 dark:bg-white/90 hover:bg-white dark:hover:bg-white transition-all shadow-sm ${
             isFavorited ? 'text-red-500 hover:text-red-600' : 'text-gray-600 hover:text-red-500'
           }`}
           onClick={handleFavoriteClick}

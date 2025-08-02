@@ -79,8 +79,8 @@ export function MarketplaceNav({
         {isMobile && (
           <Button
             variant="ghost"
-            size="sm"
-            className="mr-2 md:hidden h-8 w-8 md:h-10 md:w-10 p-0"
+            size="icon-sm"
+            className="mr-2 md:hidden"
             onClick={onMenuClick}
           >
             <Menu className="h-4 w-4 md:h-5 md:w-5" />

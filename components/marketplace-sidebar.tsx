@@ -70,45 +70,45 @@ export function MarketplaceBottomNav({
   if (isMobile) {
     return (
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-white border-t border-gray-200 dark:border-gray-200">
-        <div className="flex items-center justify-around px-4 py-2">
+        <div className="flex items-center justify-around px-2 py-1">
           <Link href="/">
-            <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2">
-              <Home className="h-4 w-4" />
-              <span className="text-xs">Home</span>
+            <Button variant="ghost" size="mobile" className="flex flex-col items-center space-y-1 h-auto py-2 px-3">
+              <Home className="h-5 w-5" />
+              <span className="text-xs font-medium">Home</span>
             </Button>
           </Link>
 
           <Button 
             variant="ghost" 
-            size="sm" 
-            className="flex flex-col items-center space-y-1 h-auto p-2"
+            size="mobile" 
+            className="flex flex-col items-center space-y-1 h-auto py-2 px-3"
             onClick={() => setShowFilters(!showFilters)}
           >
-            <Filter className="h-4 w-4" />
-            <span className="text-xs">Filters</span>
+            <Filter className="h-5 w-5" />
+            <span className="text-xs font-medium">Filters</span>
           </Button>
 
           <Link href="/sell">
             <Button 
-              size="sm" 
-              className="flex flex-col items-center space-y-1 h-auto p-2 bg-blue-600 hover:bg-blue-700"
+              size="mobile" 
+              className="flex flex-col items-center space-y-1 h-auto py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white"
             >
-              <Plus className="h-4 w-4" />
-              <span className="text-xs">Sell</span>
+              <Plus className="h-5 w-5" />
+              <span className="text-xs font-medium">Sell</span>
             </Button>
           </Link>
 
           <Link href="/messages">
-            <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2">
-              <MessageCircle className="h-4 w-4" />
-              <span className="text-xs">Messages</span>
+            <Button variant="ghost" size="mobile" className="flex flex-col items-center space-y-1 h-auto py-2 px-3">
+              <MessageCircle className="h-5 w-5" />
+              <span className="text-xs font-medium">Messages</span>
             </Button>
           </Link>
 
           <Link href="/profile">
-            <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2">
-              <User className="h-4 w-4" />
-              <span className="text-xs">Profile</span>
+            <Button variant="ghost" size="mobile" className="flex flex-col items-center space-y-1 h-auto py-2 px-3">
+              <User className="h-5 w-5" />
+              <span className="text-xs font-medium">Profile</span>
             </Button>
           </Link>
         </div>
