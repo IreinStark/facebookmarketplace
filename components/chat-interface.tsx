@@ -10,16 +10,23 @@ import { Textarea } from './ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { PhotoUpload } from './photo-upload';
 import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu';
+import {
   Send, 
-  User, 
-  Phone,
-  Video,
+  User,
   MoreVertical,
-  Paperclip,
   Search,
   ArrowLeft,
   Camera,
-  MessageCircle
+  MessageCircle,
+  Download,
+  FileText,
+  Home
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { 
@@ -218,6 +225,63 @@ export function ChatInterface({
       handleSendMessage();
     }
   };
+  
+  // Function to export chat as text file for proof
+  const exportChatAsText = () => {
+    if (!selectedConversation || messages.length === 0) return;
+    
+    // Get conversation details
+    const conv = conversations.find(c => c.id === selectedConversation);
+    if (!conv) return;
+    
+    const otherParticipantName = Object.entries(conv.participantNames)
+      .find(([id]) => id !== currentUserId)?.[1] || 'Unknown';
+    
+    // Format the chat content
+    let content = `Chat with ${otherParticipantName}\n`;
+    content += `Exported on ${new Date().toLocaleString()}\n`;
+    if (conv.productTitle) {
+      content += `About: ${conv.productTitle}\n`;
+    }
+    content += `\n----- CONVERSATION -----\n\n`;
+    
+    // Add messages
+    messages.forEach(msg => {
+      const sender = msg.senderId === currentUserId ? 'You' : otherParticipantName;
+      let timestamp = 'Unknown time';
+      try {
+        if (msg.timestamp) {
+          timestamp = format(msg.timestamp.toDate(), 'MMM d, yyyy h:mm a');
+        }
+      } catch (error) {
+        console.warn('Error formatting timestamp for export', error);
+      }
+      
+      content += `[${timestamp}] ${sender}: `;
+      
+      if (msg.type === 'image') {
+        content += `[PHOTO: ${msg.photoUrl || 'No URL'}]`;
+        if (msg.content !== 'Photo') {
+          content += ` - ${msg.content}`;
+        }
+      } else {
+        content += msg.content;
+      }
+      
+      content += '\n';
+    });
+    
+    // Create and download the file
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-${otherParticipantName.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const handleBackToConversations = () => {
     setShowConversationsList(true);
@@ -252,7 +316,7 @@ export function ChatInterface({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl h-[90vh] md:h-[80vh] p-0 w-[95vw] md:w-full">
+      <DialogContent className="max-w-6xl h-[90vh] md:h-[80vh] p-0 w-[95vw] md:w-full overflow-hidden">
         <DialogHeader className="p-3 sm:p-4 border-b">
           <DialogTitle className="text-base sm:text-lg flex items-center">
             <MessageCircle className="h-5 w-5 mr-2 text-blue-600" />
@@ -286,7 +350,7 @@ export function ChatInterface({
             </div>
 
             {/* Conversations */}
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 overflow-y-auto">
               <div className="p-2 space-y-1 sm:space-y-2">
                 {filteredConversations.map((conversation) => {
                   const otherParticipantEntry = Object.entries(conversation.participantNames)
@@ -408,15 +472,41 @@ export function ChatInterface({
                     </div>
                     
                     <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hidden sm:flex">
-                        <Phone className="h-4 w-4" />
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 w-8 p-0 hidden sm:flex"
+                        onClick={exportChatAsText}
+                        title="Export chat"
+                      >
+                        <Download className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hidden sm:flex">
-                        <Video className="h-4 w-4" />
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 w-8 p-0 hidden sm:flex"
+                        onClick={() => window.open('/', '_self')}
+                        title="Go to homepage"
+                      >
+                        <Home className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={exportChatAsText}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            Export Chat
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => window.open('/', '_self')}>
+                            <Home className="h-4 w-4 mr-2" />
+                            Go to Homepage
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </div>

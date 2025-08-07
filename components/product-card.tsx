@@ -35,6 +35,12 @@ interface ProductCardProps {
     category: string
     location: string
     images?: string[]
+    image?: string
+    photos?: Array<{
+      id: string
+      url: string
+      filename: string
+    }>
     seller?: string
     userId: string
     sellerId?: string
@@ -141,10 +147,22 @@ export function ProductCard({
   }
 
   const getMainImage = () => {
+    // Try to get image from various sources
     if (product.images && product.images.length > 0) {
-      return product.images[0]
+      return product.images[0];
     }
-    return '/placeholder.svg?height=200&width=200'
+    
+    if (product.image) {
+      return product.image;
+    }
+    
+    // Check for Cloudinary photos array
+    if (product.photos && product.photos.length > 0 && product.photos[0].url) {
+      return product.photos[0].url;
+    }
+    
+    // Fallback to placeholder
+    return '/placeholder.svg?height=200&width=200';
   }
 
   // Helper function to convert createdAt to Date object
@@ -178,7 +196,7 @@ export function ProductCard({
   }
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-200 border border-gray-200 dark:border-gray-200 bg-white dark:bg-white overflow-hidden">
+    <Card className="group hover:shadow-lg transition-all duration-200 border border-gray-200 dark:border-gray-800 bg-white dark:bg-black overflow-hidden">
       {/* Image Container */}
       <div 
         className="relative aspect-square cursor-pointer overflow-hidden"
@@ -262,7 +280,7 @@ export function ProductCard({
               <MoreVertical className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white dark:bg-white border-gray-200 dark:border-gray-200">
+          <DropdownMenuContent className="bg-white dark:bg-black border-gray-200 dark:border-gray-800">
             <DropdownMenuItem onClick={handleShareClick}>
               <Share2 className="w-4 h-4 mr-2" />
               Share
@@ -296,7 +314,7 @@ export function ProductCard({
           className="cursor-pointer mb-2" 
           onClick={handleProductClick}
         >
-          <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-900 line-clamp-2 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-600 transition-colors">
+          <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-500 transition-colors">
             {product.title}
           </h3>
           <div className="flex items-center justify-between mb-2">

@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 // REMOVE: import { uploadPhoto, type Photo } from '../lib/firebase-utils';
 import { Upload, X, Image as ImageIcon, CheckCircle, AlertCircle, Camera, MapPin, Navigation, Globe } from 'lucide-react';
 import { Timestamp, serverTimestamp } from "firebase/firestore";
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../app/firebase';
 
 interface PhotoUploadProps {
@@ -227,6 +227,40 @@ export function PhotoUpload({
           ...(productId ? { productId } : {}),
           ...(currentUpload.location ? { location: currentUpload.location } : {})
         };
+        
+        // If productId is provided, also update the product's images array
+        if (productId) {
+          try {
+<div className={`space-y-3 sm:space-y-4 ${className || ""}`}>
+
+
+// And remove its closing tag </div> later in the code
+            const productSnap = await getDoc(productRef);
+            
+            if (productSnap.exists()) {
+              // Get existing images array or create new one
+              const productData = productSnap.data();
+              let images = productData.images || [];
+              if (!Array.isArray(images)) {
+                images = productData.image ? [productData.image] : [];
+              }
+              
+              // Add the new image URL
+              images.push(imageUrl);
+              
+              // Update the product with the new images array
+              await updateDoc(productRef, { 
+                images: images,
+                image: images[0] // Keep the first image as the main image
+              });
+              
+              console.log('Updated product with new image URL:', imageUrl);
+            }
+          } catch (error) {
+            console.error('Error updating product with image URL:', error);
+            // Continue even if this fails - the photo document will still be created
+          }
+        }
         
         console.log('Saving to Firestore:', photoData);
         const docRef = await addDoc(collection(db, 'photos'), photoData);
@@ -471,7 +505,7 @@ export function PhotoUpload({
                   )}
                 </div>
                 
-                <div className="space-y-1 sm:space-y-2">
+<div className={`space-y-3 sm:space-y-4 ${className}`}>
                   <p className="text-sm sm:text-base lg:text-lg font-medium">
                     {isDragActive ? 'Drop photos here' : 'Upload Photos'}
                   </p>

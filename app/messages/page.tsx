@@ -7,6 +7,9 @@ import { auth } from '@/app/firebase'
 import { ChatInterface } from '@/components/chat-interface'
 import { MarketplaceNav } from '@/components/marketplace-nav'
 import { MarketplaceBottomNav } from '@/components/marketplace-sidebar'
+import { Button } from '@/components/ui/button'
+import { Home } from 'lucide-react'
+import Link from 'next/link'
 
 export default function MessagesPage() {
   const [user, setUser] = useState<User | null>(null)
@@ -46,10 +49,10 @@ export default function MessagesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-black flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-600">Loading messages...</p>
+          <p className="mt-4 text-gray-600 dark:text-white">Loading messages...</p>
         </div>
       </div>
     )
@@ -60,15 +63,24 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-black">
       <MarketplaceNav 
         user={user} 
         isMobile={isMobile}
       />
       
       <div className="container mx-auto px-4 py-6">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-xl font-bold">Messages</h1>
+          <Link href="/">
+            <Button variant="outline" size="sm" className="flex items-center space-x-2">
+              <Home className="h-4 w-4" />
+              <span>Back to Homepage</span>
+            </Button>
+          </Link>
+        </div>
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-white rounded-lg shadow-sm border border-gray-200 dark:border-gray-200">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <ChatInterface
               currentUserId={user.uid}
               currentUserName={user.displayName || user.email || 'User'}
