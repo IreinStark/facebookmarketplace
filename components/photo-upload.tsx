@@ -539,17 +539,30 @@ export function PhotoUpload({
                   <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4">
                     {/* File Preview - Responsive sizing */}
                     <div className="flex-shrink-0">
-                      {upload.photo ? (
+                      {upload.photo?.url ? (
                         <img 
                           src={upload.photo.url} 
                           alt={upload.file.name}
                           className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 object-cover rounded border"
+                          onError={(e) => {
+                            console.error('Failed to load uploaded image:', upload.photo.url);
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling.style.display = 'flex';
+                          }}
                         />
+                      ) : upload.status === 'uploading' ? (
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gray-100 dark:bg-gray-800 rounded border flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                        </div>
                       ) : (
                         <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gray-100 dark:bg-gray-800 rounded border flex items-center justify-center">
                           <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-gray-400" />
                         </div>
                       )}
+                      {/* Hidden fallback div for image error */}
+                      <div className="hidden w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-red-100 dark:bg-red-900 rounded border flex items-center justify-center">
+                        <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-red-400" />
+                      </div>
                     </div>
 
                     {/* File Info - Responsive text and spacing */}

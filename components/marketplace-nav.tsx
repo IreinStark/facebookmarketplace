@@ -73,7 +73,7 @@ export function MarketplaceNav({
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+    <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-black/60">
       <div className="container flex h-14 md:h-16 items-center px-4">
         {/* Mobile Menu Button */}
         {isMobile && (
@@ -92,7 +92,7 @@ export function MarketplaceNav({
           <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xs md:text-sm">M</span>
           </div>
-          <span className="hidden sm:inline-block font-bold text-base md:text-lg text-gray-900">
+          <span className="hidden sm:inline-block font-bold text-base md:text-lg text-gray-900 dark:text-white">
             Marketplace
           </span>
         </Link>
@@ -107,7 +107,7 @@ export function MarketplaceNav({
                 placeholder="Search products..."
                 value={searchValue}
                 onChange={(e) => onSearch?.(e.target.value)}
-                className="pl-10 w-full border-gray-300 focus:border-blue-500 bg-white"
+                className="pl-10 w-full border-gray-300 dark:border-gray-600 focus:border-blue-500 bg-white dark:bg-gray-900 dark:text-white"
               />
             </div>
           </div>
@@ -194,21 +194,21 @@ export function MarketplaceNav({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
-                  className="w-48 md:w-56 bg-white border-gray-200" 
+                  className="w-48 md:w-56 bg-white dark:bg-black border-gray-200 dark:border-gray-800" 
                   align="end" 
                   forceMount
                 >
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium text-gray-900 text-sm md:text-base">
+                      <p className="font-medium text-gray-900 dark:text-white text-sm md:text-base">
                         {user.displayName || 'User'}
                       </p>
-                      <p className="w-[180px] md:w-[200px] truncate text-xs md:text-sm text-gray-600">
+                      <p className="w-[180px] md:w-[200px] truncate text-xs md:text-sm text-gray-600 dark:text-gray-300">
                         {user.email}
                       </p>
                     </div>
                   </div>
-                  <DropdownMenuSeparator className="bg-gray-200" />
+                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
                   <DropdownMenuItem asChild>
                     <Link href="/profile" className="flex items-center cursor-pointer text-sm md:text-base">
                       <User className="mr-2 h-4 w-4" />
@@ -267,7 +267,7 @@ export function MarketplaceNav({
 
       {/* Mobile Quick Actions Bar */}
       {isMobile && user && (
-        <div className="border-t border-gray-200 bg-white px-4 py-2">
+        <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black px-4 py-2">
           <div className="flex items-center justify-around">
             <Link href="/sell">
               <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2 min-h-[44px] min-w-[44px]">

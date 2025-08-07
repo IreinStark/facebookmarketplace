@@ -42,9 +42,9 @@ interface ProductCardProduct {
 		photoURL?: string
 	}
 	createdAt: {
-		toDate: () => Date
-		toMillis: () => number
-	}
+		toDate?: () => Date
+		toMillis?: () => number
+	} | Date | string | number
 	views?: number
 	condition?: string
 	tags?: string[]
@@ -103,8 +103,8 @@ export default function MarketplacePage() {
 
 	const router = useRouter()
 	
-	// Initialize socket only after user is loaded
-	const { socket, isConnected } = useSocket(user)
+	// Initialize socket only after user is loaded (disabled for now)
+	const { socket, isConnected } = useSocket(process.env.NEXT_PUBLIC_ENABLE_SOCKET === 'true' ? user : null)
 
 	const isLoggedIn = !!user
 
@@ -114,7 +114,7 @@ export default function MarketplacePage() {
 			if (user) {
 				setUser(user)
 				try {
-					const profile = await getUserProfile(user.uid)
+					const profile = await getUserProfile(user)
 					setUserProfile(profile)
 				} catch (error: unknown) {
 					console.error('Failed to load user profile:', error)
@@ -186,6 +186,38 @@ export default function MarketplacePage() {
 		return matchesCategory && matchesLocation && matchesSearch && matchesPrice
 	})
 
+	// Helper function to get timestamp from createdAt field
+	const getTimestamp = (createdAt: any): number => {
+		if (!createdAt) return 0
+		
+		// If it's a Firebase Timestamp with toMillis method
+		if (typeof createdAt.toMillis === 'function') {
+			return createdAt.toMillis()
+		}
+		
+		// If it's a Date object
+		if (createdAt instanceof Date) {
+			return createdAt.getTime()
+		}
+		
+		// If it's a string date
+		if (typeof createdAt === 'string') {
+			return new Date(createdAt).getTime()
+		}
+		
+		// If it's already a number (timestamp)
+		if (typeof createdAt === 'number') {
+			return createdAt
+		}
+		
+		// If it has a toDate method (Firebase Timestamp)
+		if (typeof createdAt.toDate === 'function') {
+			return createdAt.toDate().getTime()
+		}
+		
+		return 0
+	}
+
 	// Sort products
 	const sortedProducts = [...filteredProducts].sort((a, b) => {
 		switch (sortBy) {
@@ -194,11 +226,11 @@ export default function MarketplacePage() {
 			case "price-high":
 				return b.price - a.price
 			case "recent":
-				return b.createdAt.toMillis() - a.createdAt.toMillis()
+				return getTimestamp(b.createdAt) - getTimestamp(a.createdAt)
 			case "popular":
 				return (b.views || 0) - (a.views || 0)
 			default:
-				return b.createdAt.toMillis() - a.createdAt.toMillis()
+				return getTimestamp(b.createdAt) - getTimestamp(a.createdAt)
 		}
 	})
 
@@ -435,10 +467,10 @@ export default function MarketplacePage() {
 							</p>
 						</div>
 						
-						{/* Socket connection status - for debugging */}
-						{user && (
+						{/* Socket connection status - for debugging (only show in development) */}
+						{process.env.NODE_ENV === 'development' && user && (
 							<div className="text-xs text-gray-500">
-								Socket: {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
+								Socket: {isConnected ? 'Connected' : 'Disconnected'}
 							</div>
 						)}
 						
@@ -557,8 +589,8 @@ export default function MarketplacePage() {
 							</Pagination>
 						</div>
 					)}
+				</div>
 			</div>
-		</div>
 
 		{/* Mobile Bottom Navigation */}
 		{isMobile && (

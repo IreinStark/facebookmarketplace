@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from 'react'
-import { MapPin, Filter, Grid3X3, List, Plus, Search, X, Navigation, Clock, TrendingUp, Home, User, MessageCircle } from 'lucide-react'
+import { MapPin, Filter, Grid3X3, List, Plus, Search, X, Navigation, Clock, TrendingUp, Home, User, MessageCircle, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -53,6 +53,7 @@ export function MarketplaceBottomNav({
   const [showLocationSearch, setShowLocationSearch] = useState(false)
   const [locationSearchTerm, setLocationSearchTerm] = useState("")
   const [showFilters, setShowFilters] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
   const router = useRouter()
 
   const filteredLocations = availableLocations.filter(location =>
@@ -69,10 +70,10 @@ export function MarketplaceBottomNav({
   // Mobile bottom navigation
   if (isMobile) {
     return (
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-white border-t border-gray-200 dark:border-gray-200">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-around px-2 py-1">
           <Link href="/">
-            <Button variant="ghost" size="mobile" className="flex flex-col items-center space-y-1 h-auto py-2 px-3">
+            <Button variant="ghost" size="mobile" className="flex flex-col items-center space-y-1 h-auto py-2 px-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white min-h-[60px] min-w-[60px] touch-manipulation">
               <Home className="h-5 w-5" />
               <span className="text-xs font-medium">Home</span>
             </Button>
@@ -81,7 +82,7 @@ export function MarketplaceBottomNav({
           <Button 
             variant="ghost" 
             size="mobile" 
-            className="flex flex-col items-center space-y-1 h-auto py-2 px-3"
+            className="flex flex-col items-center space-y-1 h-auto py-2 px-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white min-h-[60px] min-w-[60px] touch-manipulation"
             onClick={() => setShowFilters(!showFilters)}
           >
             <Filter className="h-5 w-5" />
@@ -91,7 +92,7 @@ export function MarketplaceBottomNav({
           <Link href="/sell">
             <Button 
               size="mobile" 
-              className="flex flex-col items-center space-y-1 h-auto py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white"
+              className="flex flex-col items-center space-y-1 h-auto py-2 px-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white min-h-[60px] min-w-[60px] touch-manipulation"
             >
               <Plus className="h-5 w-5" />
               <span className="text-xs font-medium">Sell</span>
@@ -99,14 +100,14 @@ export function MarketplaceBottomNav({
           </Link>
 
           <Link href="/messages">
-            <Button variant="ghost" size="mobile" className="flex flex-col items-center space-y-1 h-auto py-2 px-3">
+            <Button variant="ghost" size="mobile" className="flex flex-col items-center space-y-1 h-auto py-2 px-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white min-h-[60px] min-w-[60px] touch-manipulation">
               <MessageCircle className="h-5 w-5" />
               <span className="text-xs font-medium">Messages</span>
             </Button>
           </Link>
 
           <Link href="/profile">
-            <Button variant="ghost" size="mobile" className="flex flex-col items-center space-y-1 h-auto py-2 px-3">
+            <Button variant="ghost" size="mobile" className="flex flex-col items-center space-y-1 h-auto py-2 px-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white min-h-[60px] min-w-[60px] touch-manipulation">
               <User className="h-5 w-5" />
               <span className="text-xs font-medium">Profile</span>
             </Button>
@@ -114,7 +115,7 @@ export function MarketplaceBottomNav({
         </div>
 
         {showFilters && (
-          <div className="border-t border-gray-200 bg-white p-4">
+          <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4">
             <div className="space-y-4">
               <div className="space-y-2">
                 <h3 className="text-sm font-medium">Location</h3>
@@ -157,37 +158,49 @@ export function MarketplaceBottomNav({
 
   // Desktop horizontal bar below navbar
   return (
-    <div className="w-full bg-white border-b border-gray-200 sticky top-14 md:top-16 z-40">
+    <div className="w-full bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 sticky top-14 md:top-16 z-40">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          {/* Create Listing Button */}
-          <Button 
-            onClick={onCreateListing}
-            className="bg-blue-600 hover:bg-blue-700 text-white h-8 md:h-9 px-3 md:px-4 text-xs md:text-sm"
-            size="sm"
-          >
-            <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-            Create Listing
-          </Button>
 
-          {/* Categories */}
-          <div className="flex items-center space-x-1 md:space-x-2 overflow-x-auto flex-1 mx-4">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "ghost"}
-                size="sm"
-                className={`whitespace-nowrap h-8 md:h-9 px-2 md:px-3 text-xs md:text-sm ${
-                  selectedCategory === category 
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-                onClick={() => onCategoryChange(category)}
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
+          {/* Categories Dropdown */}
+<div className="flex items-center mx-4">
+  <div className="relative">
+    <button
+      className="flex items-center space-x-2 px-3 md:px-4 py-2 text-sm md:text-base bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[44px] touch-manipulation"
+      onClick={() => setDropdownOpen(!dropdownOpen)}
+    >
+      <span className="text-gray-700">{selectedCategory === "All" ? "Categories" : selectedCategory}</span>
+      <ChevronDown 
+        className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
+          dropdownOpen ? 'rotate-180' : ''
+        }`} 
+      />
+    </button>
+    
+    {dropdownOpen && (
+      <div className="absolute top-full left-0 mt-1 w-full min-w-max bg-white border border-gray-200 rounded-md shadow-lg z-50">
+        <div className="py-1">
+          {categories.map((category) => (
+            <button
+              key={category}
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 focus:outline-none focus:bg-gray-100 ${
+                selectedCategory === category 
+                  ? 'bg-blue-50 text-blue-700 font-medium' 
+                  : 'text-gray-700'
+              }`}
+              onClick={() => {
+                onCategoryChange(category);
+                setDropdownOpen(false);
+              }}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+</div>
 
           {/* Location Selector */}
           <div className="flex items-center space-x-2">

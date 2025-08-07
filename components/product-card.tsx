@@ -45,9 +45,9 @@ interface ProductCardProps {
       photoURL?: string
     }
     createdAt: {
-      toDate: () => Date
-      toMillis: () => number
-    }
+      toDate?: () => Date
+      toMillis?: () => number
+    } | Date | string | number
     views?: number
     condition?: string
     tags?: string[]
@@ -145,6 +145,36 @@ export function ProductCard({
       return product.images[0]
     }
     return '/placeholder.svg?height=200&width=200'
+  }
+
+  // Helper function to convert createdAt to Date object
+  const getCreatedAtDate = (): Date => {
+    const { createdAt } = product
+    
+    if (!createdAt) return new Date()
+    
+    // If it's already a Date object
+    if (createdAt instanceof Date) {
+      return createdAt
+    }
+    
+    // If it's a Firebase Timestamp with toDate method
+    if (typeof createdAt === 'object' && typeof createdAt.toDate === 'function') {
+      return createdAt.toDate()
+    }
+    
+    // If it's a string date
+    if (typeof createdAt === 'string') {
+      return new Date(createdAt)
+    }
+    
+    // If it's a number (timestamp)
+    if (typeof createdAt === 'number') {
+      return new Date(createdAt)
+    }
+    
+    // Fallback to current date
+    return new Date()
   }
 
   return (
@@ -288,7 +318,7 @@ export function ProductCard({
           <span className="truncate mr-2">{product.location}</span>
           <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
           <span className="truncate">
-            {formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true })}
+            {formatDistanceToNow(getCreatedAtDate(), { addSuffix: true })}
           </span>
         </div>
 

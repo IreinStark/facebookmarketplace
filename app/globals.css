@@ -64,63 +64,38 @@ body {
   }
   
   .dark {
-    --background: 0 0% 98%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 240 5% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 240 5% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 240 5% 90%;
-    --input: 240 5% 90%;
-    --background: 248 250 252; /* slate-50 */
-    --foreground: 15 23 42; /* slate-800 */
-    --card: 248 250 252; /* slate-50 */
-    --card-foreground: 15 23 42; /* slate-800 */
-    --popover: 248 250 252; /* slate-50 */
-    --popover-foreground: 15 23 42; /* slate-800 */
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 248 250 252; /* slate-50 */
-    --secondary: 241 245 249; /* slate-100 */
-    --secondary-foreground: 15 23 42; /* slate-800 */
-    --muted: 241 245 249; /* slate-100 */
-    --muted-foreground: 100 116 139; /* slate-500 */
-    --accent: 241 245 249; /* slate-100 */
-    --accent-foreground: 15 23 42; /* slate-800 */
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 248 250 252; /* slate-50 */
-    --border: 226 232 240; /* slate-200 */
-    --input: 226 232 240; /* slate-200 */
-    --ring: 221.2 83.2% 53.3%;
+    --background: 0 0% 0%; /* Pure black */
+    --foreground: 0 0% 100%; /* Pure white */
+    --card: 0 0% 5%; /* Very dark gray for cards */
+    --card-foreground: 0 0% 100%; /* White text on cards */
+    --popover: 0 0% 5%; /* Very dark gray for popovers */
+    --popover-foreground: 0 0% 100%; /* White text on popovers */
+    --primary: 221.2 83.2% 53.3%; /* Keep blue primary */
+    --primary-foreground: 0 0% 100%; /* White text on primary */
+    --secondary: 0 0% 10%; /* Dark gray for secondary */
+    --secondary-foreground: 0 0% 100%; /* White text on secondary */
+    --muted: 0 0% 15%; /* Slightly lighter gray for muted */
+    --muted-foreground: 0 0% 70%; /* Light gray for muted text */
+    --accent: 0 0% 10%; /* Dark gray for accent */
+    --accent-foreground: 0 0% 100%; /* White text on accent */
+    --destructive: 0 84.2% 60.2%; /* Keep red destructive */
+    --destructive-foreground: 0 0% 100%; /* White text on destructive */
+    --border: 0 0% 20%; /* Dark gray borders */
+    --input: 0 0% 10%; /* Dark gray inputs */
+    --ring: 221.2 83.2% 53.3%; /* Keep blue ring */
     --chart-1: 221.2 83.2% 53.3%;
     --chart-2: 212 95% 68%;
     --chart-3: 216 92% 60%;
     --chart-4: 210 98% 78%;
     --chart-5: 212 97% 87%;
-    --sidebar-background: 240 5% 96%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 221.2 83.2% 53.3%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 240 5% 90%;
-    --sidebar-background: 248 250 252; /* slate-50 */
-    --sidebar-foreground: 15 23 42; /* slate-800 */
-    --sidebar-primary: 221.2 83.2% 53.3%;
-    --sidebar-primary-foreground: 248 250 252; /* slate-50 */
-    --sidebar-accent: 241 245 249; /* slate-100 */
-    --sidebar-accent-foreground: 15 23 42; /* slate-800 */
-    --sidebar-border: 226 232 240; /* slate-200 */
-    --sidebar-ring: 221.2 83.2% 53.3%;
+    --sidebar-background: 0 0% 5%; /* Very dark gray for sidebar */
+    --sidebar-foreground: 0 0% 100%; /* White text in sidebar */
+    --sidebar-primary: 221.2 83.2% 53.3%; /* Keep blue primary */
+    --sidebar-primary-foreground: 0 0% 100%; /* White text on primary */
+    --sidebar-accent: 0 0% 10%; /* Dark gray for sidebar accent */
+    --sidebar-accent-foreground: 0 0% 100%; /* White text on sidebar accent */
+    --sidebar-border: 0 0% 20%; /* Dark gray sidebar borders */
+    --sidebar-ring: 221.2 83.2% 53.3%; /* Keep blue ring */
   }
 }
 
