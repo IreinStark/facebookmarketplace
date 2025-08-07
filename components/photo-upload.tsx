@@ -10,14 +10,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-// REMOVE: import { uploadPhoto, type Photo } from '../lib/firebase-utils';
 import { Upload, X, Image as ImageIcon, CheckCircle, AlertCircle, Camera, MapPin, Navigation, Globe } from 'lucide-react';
 import { Timestamp, serverTimestamp } from "firebase/firestore";
 import { addDoc, collection, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../app/firebase';
 
 interface PhotoUploadProps {
-  onPhotosUploaded: (photos: any[]) => void; // Changed type to any[] as Photo type is removed
+  onPhotosUploaded: (photos: any[]) => void;
   userId: string;
   productId?: string;
   maxFiles?: number;
@@ -29,7 +28,7 @@ interface UploadState {
   file: File;
   progress: number;
   status: 'uploading' | 'success' | 'error';
-  photo?: any; // Changed type to any as Photo type is removed
+  photo?: any;
   error?: string;
   location?: {
     latitude: number;
@@ -231,10 +230,7 @@ export function PhotoUpload({
         // If productId is provided, also update the product's images array
         if (productId) {
           try {
-<div className={`space-y-3 sm:space-y-4 ${className || ""}`}>
-
-
-// And remove its closing tag </div> later in the code
+            const productRef = doc(db, 'products', productId); // Fixed: Missing productRef declaration
             const productSnap = await getDoc(productRef);
             
             if (productSnap.exists()) {
@@ -300,7 +296,7 @@ export function PhotoUpload({
 
     try {
       const results = await Promise.all(uploadPromises);
-      const successfulPhotos = results.filter((photo: any): photo is any => photo !== null); // Changed type to any
+      const successfulPhotos = results.filter((photo: any): photo is any => photo !== null);
       
       if (successfulPhotos.length > 0) {
         onPhotosUploaded(successfulPhotos);
@@ -505,7 +501,7 @@ export function PhotoUpload({
                   )}
                 </div>
                 
-<div className={`space-y-3 sm:space-y-4 ${className}`}>
+                <div>
                   <p className="text-sm sm:text-base lg:text-lg font-medium">
                     {isDragActive ? 'Drop photos here' : 'Upload Photos'}
                   </p>
@@ -580,8 +576,12 @@ export function PhotoUpload({
                           className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 object-cover rounded border"
                           onError={(e) => {
                             console.error('Failed to load uploaded image:', upload.photo.url);
-                            e.currentTarget.style.display = 'none';
-                            e.currentTarget.nextElementSibling.style.display = 'flex';
+                            const imgElement = e.currentTarget as HTMLImageElement;
+                            const fallbackElement = imgElement.nextElementSibling as HTMLElement;
+                            imgElement.style.display = 'none';
+                            if (fallbackElement) {
+                              fallbackElement.style.display = 'flex';
+                            }
                           }}
                         />
                       ) : upload.status === 'uploading' ? (
@@ -593,8 +593,8 @@ export function PhotoUpload({
                           <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-gray-400" />
                         </div>
                       )}
-                      {/* Hidden fallback div for image error */}
-                      <div className="hidden w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-red-100 dark:bg-red-900 rounded border flex items-center justify-center">
+                      {/* Fallback div for image error */}
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-red-100 dark:bg-red-900 rounded border items-center justify-center" style={{ display: 'none' }}>
                         <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-red-400" />
                       </div>
                     </div>
@@ -679,7 +679,6 @@ export function PhotoUpload({
           </div>
         </div>
       )}
-      
 
       {/* Success Message */}
       {hasSuccessfulUploads && (
