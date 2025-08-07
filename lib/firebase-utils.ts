@@ -418,89 +418,96 @@ export function subscribeToProducts(callback: (products: Product[]) => void): ()
     orderBy('createdAt', 'desc')
   );
   
-  return onSnapshot(q, async (snapshot) => {
+  return onSnapshot(q, (snapshot) => {
     console.log('Firebase snapshot received:', snapshot.size, 'documents');
     
-    try {
-      // Process products one by one to handle potential image loading
-      const productsPromises = snapshot.docs.map(async (doc: QueryDocumentSnapshot<DocumentData>) => {
-        const data = doc.data();
-        console.log('Product document:', doc.id, data);
-        
-        // Check if this product has photos in the photos collection
-        let productImages: string[] = [];
-        
-        // Try to find images from the photos collection for this product
-        try {
-          const photoQuery = query(
-            collection(db, 'photos'),
-            where('productId', '==', doc.id)
-          );
-          const photoSnapshot = await getDocs(photoQuery);
+    // First, immediately send basic products without waiting for image loading
+    const basicProducts = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Product[];
+    
+    // Call the callback with basic products first for immediate display
+    callback(basicProducts);
+    
+    // Then start the process to enhance products with images
+    (async () => {
+      try {
+        // Process products one by one to handle potential image loading
+        const productsPromises = snapshot.docs.map(async (doc: QueryDocumentSnapshot<DocumentData>) => {
+          const data = doc.data();
           
-          if (!photoSnapshot.empty) {
-            // We found photos for this product in the photos collection
-            const cloudinaryPhotos = photoSnapshot.docs.map(photoDoc => {
-              const photoData = photoDoc.data();
-              return photoData.url || '';
-            }).filter(url => url !== '');
+          // Check if this product has photos in the photos collection
+          let productImages: string[] = [];
+          
+          // Try to find images from the photos collection for this product
+          try {
+            const photoQuery = query(
+              collection(db, 'photos'),
+              where('productId', '==', doc.id)
+            );
+            const photoSnapshot = await getDocs(photoQuery);
             
-            if (cloudinaryPhotos.length > 0) {
-              productImages = cloudinaryPhotos;
-              console.log(`Found ${cloudinaryPhotos.length} Cloudinary images for product ${doc.id}`);
+            if (!photoSnapshot.empty) {
+              // We found photos for this product in the photos collection
+              const cloudinaryPhotos = photoSnapshot.docs.map(photoDoc => {
+                const photoData = photoDoc.data();
+                return photoData.url || '';
+              }).filter(url => url !== '');
+              
+              if (cloudinaryPhotos.length > 0) {
+                productImages = cloudinaryPhotos;
+                console.log(`Found ${cloudinaryPhotos.length} Cloudinary images for product ${doc.id}`);
+              }
+            }
+          } catch (photoError) {
+            console.error('Error fetching product photos from Cloudinary collection:', photoError);
+          }
+          
+          // If we didn't find any images in photos collection, try direct properties
+          if (productImages.length === 0) {
+            if (data.images && Array.isArray(data.images)) {
+              // Handle images array
+              productImages = data.images;
+            } else if (data.image) {
+              // Handle single image case
+              productImages = [data.image];
             }
           }
-        } catch (photoError) {
-          console.error('Error fetching product photos from Cloudinary collection:', photoError);
-        }
+          
+          // Create a photos array in the format the ProductCard expects
+          const formattedPhotos = productImages.map((url, index) => ({
+            id: `photo-${index}`,
+            url: url,
+            filename: url.split('/').pop() || `image-${index}`
+          }));
+          
+          // Return product with images
+          return {
+            id: doc.id,
+            ...data,
+            images: productImages.length > 0 ? productImages : undefined,
+            image: productImages.length > 0 ? productImages[0] : undefined,
+            photos: formattedPhotos.length > 0 ? formattedPhotos : undefined
+          } as Product;
+        });
         
-        // If we didn't find any images in photos collection, try direct properties
-        if (productImages.length === 0) {
-          if (data.images && Array.isArray(data.images)) {
-            // Handle images array
-            productImages = data.images;
-          } else if (data.image) {
-            // Handle single image case
-            productImages = [data.image];
-          }
-        }
+        const enhancedProducts = await Promise.all(productsPromises);
+        console.log('Processed enhanced products:', enhancedProducts.length, 'products');
         
-        // Create a photos array in the format the ProductCard expects
-        const formattedPhotos = productImages.map((url, index) => ({
-          id: `photo-${index}`,
-          url: url,
-          filename: url.split('/').pop() || `image-${index}`
-        }));
-        
-        // Return product with images
-        return {
-          id: doc.id,
-          ...data,
-          images: productImages.length > 0 ? productImages : undefined,
-          image: productImages.length > 0 ? productImages[0] : undefined,
-          photos: formattedPhotos.length > 0 ? formattedPhotos : undefined
-        } as Product;
-      });
-      
-      const products = await Promise.all(productsPromises);
-      console.log('Processed products for callback:', products.length, 'products');
-      callback(products);
-    } catch (error) {
-      console.error('Error processing products:', error);
-      // Return the basic products without trying to load images as fallback
-      const basicProducts = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Product[];
-      callback(basicProducts);
-    }
+        // Call the callback again with enhanced products
+        callback(enhancedProducts);
+      } catch (error) {
+        console.error('Error processing enhanced products:', error);
+        // We already called the callback with basic products, so no need to do it again
+      }
+    })();
   }, (error) => {
     console.error('Error in subscribeToProducts:', error);
     console.error('Error details:', error.code, error.message);
     callback([]); // Return empty array on error
   });
 }
-
 
 export async function getUserById(userId: string): Promise<{displayName: string} | null> {
   try {

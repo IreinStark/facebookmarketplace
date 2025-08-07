@@ -62,6 +62,11 @@ export function MarketplaceNav({
     }
   }
 
+  const handleLogoClick = () => {
+    // Refresh the page when logo is clicked
+    window.location.reload()
+  }
+
   const getUserInitials = () => {
     if (user?.displayName) {
       return user.displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase()
@@ -87,15 +92,18 @@ export function MarketplaceNav({
           </Button>
         )}
 
-        {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2">
+        {/* Logo - Now clickable to refresh page */}
+        <button 
+          onClick={handleLogoClick}
+          className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+        >
           <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xs md:text-sm">M</span>
+            <span className="text-white font-bold text-xs md:text-sm">N</span>
           </div>
           <span className="hidden sm:inline-block font-bold text-base md:text-lg text-gray-900 dark:text-white">
-            Marketplace
+            NEAR ME
           </span>
-        </Link>
+        </button>
 
         {/* Desktop Search */}
         {!isMobile && (

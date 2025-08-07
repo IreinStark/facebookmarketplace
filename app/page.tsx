@@ -140,6 +140,15 @@ export default function MarketplacePage() {
 		return () => window.removeEventListener('resize', checkMobile)
 	}, [])
 
+	// Helper function to transform mock products to match ProductCardProduct interface
+	const transformMockProducts = (mockProducts: any[]): ProductCardProduct[] => {
+		return mockProducts.map(product => ({
+			...product,
+			userId: product.sellerId || product.userId || 'mock-user-id', // Ensure userId is always present
+			sellerId: product.sellerId || product.userId || 'mock-user-id',
+		}))
+	}
+
 	// Subscribe to products
 	useEffect(() => {
 		let unsubscribe: (() => void) | undefined
@@ -156,9 +165,10 @@ export default function MarketplacePage() {
 				)
 			} catch (error: unknown) {
 				console.error('Error subscribing to products:', error)
-				// Fallback to mock products
+				// Fallback to mock products with type transformation
 				subscribeMockProducts((mockProducts) => {
-					setProducts(mockProducts)
+					const transformedProducts = transformMockProducts(mockProducts)
+					setProducts(transformedProducts)
 					setProductsLoading(false)
 				})
 			}
@@ -501,7 +511,7 @@ export default function MarketplacePage() {
 								<ProductCard
 									key={product.id}
 									product={product}
-									onClick={() => handleProductClick(product.id)}
+									onProductClick={() => handleProductClick(product.id)}
 									onFavoriteClick={() => handleFavoriteClick(product.id)}
 									onMessageClick={() => handleMessageClick(product.id)}
 									onDeleteClick={() => handleDeleteProduct(product.id)}

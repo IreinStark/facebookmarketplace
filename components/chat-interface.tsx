@@ -76,6 +76,7 @@ export function ChatInterface({
   const [userProfiles, setUserProfiles] = useState<{[userId: string]: UserProfile}>({});
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Check if mobile on mount and resize
   useEffect(() => {
@@ -100,7 +101,16 @@ export function ChatInterface({
 
   // Scroll to bottom of messages
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  };
+
+  // Alternative scroll method for better compatibility
+  const scrollToBottomForce = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   };
 
   // Initialize conversation if recipient is provided
@@ -168,7 +178,11 @@ export function ChatInterface({
 
     const unsubscribe = subscribeToMessages(selectedConversation, (messages) => {
       setMessages(messages);
-      scrollToBottom();
+      // Use setTimeout to ensure DOM has updated before scrolling
+      setTimeout(() => {
+        scrollToBottom();
+        scrollToBottomForce();
+      }, 100);
       
       // Mark messages as read
       markMessagesAsRead(selectedConversation, currentUserId);
@@ -176,6 +190,16 @@ export function ChatInterface({
 
     return unsubscribe;
   }, [selectedConversation, currentUserId]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => {
+        scrollToBottom();
+        scrollToBottomForce();
+      }, 100);
+    }
+  }, [messages.length]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
@@ -189,6 +213,11 @@ export function ChatInterface({
         newMessage.trim()
       );
       setNewMessage('');
+      // Scroll after sending message
+      setTimeout(() => {
+        scrollToBottom();
+        scrollToBottomForce();
+      }, 100);
     } catch (error) {
       console.error('Failed to send message:', error);
     } finally {
@@ -212,6 +241,11 @@ export function ChatInterface({
         );
       }
       setShowPhotoUpload(false);
+      // Scroll after sending photos
+      setTimeout(() => {
+        scrollToBottom();
+        scrollToBottomForce();
+      }, 100);
     } catch (error) {
       console.error('Failed to send photo:', error);
     } finally {
@@ -317,14 +351,14 @@ export function ChatInterface({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl h-[90vh] md:h-[80vh] p-0 w-[95vw] md:w-full overflow-hidden">
-        <DialogHeader className="p-3 sm:p-4 border-b">
+        <DialogHeader className="p-3 sm:p-4 border-b flex-shrink-0">
           <DialogTitle className="text-base sm:text-lg flex items-center">
             <MessageCircle className="h-5 w-5 mr-2 text-blue-600" />
             Messages
           </DialogTitle>
         </DialogHeader>
         
-        <div className="flex h-full relative">
+        <div className="flex h-full min-h-0">
           {/* Conversations List */}
           <div className={`
             ${isMobile 
@@ -337,7 +371,7 @@ export function ChatInterface({
             border-r flex flex-col ${isMobile ? 'absolute inset-0 bg-background z-10' : ''}
           `}>
             {/* Search */}
-            <div className="p-3 sm:p-4 border-b">
+            <div className="p-3 sm:p-4 border-b flex-shrink-0">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
@@ -349,8 +383,8 @@ export function ChatInterface({
               </div>
             </div>
 
-            {/* Conversations */}
-            <ScrollArea className="flex-1 overflow-y-auto">
+            {/* Conversations - Scrollable */}
+            <div className="flex-1 overflow-y-auto">
               <div className="p-2 space-y-1 sm:space-y-2">
                 {filteredConversations.map((conversation) => {
                   const otherParticipantEntry = Object.entries(conversation.participantNames)
@@ -424,7 +458,7 @@ export function ChatInterface({
                   </div>
                 )}
               </div>
-            </ScrollArea>
+            </div>
           </div>
 
           {/* Chat Area */}
@@ -436,12 +470,12 @@ export function ChatInterface({
                 ) 
               : 'flex-1'
             } 
-            flex flex-col ${isMobile ? 'absolute inset-0 bg-background' : ''}
+            flex flex-col ${isMobile ? 'absolute inset-0 bg-background' : ''} min-h-0
           `}>
             {selectedConversation ? (
               <>
                 {/* Chat Header */}
-                <div className="p-3 sm:p-4 border-b">
+                <div className="p-3 sm:p-4 border-b flex-shrink-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
                       {isMobile && (
@@ -511,8 +545,15 @@ export function ChatInterface({
                   </div>
                 </div>
 
-                {/* Messages */}
-                <ScrollArea className="flex-1 p-2 sm:p-4">
+                {/* Messages - Fixed scrollable area */}
+                <div 
+                  ref={messagesContainerRef}
+                  className="flex-1 overflow-y-auto p-2 sm:p-4 scroll-smooth"
+                  style={{ 
+                    minHeight: 0,
+                    maxHeight: '100%'
+                  }}
+                >
                   <div className="space-y-3 sm:space-y-4">
                     {messages.map((message) => (
                       <div
@@ -564,12 +605,12 @@ export function ChatInterface({
                         </div>
                       </div>
                     ))}
-                    <div ref={messagesEndRef} />
+                    <div ref={messagesEndRef} className="h-1" />
                   </div>
-                </ScrollArea>
+                </div>
 
                 {/* Message Input */}
-                <div className="p-2 sm:p-4 border-t">
+                <div className="p-2 sm:p-4 border-t flex-shrink-0">
                   <div className="flex items-end space-x-2">
                     <Button
                       variant="ghost"
