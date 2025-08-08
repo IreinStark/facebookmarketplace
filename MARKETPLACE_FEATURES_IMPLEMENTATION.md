@@ -174,6 +174,6 @@ Successfully implemented all requested features for the Facebook Marketplace clo
 4. **Extend Features**: Well-structured code for easy extension
 
 ## Summary
-The Facebook Marketplace clone now includes all requested features with professional-grade implementation. Users can delete their listings, click products to view details, visit user profiles with ratings, and enjoy a modern theme-aware interface with location search. The application is fully functional, secure, and ready for production use.
+The NEAR ME Marketplace now includes all requested features with professional-grade implementation. Users can delete their listings, click products to view details, visit user profiles with ratings, and enjoy a modern theme-aware interface with location search. The application is fully functional, secure, and ready for production use.
 
 All features work seamlessly together to provide a complete marketplace experience that rivals the original Facebook Marketplace functionality.

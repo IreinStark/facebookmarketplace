@@ -195,9 +195,41 @@ export default function ProductDetailPage() {
                   {product.location}
                 </div>
                 <div className="flex items-center">
-                  <Clock className="w-4 h-4 mr-1" />
-                  {formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true })}
-                </div>
+<Clock className="w-4 h-4 mr-1" />
+  {(() => {
+    try {
+      // Handle different timestamp formats
+      if (!product.createdAt) {
+        return 'Recently';
+      }
+      
+      // Handle Firebase Timestamp with toDate() method
+      if (product.createdAt && typeof product.createdAt.toDate === 'function') {
+        return formatDistanceToNow(product.createdAt.toDate(), { addSuffix: true });
+      }
+      
+      // Handle JavaScript Date object
+      if (product.createdAt instanceof Date) {
+        return formatDistanceToNow(product.createdAt, { addSuffix: true });
+      }
+      
+      // Handle string date
+      if (typeof product.createdAt === 'string') {
+        return formatDistanceToNow(new Date(product.createdAt), { addSuffix: true });
+      }
+      
+      // Handle number (timestamp)
+      if (typeof product.createdAt === 'number') {
+        return formatDistanceToNow(new Date(product.createdAt), { addSuffix: true });
+      }
+      
+      return 'Recently';
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Recently';
+    }
+  })()}
+</div>
               </div>
             </div>
 
