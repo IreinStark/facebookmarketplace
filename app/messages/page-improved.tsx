@@ -80,6 +80,7 @@ export default function MessagesPage() {
               isOpen={true} 
               onClose={() => {}} 
               currentUserId={user?.uid || ''} 
+              currentUserName={user?.displayName || user?.email?.split('@')[0] || 'User'}
             />
           </div>
         </div>
