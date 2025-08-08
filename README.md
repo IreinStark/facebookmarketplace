@@ -8,14 +8,14 @@ A modern marketplace web app with real‑time chat and photo sharing. Built with
 - **Listings**: create/read/update/delete products with multiple photos
 - **Auth**: Firebase Authentication (email/password)
 - **Real‑time chat**: conversations, typing indicators, read receipts, photo messages
-- **Photo uploads**: drag & drop, progress, validation, Cloudinary/Firebase ready
+- **Photo uploads**: Cloudinary as primary storage; drag & drop, progress, validation
 - **Mobile‑first UI**: responsive layout, dark/light theme, accessible components
 
 ## Tech Stack
 
 - **Frontend**: Next.js 15 (App Router), React 18, TypeScript, Tailwind CSS, Radix UI, Lucide
 - **Realtime**: Socket.io (custom Node server in `server.js`)
-- **Backend/DB**: Firebase (Auth, Firestore, Storage)
+- **Backend/DB**: Firebase (Auth, Firestore); Cloudinary for media storage
 - **Forms/Validation**: React Hook Form, Zod
 
 ## Quickstart
@@ -23,7 +23,8 @@ A modern marketplace web app with real‑time chat and photo sharing. Built with
 ### Prerequisites
 - Node.js 18+
 - npm (or pnpm/yarn)
-- Optional: Firebase project (for real data), Cloudinary (for uploads)
+- Cloudinary account (for media uploads)
+- Optional: Firebase project (for real data)
 
 ### Install
 ```bash
@@ -84,12 +85,12 @@ firebase deploy --only storage
 ```
 
 Relevant files:
-- `firestore.rules`, `firestore.indexes.json`, `storage.rules`
+- `firestore.rules`, `firestore.indexes.json` (Firebase Storage optional if you do not store images there)
 - App config at `app/firebase.ts`
 
-## Cloudinary (Optional)
+## Cloudinary (Primary Media Storage)
 
-Photo uploads support Cloudinary. See `CLOUDINARY_SETUP.md` to configure `lib/cloudinary-config.ts` and test uploads.
+This app uses Cloudinary for all image uploads. Configure `lib/cloudinary-config.ts` and follow `CLOUDINARY_SETUP.md` to set `cloudName` and an unsigned `uploadPreset`.
 
 ## Realtime Chat
 
@@ -103,7 +104,7 @@ Photo uploads support Cloudinary. See `CLOUDINARY_SETUP.md` to configure `lib/cl
 app/                 # Next.js App Router pages and layout
 components/          # UI, marketplace, chat, photo upload components
 hooks/               # Custom hooks (socket, mobile, toasts)
-lib/                 # Utilities and Firebase helpers
+lib/                 # Utilities, Firebase helpers, and Cloudinary config
 public/              # Static assets
 server.js            # Custom Node server with Socket.io
 styles/              # Tailwind and global styles
