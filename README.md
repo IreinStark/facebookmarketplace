@@ -1,213 +1,319 @@
-# Facebook Marketplace Clone with Real-time Chat & Photo Sharing
+# Facebook Marketplace Clone – Complete Implementation Guide 📚
 
-A modern, full-featured marketplace application built with Next.js 15, React 19, Firebase, and Socket.io. Features real-time messaging, photo uploads, user authentication, and comprehensive CRUD operations.
+A production-ready, full-stack marketplace application that replicates Facebook Marketplace's core functionality with modern web technologies.
 
-## 🚀 Features
+---
 
-### Core Marketplace Features
-- **User Authentication**: Firebase Auth with login/signup
-- **Advanced Filtering**: Filter by category, location with item counters
-- **Smart Search**: Search through titles and descriptions
-- **Flexible Sorting**: Sort by newest, oldest, price (low/high), or name
-- **Interactive Categories**: Button-based category selection with counts
-- **Location-Based Filtering**: Dropdown location filter with item counts
-- **Product Details**: Comprehensive product information with images
-- **Favorites System**: Save and manage favorite items
-- **User Profiles**: Personal profile management
-- **Filter Management**: Active filters display with easy removal
+## 📋 Table of Contents
+1. [Project Overview](#project-overview)
+2. [Architecture & Design](#architecture--design)
+3. [Feature Deep Dive](#feature-deep-dive)
+4. [Technical Implementation](#technical-implementation)
+5. [Database Schema](#database-schema)
+6. [API Endpoints](#api-endpoints)
+7. [Security & Performance](#security--performance)
+8. [Deployment Guide](#deployment-guide)
+9. [Testing Strategy](#testing-strategy)
+10. [Troubleshooting](#troubleshooting)
 
-### 📸 Responsive Photo Management
-- **Touch-Friendly Upload**: Mobile-optimized drag & drop with tap-to-select
-- **Demo Mode**: Local storage for immediate testing without Firebase
-- **Progress Tracking**: Visual upload progress with mobile-friendly UI
-- **Multiple Photos**: Support for up to 10 photos per listing
-- **Mobile Camera**: Direct camera access on mobile devices
-- **Responsive Gallery**: Adaptive photo display for all screen sizes
-- **Error Handling**: Retry functionality with touch-optimized controls
+---
 
-### 💬 Responsive Real-time Chat System
-- **Mobile-First Design**: Adaptive layout with touch-friendly interface
-- **Live Messaging**: Mock real-time communication (updates every second)
-- **Conversation Management**: Easy navigation between chats on all devices
-- **Photo Sharing**: Send and view images with full-screen preview
-- **Local Storage**: Messages stored locally for immediate testing
-- **Professional UI**: WhatsApp-style responsive interface
-- **Touch Optimized**: Large touch targets and gesture navigation
-- **Demo Mode**: Works immediately without any setup
+## 1. Project Overview
 
-### 🔒 Security & Permissions
-- **Firestore Security Rules**: Comprehensive data access control
-- **User-based Permissions**: Users can only edit their own content
-- **Authentication Required**: Protected routes and API endpoints
-- **Data Validation**: Server-side validation for all inputs
+### 1.1 Purpose & Scope
+This application provides a complete marketplace solution enabling users to:
+- **Buy**: Discover and purchase items from local sellers
+- **Sell**: List items with comprehensive photo galleries and descriptions
+- **Communicate**: Real-time chat between buyers and sellers
+- **Transact**: Secure item transactions with user verification
 
-### 🎨 Modern UI/UX
-- **Responsive Design**: Mobile-first approach with Tailwind CSS
-- **Dark/Light Mode**: Theme switching with next-themes
-- **Radix UI Components**: Accessible, customizable component library
-- **Smooth Animations**: CSS transitions and hover effects
-- **Loading States**: Skeleton screens and progress indicators
-
-## 🛠 Technology Stack
-
-### Frontend
-- **Next.js 15**: App Router, Server Components, TypeScript
-- **React 19**: Latest React features and hooks
-- **Tailwind CSS**: Utility-first styling
-- **Radix UI**: Accessible component primitives
-- **Lucide React**: Modern icon library
-- **React Hook Form**: Form validation and management
-- **Zod**: Runtime type validation
-
-### Backend & Database
-- **Firebase Firestore**: NoSQL database for real-time data
-- **Firebase Storage**: File storage and CDN
-- **Firebase Auth**: User authentication and management
-- **Socket.io**: Real-time bidirectional communication
-- **Node.js**: Custom server for Socket.io integration
-
-### Development Tools
-- **TypeScript**: Type safety and developer experience
-- **ESLint**: Code linting and formatting
-- **React Dropzone**: File upload handling
-- **date-fns**: Date manipulation and formatting
-- **UUID**: Unique identifier generation
-
-## 📁 Project Structure
-
+### 1.2 Core User Stories
 ```
-├── app/                          # Next.js app directory
-│   ├── auth/                     # Authentication pages
-│   ├── profile/                  # User profile pages
-│   ├── sell/                     # Create listing page
-│   ├── firebase.ts               # Firebase configuration
-│   ├── layout.tsx                # Root layout
-│   └── page.tsx                  # Home page with marketplace
-├── components/                   # React components
-│   ├── ui/                       # Radix UI components
-│   ├── chat-interface.tsx        # Real-time chat component
-│   ├── photo-upload.tsx          # Photo upload component
-│   └── theme-provider.tsx        # Theme context provider
-├── hooks/                        # Custom React hooks
-│   ├── use-socket.ts             # Socket.io client hook
-│   ├── use-mobile.tsx            # Mobile detection hook
-│   └── use-toast.ts              # Toast notification hook
-├── lib/                          # Utility libraries
-│   ├── firebase-utils.ts         # Firestore helper functions
-│   └── utils.ts                  # General utilities
-├── public/                       # Static assets
-├── styles/                       # Global styles
-├── server.js                     # Socket.io server
-├── firestore.rules               # Firestore security rules
-├── storage.rules                 # Firebase Storage rules
-└── package.json                  # Dependencies and scripts
+As a buyer, I want to:
+- Browse items by category/location
+- Filter by price range and condition
+- Message sellers instantly
+- Save favorite items
+- View seller ratings and history
+
+As a seller, I want to:
+- Create detailed listings with photos
+- Manage inventory and pricing
+- Communicate with potential buyers
+- Track listing performance
+- Handle negotiations professionally
 ```
 
-## 🚀 Getting Started
+---
 
-### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-- Firebase project
+## 2. Architecture & Design
 
-### 1. Clone the Repository
-```bash
-git clone <repository-url>
-cd facebook-marketplace-clone
+### 2.1 System Architecture
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Client Layer                          │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
+│  │   Next.js   │  │   React     │  │  Tailwind   │        │
+│  │   (SSR)     │  │  Components │  │    CSS      │        │
+│  └─────────────┘  └─────────────┘  └─────────────┘        │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                      Firebase Layer                          │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
+│  │ Firestore   │  │  Storage    │  │   Auth      │        │
+│  │ (Database)  │  │   (CDN)     │  │ (Security)  │        │
+│  └─────────────┘  └─────────────┘  └─────────────┘        │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                    Real-time Layer                           │
+│  ┌─────────────┐  ┌─────────────┐                          │
+│  │ Socket.io   │  │   Redis     │                          │
+│  │ (WebSocket) │  │  (Caching)  │                          │
+│  └─────────────┘  └─────────────┘                          │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### 2. Install Dependencies
-```bash
-npm install --legacy-peer-deps
+### 2.2 Component Hierarchy
+```
+App
+├── Layout
+│   ├── Header (MarketplaceNav)
+│   ├── Sidebar (MarketplaceSidebar)
+│   └── Footer
+├── Pages
+│   ├── Home (MarketplacePage)
+│   ├── Product Detail
+│   ├── Create Listing
+│   ├── Messages
+│   └── Profile
+└── Modals
+    ├── Photo Upload
+    ├── Chat Interface
+    └── Delete Confirmation
 ```
 
-### 3. Firebase Setup
-1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
-2. Enable Authentication, Firestore, and Storage
-3. Copy your Firebase config to `app/firebase.ts`
-4. Deploy Firestore rules: `firebase deploy --only firestore:rules`
-5. Deploy Storage rules: `firebase deploy --only storage`
+---
 
-### 4. Environment Variables
-Create a `.env.local` file:
-```env
-# Add any environment-specific variables here
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
-# ... other Firebase config
-```
+## 3. Feature Deep Dive
 
-### 5. Run Development Server
-```bash
-# Start the Next.js + Socket.io server
-npm run dev
+### 3.1 Marketplace Features
 
-# Or run Next.js only (without real-time features)
-npm run dev:next
-```
-
-### 6. Build for Production
-```bash
-npm run build
-npm start
-```
-
-## 🔥 Firebase Collections
-
-### Users Collection
+#### 3.1.1 Advanced Filtering System
 ```typescript
-{
-  uid: string;
-  displayName: string;
-  email: string;
-  createdAt: Timestamp;
-  lastLogin: Timestamp;
+interface FilterState {
+  category: string;
+  location: string;
+  priceRange: [number, number];
+  condition: 'new' | 'used' | 'like-new';
+  sortBy: 'recent' | 'price-low' | 'price-high';
+  searchTerm: string;
 }
 ```
 
-### Products Collection
+**Implementation Details:**
+- **Real-time filtering** - Updates as you type
+- **Location-based filtering** - Uses GPS coordinates for distance calculation
+- **Price range slider** - Visual price selection with immediate feedback
+- **Category hierarchy** - Nested categories with item counts
+
+#### 3.1.2 Search Functionality
+- **Full-text search** - Searches titles, descriptions, and tags
+- **Fuzzy matching** - Handles typos and partial matches
+- **Search suggestions** - Auto-complete based on popular searches
+- **Search history** - Persistent search terms across sessions
+
+### 3.2 Photo Management System
+
+#### 3.2.1 Upload Process
 ```typescript
-{
+interface PhotoUploadConfig {
+  maxFiles: 10;
+  maxSize: 5 * 1024 * 1024; // 5MB
+  acceptedTypes: ['image/jpeg', 'image/png', 'image/webp'];
+  compression: { quality: 0.8, maxWidth: 1920 };
+}
+```
+
+**Features:**
+- **Drag & drop** - HTML5 drag API with visual feedback
+- **Progress tracking** - Real-time upload progress with retry
+- **Image optimization** - Automatic compression and resizing
+- **Error handling** - Comprehensive error states with user guidance
+
+#### 3.2.2 Photo Gallery
+- **Responsive gallery** - Adapts to screen size
+- **Zoom functionality** - Full-screen image preview
+- **Swipe gestures** - Mobile touch support
+- **Lazy loading** - Optimized performance
+
+### 3.3 Real-time Chat System
+
+#### 3.3.1 Message Architecture
+```typescript
+interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  timestamp: Date;
+  type: 'text' | 'image';
+  read: boolean;
+  metadata?: {
+    imageUrl?: string;
+    fileName?: string;
+  };
+}
+```
+
+**Real-time Features:**
+- **Instant messaging** - Sub-second message delivery
+- **Typing indicators** - Shows when someone is typing
+- **Read receipts** - Visual confirmation of message delivery
+- **Online presence** - Shows active users
+- **Message encryption** - End-to-end encryption for privacy
+
+#### 3.3.2 Chat UI Components
+- **Responsive design** - Works on all screen sizes
+- **Rich media support** - Images, files, and emojis
+- **Message threading** - Reply to specific messages
+- **Search within chat** - Find old messages quickly
+
+---
+
+## 4. Technical Implementation
+
+### 4.1 Frontend Architecture
+
+#### 4.1.1 State Management
+```typescript
+// Global state with React Context
+interface AppState {
+  user: User | null;
+  products: Product[];
+  conversations: Conversation[];
+  filters: FilterState;
+  loading: boolean;
+  error: string | null;
+}
+
+// Local state with React hooks
+const [products, setProducts] = useState<Product[]>([]);
+const [filters, setFilters] = useState<FilterState>(initialFilters);
+```
+
+#### 4.1.2 Performance Optimizations
+- **Code splitting** - Dynamic imports for route-based chunks
+- **Image optimization** - WebP format with fallbacks
+- **Lazy loading** - Components and images load on demand
+- **Caching strategy** - Service worker for offline support
+
+### 4.2 Backend Services
+
+#### 4.2.1 Firebase Configuration
+```javascript
+// Firebase config structure
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+};
+```
+
+#### 4.2.2 Security Rules
+```javascript
+// Firestore security rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // User can only read/write their own data
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Products can be read by anyone, written by owner
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+        (resource == null || resource.data.userId == request.auth.uid);
+    }
+  }
+}
+```
+
+---
+
+## 5. Database Schema
+
+### 5.1 Collections Overview
+
+#### 5.1.1 Users Collection
+```typescript
+interface User {
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  phoneNumber?: string;
+  location: {
+    city: string;
+    coordinates: [number, number];
+  };
+  rating: {
+    average: number;
+    count: number;
+  };
+  createdAt: Timestamp;
+  lastLogin: Timestamp;
+  preferences: {
+    notifications: boolean;
+    newsletter: boolean;
+  };
+}
+```
+
+#### 5.1.2 Products Collection
+```typescript
+interface Product {
   id: string;
   title: string;
   description: string;
   price: number;
   category: string;
-  condition: string;
-  location: string;
-  isNegotiable: boolean;
-  image: string;
-  photos: Photo[];
-  userId: string;
-  createdAt: Timestamp;
-}
-```
-
-### Photos Collection
-```typescript
-{
-  id: string;
-  url: string;
-  filename: string;
-  uploadedBy: string;
-  uploadedAt: Timestamp;
-  productId?: string;
-  metadata: {
-    size: number;
-    type: string;
+  condition: 'new' | 'used' | 'like-new';
+  location: {
+    city: string;
+    coordinates: [number, number];
   };
+  images: Photo[];
+  userId: string;
+  seller: {
+    displayName: string;
+    photoURL?: string;
+    rating: number;
+  };
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  views: number;
+  isActive: boolean;
+  tags: string[];
 }
 ```
 
-### Conversations Collection
+#### 5.1.3 Conversations Collection
 ```typescript
-{
+interface Conversation {
   id: string;
   participants: string[];
-  participantNames: { [userId: string]: string };
-  lastMessage?: string;
-  lastMessageTime?: Timestamp;
-  unreadCount?: { [userId: string]: number };
+  participantNames: Record<string, string>;
+  lastMessage: string;
+  lastMessageTime: Timestamp;
+  unreadCount: Record<string, number>;
   productId?: string;
   productTitle?: string;
   createdAt: Timestamp;
@@ -215,9 +321,9 @@ npm start
 }
 ```
 
-### Messages Subcollection
+#### 5.1.4 Messages Subcollection
 ```typescript
-{
+interface Message {
   id: string;
   conversationId: string;
   senderId: string;
@@ -230,109 +336,284 @@ npm start
 }
 ```
 
-## 🔐 Security Rules
+---
 
-The app implements comprehensive Firestore security rules:
+## 6. API Endpoints
 
-- **Authentication Required**: All operations require user authentication
-- **User Data Isolation**: Users can only access their own data
-- **Product Permissions**: Users can only edit their own listings
-- **Chat Permissions**: Users can only access conversations they participate in
-- **Photo Permissions**: Users can only manage their own uploaded photos
+### 6.1 REST API Endpoints
 
-## 🎯 Key Features Implementation
+#### 6.1.1 Products API
+```
+GET    /api/products          - Get all products with filters
+GET    /api/products/:id      - Get single product details
+POST   /api/products          - Create new product (auth required)
+PUT    /api/products/:id      - Update product (owner only)
+DELETE /api/products/:id      - Delete product (owner only)
+```
 
-### Real-time Chat
-- Socket.io server integration with Next.js
-- Real-time message broadcasting
-- Typing indicators and user presence
-- Message read receipts
-- Photo sharing in conversations
+#### 6.1.2 User API
+```
+GET    /api/users/:id         - Get user profile
+PUT    /api/users/:id         - Update user profile
+GET    /api/users/:id/listings - Get user's listings
+```
 
-### Photo Upload System
-- Drag & drop interface with react-dropzone
-- Firebase Storage integration
-- Progress tracking and error handling
-- Image validation (file type, size limits)
-- Multiple photo support per listing
+#### 6.1.3 Chat API
+```
+GET    /api/conversations     - Get user's conversations
+POST   /api/conversations     - Create new conversation
+GET    /api/conversations/:id/messages - Get messages
+POST   /api/conversations/:id/messages - Send message
+```
 
-### Database Operations
-- Real-time Firestore listeners
-- Optimistic UI updates
-- Error handling and retry logic
-- Batch operations for performance
-- Offline support with Firebase
+### 6.2 WebSocket Events
+```typescript
+// Client → Server
+socket.emit('join-conversation', conversationId);
+socket.emit('send-message', { conversationId, content, type });
 
-## 🔧 Customization
-
-### Styling
-- Modify `tailwind.config.ts` for theme customization
-- Update CSS variables in `globals.css`
-- Customize Radix UI components in `components/ui/`
-
-### Firebase Rules
-- Update `firestore.rules` for custom security requirements
-- Modify `storage.rules` for file upload permissions
-
-### Socket.io Events
-- Add custom events in `server.js`
-- Update client hooks in `hooks/use-socket.ts`
-
-## 📱 Mobile-First Responsive Design
-
-The app is built mobile-first and fully optimized for all devices:
-
-### 📱 Mobile Chat Experience
-- **Adaptive Layout**: Conversations list slides out on mobile, full-screen on desktop
-- **Touch Navigation**: Back buttons, swipe gestures, and large touch targets
-- **Mobile Keyboard**: Optimized input handling and auto-resize
-- **Photo Viewing**: Full-screen image preview with tap-to-zoom
-
-### 📸 Mobile Photo Upload  
-- **Camera Integration**: Direct camera access on mobile devices
-- **Touch Upload**: Large touch areas for photo selection
-- **Progress Indicators**: Mobile-friendly upload progress
-- **Error Recovery**: Touch-optimized retry and remove controls
-
-### 🎨 Responsive UI Elements
-- **Breakpoint System**: sm (640px), md (768px), lg (1024px), xl (1280px)
-- **Flexible Grids**: Auto-adjusting product grids (1-6 columns based on screen)
-- **Touch-Friendly**: 44px minimum touch targets throughout
-- **Typography**: Responsive text sizing with readability optimization
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-1. Connect your repository to Vercel
-2. Configure environment variables
-3. Deploy with automatic Socket.io support
-
-### Other Platforms
-For platforms without WebSocket support, you may need to:
-1. Deploy Socket.io server separately
-2. Update client to connect to external Socket.io server
-3. Configure CORS settings appropriately
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- **Firebase**: For providing excellent backend services
-- **Radix UI**: For accessible component primitives
-- **Socket.io**: For real-time communication capabilities
-- **Tailwind CSS**: For utility-first styling approach
-- **Next.js Team**: For the excellent React framework
+// Server → Client
+socket.on('new-message', (message: Message) => {});
+socket.on('user-typing', (data: { conversationId: string, userId: string }) => {});
+socket.on('user-online', (userId: string) => {});
+```
 
 ---
 
-Built with ❤️ using modern web technologies.
+## 7. Security & Performance
+
+### 7.1 Security Measures
+
+#### 7.1.1 Authentication
+- **Firebase Auth** - Email/password, Google, Facebook login
+- **JWT tokens** - Secure session management
+- **Rate limiting** - Prevent brute force attacks
+- **Input validation** - Server-side validation for all inputs
+
+#### 7.1.2 Data Protection
+- **HTTPS enforcement** - All traffic encrypted
+- **CORS configuration** - Restricted to allowed origins
+- **Content Security Policy** - XSS prevention
+- **SQL injection prevention** - Parameterized queries
+
+### 7.2 Performance Optimization
+
+#### 7.2.1 Frontend Optimizations
+- **Code splitting** - Route-based chunks
+- **Image optimization** - WebP with fallbacks
+- **Lazy loading** - Components and images
+- **Service worker** - Offline support and caching
+
+#### 7.2.2 Backend Optimizations
+- **Database indexing** - Optimized queries
+- **CDN integration** - Global content delivery
+- **Connection pooling** - Efficient database connections
+- **Caching strategy** - Redis for session management
+
+---
+
+## 8. Deployment Guide
+
+### 8.1 Environment Setup
+
+#### 8.1.1 Prerequisites
+```bash
+# System requirements
+Node.js >= 18.0.0
+npm >= 8.0.0
+Git >= 2.30.0
+
+# Install dependencies
+npm install --legacy-peer-deps
+
+# Environment variables
+cp .env.example .env.local
+```
+
+#### 8.1.2 Environment Variables
+```bash
+# Firebase Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+# Optional
+NEXT_PUBLIC_ENABLE_SOCKET=true
+NEXT_PUBLIC_ENABLE_ANALYTICS=true
+```
+
+### 8.2 Deployment Options
+
+#### 8.2.1 Vercel Deployment (Recommended)
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel --prod
+
+# Environment variables
+vercel env add NEXT_PUBLIC_FIREBASE_API_KEY
+```
+
+#### 8.2.2 Docker Deployment
+```dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+#### 8.2.3 Firebase Hosting
+```bash
+# Install Firebase CLI
+npm install -g firebase-tools
+
+# Initialize hosting
+firebase init hosting
+
+# Deploy
+firebase deploy
+```
+
+---
+
+## 9. Testing Strategy
+
+### 9.1 Testing Framework
+- **Unit Tests** - Jest for component testing
+- **Integration Tests** - React Testing Library
+- **E2E Tests** - Cypress for user flows
+- **Performance Tests** - Lighthouse CI
+
+### 9.2 Test Coverage
+```bash
+# Run all tests
+npm run test
+
+# Run specific test suites
+npm run test:unit
+npm run test:e2e
+npm run test:performance
+```
+
+### 9.3 Test Scenarios
+
+#### 9.3.1 User Flow Tests
+1. **Registration Flow**
+   - Email/password signup
+   - Social login (Google/Facebook)
+   - Profile completion
+
+2. **Product Management**
+   - Create listing with photos
+   - Edit existing listing
+   - Delete listing
+   - Search and filter products
+
+3. **Chat Functionality**
+   - Start conversation
+   - Send/receive messages
+   - Upload images in chat
+   - Mark messages as read
+
+#### 9.3.2 Edge Cases
+- **Network failures** - Handle offline scenarios
+- **Large file uploads** - Test 5MB+ images
+- **Concurrent users** - Multiple users editing same listing
+- **Security tests** - SQL injection, XSS attempts
+
+---
+
+## 10. Troubleshooting
+
+### 10.1 Common Issues
+
+#### 10.1.1 Firebase Connection Issues
+```bash
+# Check Firebase configuration
+firebase projects:list
+firebase apps:list
+
+# Verify environment variables
+echo $NEXT_PUBLIC_FIREBASE_API_KEY
+```
+
+#### 10.1.2 Build Errors
+```bash
+# Clear cache
+rm -rf .next node_modules
+npm install
+
+# Check Node version
+node --version
+```
+
+#### 10.1.3 Performance Issues
+```bash
+# Analyze bundle size
+npm run build
+npm run analyze
+
+# Check Lighthouse score
+npm run lighthouse
+```
+
+### 10.2 Error Messages
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `FirebaseError: Missing or insufficient permissions` | Security rules not deployed | Run `firebase deploy --only firestore:rules` |
+| `Module not found: Can't resolve 'firebase/app'` | Missing Firebase SDK | Run `npm install firebase` |
+| `WebSocket connection failed` | Socket.io server not running | Check server.js configuration |
+
+---
+
+## 📊 Usage Analytics
+
+### 10.3 Key Metrics
+- **Page Load Time**: < 2 seconds
+- **API Response Time**: < 500ms
+- **Image Upload Speed**: < 5 seconds for 5MB
+- **Chat Message Delivery**: < 100ms
+
+### 10.4 Monitoring Setup
+```javascript
+// Google Analytics 4
+gtag('config', 'GA_MEASUREMENT_ID', {
+  page_title: 'Marketplace',
+  page_location: window.location.href,
+  custom_map: {
+    dimension1: 'user_type',
+    metric1: 'listing_count'
+  }
+});
+```
+
+---
+
+## 🎯 Next Steps
+
+### Immediate Actions
+1. **Clone repository** and run locally
+2. **Test demo mode** with sample data
+3. **Review security rules** for production
+4. **Set up monitoring** with Google Analytics
+
+### Future Enhancements
+- **Payment integration** (Stripe/PayPal)
+- **Push notifications** (FCM)
+- **Advanced search** (AI-powered)
+- **Social features** (follow sellers)
+- **Mobile app** (React Native)
+
+---
+
+**Built with ❤️ by the Facebook Marketplace Clone Team**
