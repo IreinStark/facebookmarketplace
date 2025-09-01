@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { onAuthStateChanged, type User } from "firebase/auth"
 import { useRouter } from "next/navigation"
 
@@ -21,7 +21,7 @@ import { MessageCircle, Plus, Filter, Search, Menu, X } from "lucide-react"
 import { useSocket } from "@/hooks/use-socket"
 import { subscribeToProducts as subscribeToRealProducts, deleteProduct } from "@/lib/firebase-utils"
 import { subscribeMockProducts } from "@/lib/mock-data-utils"
-import { getUserProfile, type UserProfile } from "@/lib/user-utils"
+import { getUserProfile, updateUserProfile, getCurrentLocation, type UserProfile } from "@/lib/user-utils"
 
 // Type definitions for component compatibility
 interface ProductCardProduct {
@@ -100,6 +100,7 @@ export default function MarketplacePage() {
 	// Product states
 	const [products, setProducts] = useState<ProductCardProduct[]>([])
 	const [productsLoading, setProductsLoading] = useState(true)
+	const hasInitializedLocationRef = useRef(false)
 
 	const router = useRouter()
 	
@@ -128,6 +129,75 @@ export default function MarketplacePage() {
 
 		return () => unsubscribe()
 	}, [])
+
+	// On login: default selectedLocation from user profile once
+	useEffect(() => {
+		if (loading) return
+		if (hasInitializedLocationRef.current) return
+		if (selectedLocation !== "All Locations") {
+			hasInitializedLocationRef.current = true
+			return
+		}
+		const profileLocation = userProfile?.location?.trim()
+		if (profileLocation && profileLocation.length > 0) {
+			setSelectedLocation(profileLocation)
+			hasInitializedLocationRef.current = true
+		}
+	}, [loading, userProfile?.location, selectedLocation])
+
+	// Helper to find nearest known location by lat/lng
+	const getNearestLocationName = (lat: number, lng: number): string => {
+		let nearestName = "All Locations"
+		let bestScore = Number.POSITIVE_INFINITY
+		for (const loc of locationData) {
+			const dLat = lat - loc.lat
+			const dLng = lng - loc.lng
+			const score = dLat * dLat + dLng * dLng
+			if (score < bestScore) {
+				bestScore = score
+				nearestName = loc.name
+			}
+		}
+		return nearestName
+	}
+
+	// If no profile location, prompt for browser geolocation once and set nearest city
+	useEffect(() => {
+		if (loading) return
+		if (!user) return
+		if (hasInitializedLocationRef.current) return
+		const profileLocation = userProfile?.location?.trim()
+		if (profileLocation && profileLocation.length > 0) return
+
+		(async () => {
+			try {
+				const { latitude, longitude } = await getCurrentLocation()
+				const nearest = getNearestLocationName(latitude, longitude)
+				setSelectedLocation(nearest)
+				if (user?.uid) {
+					await updateUserProfile(user.uid, { location: nearest })
+				}
+			} catch (err) {
+				// permission denied or failed; ignore silently
+			} finally {
+				hasInitializedLocationRef.current = true
+			}
+		})()
+	}, [loading, user, userProfile?.location])
+
+	// Manual auto-detect handler for UI button
+	const handleDetectLocation = async () => {
+		try {
+			const { latitude, longitude } = await getCurrentLocation()
+			const nearest = getNearestLocationName(latitude, longitude)
+			setSelectedLocation(nearest)
+			if (user?.uid) {
+				await updateUserProfile(user.uid, { location: nearest })
+			}
+		} catch (err) {
+			console.error('Failed to detect location:', err)
+		}
+	}
 
 	// Check mobile screen size
 	useEffect(() => {
@@ -407,6 +477,7 @@ export default function MarketplacePage() {
 					onCreateListing={handleCreateListing}
 					selectedLocation={selectedLocation}
 					onLocationChange={setSelectedLocation}
+					onDetectLocation={handleDetectLocation}
 					user={user}
 					isMobile={isMobile}
 				/>
@@ -611,6 +682,7 @@ export default function MarketplacePage() {
 				onCreateListing={handleCreateListing}
 				selectedLocation={selectedLocation}
 				onLocationChange={setSelectedLocation}
+				onDetectLocation={handleDetectLocation}
 				user={user}
 				isMobile={isMobile}
 			/>
