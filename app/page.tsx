@@ -164,35 +164,61 @@ export default function MarketplacePage() {
 	// If no profile location, prompt for browser geolocation once and set nearest city
 	useEffect(() => {
 		if (loading) return
-		if (!user) return
 		if (hasInitializedLocationRef.current) return
 		const profileLocation = userProfile?.location?.trim()
 		if (profileLocation && profileLocation.length > 0) return
 
 		(async () => {
+			let nearest: string | null = null
+			// Try browser geolocation first
 			try {
 				const { latitude, longitude } = await getCurrentLocation()
-				const nearest = getNearestLocationName(latitude, longitude)
+				nearest = getNearestLocationName(latitude, longitude)
+			} catch {}
+
+			// If geolocation failed or denied, fallback to IP-based API
+			if (!nearest) {
+				try {
+					const res = await fetch('/api/geo', { cache: 'no-store' })
+					if (res.ok) {
+						const data = await res.json()
+						nearest = data.nearest || null
+					}
+				} catch {}
+			}
+
+			if (nearest) {
 				setSelectedLocation(nearest)
 				if (user?.uid) {
 					await updateUserProfile(user.uid, { location: nearest })
 				}
-			} catch (err) {
-				// permission denied or failed; ignore silently
-			} finally {
-				hasInitializedLocationRef.current = true
 			}
+			hasInitializedLocationRef.current = true
 		})()
-	}, [loading, user, userProfile?.location])
+	}, [loading, userProfile?.location])
 
 	// Manual auto-detect handler for UI button
 	const handleDetectLocation = async () => {
 		try {
-			const { latitude, longitude } = await getCurrentLocation()
-			const nearest = getNearestLocationName(latitude, longitude)
-			setSelectedLocation(nearest)
-			if (user?.uid) {
-				await updateUserProfile(user.uid, { location: nearest })
+			let nearest: string | null = null
+			try {
+				const { latitude, longitude } = await getCurrentLocation()
+				nearest = getNearestLocationName(latitude, longitude)
+			} catch {}
+			if (!nearest) {
+				try {
+					const res = await fetch('/api/geo', { cache: 'no-store' })
+					if (res.ok) {
+						const data = await res.json()
+						nearest = data.nearest || null
+					}
+				} catch {}
+			}
+			if (nearest) {
+				setSelectedLocation(nearest)
+				if (user?.uid) {
+					await updateUserProfile(user.uid, { location: nearest })
+				}
 			}
 		} catch (err) {
 			console.error('Failed to detect location:', err)
