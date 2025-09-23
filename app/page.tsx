@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { onAuthStateChanged, type User } from "firebase/auth"
 import { useRouter } from "next/navigation"
 
@@ -21,7 +21,7 @@ import { MessageCircle, Plus, Filter, Search, Menu, X } from "lucide-react"
 import { useSocket } from "@/hooks/use-socket"
 import { subscribeToProducts as subscribeToRealProducts, deleteProduct } from "@/lib/firebase-utils"
 import { subscribeMockProducts } from "@/lib/mock-data-utils"
-import { getUserProfile, type UserProfile } from "@/lib/user-utils"
+import { getUserProfile, updateUserProfile, getCurrentLocation, type UserProfile } from "@/lib/user-utils"
 
 // Type definitions for component compatibility
 interface ProductCardProduct {
@@ -108,6 +108,7 @@ export default function MarketplacePage() {
 	// Product states
 	const [products, setProducts] = useState<ProductCardProduct[]>([])
 	const [productsLoading, setProductsLoading] = useState(true)
+	const hasInitializedLocationRef = useRef(false)
 
 	const router = useRouter()
 	

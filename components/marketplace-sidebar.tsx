@@ -218,6 +218,14 @@ export function MarketplaceBottomNav({
               </span>
               <span className="sm:hidden">Location</span>
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 md:h-9 px-2 md:px-3 text-xs md:text-sm border-gray-300 hover:border-gray-400"
+              onClick={onDetectLocation}
+            >
+              Auto-detect
+            </Button>
           </div>
         </div>
 
