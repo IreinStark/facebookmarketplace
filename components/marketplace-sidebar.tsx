@@ -19,6 +19,7 @@ interface MarketplaceBottomNavProps {
   onCreateListing?: () => void
   selectedLocation?: string
   onLocationChange?: (location: string) => void
+  onLocationPopupOpen?: () => void
   user?: any
   isMobile?: boolean
 }
@@ -47,6 +48,7 @@ export function MarketplaceBottomNav({
   onCreateListing,
   selectedLocation = "All Locations",
   onLocationChange = () => {},
+  onLocationPopupOpen,
   user,
   isMobile = false
 }: MarketplaceBottomNavProps) {
@@ -115,13 +117,13 @@ export function MarketplaceBottomNav({
         </div>
 
         {showFilters && (
-          <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4">
+          <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
             <div className="space-y-4">
               <div className="space-y-2">
-                <h3 className="text-sm font-medium">Location</h3>
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Location</h3>
                 <Button
                   variant="outline"
-                  className="w-full justify-between"
+                  className="w-full justify-between text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                   onClick={() => setShowLocationSearch(!showLocationSearch)}
                 >
                   <span className="truncate">{selectedLocation}</span>
@@ -130,7 +132,7 @@ export function MarketplaceBottomNav({
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-sm font-medium">Category</h3>
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Category</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {categories.map((category) => (
                     <Button
@@ -139,8 +141,8 @@ export function MarketplaceBottomNav({
                       size="sm"
                       className={`text-xs ${
                         selectedCategory === category 
-                          ? 'bg-blue-600 text-white' 
-                          : 'text-gray-700'
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                          : 'text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
                       onClick={() => onCategoryChange(category)}
                     >
@@ -221,25 +223,39 @@ export function MarketplaceBottomNav({
 
         {/* Location Search Dropdown */}
         {showLocationSearch && (
-          <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 shadow-lg z-50 max-h-64 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg z-50 max-h-64 overflow-y-auto rounded-md">
             <div className="p-3">
+              {onLocationPopupOpen && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mb-3 text-sm border-blue-200 dark:border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                  onClick={() => {
+                    onLocationPopupOpen()
+                    setShowLocationSearch(false)
+                  }}
+                >
+                  <Navigation className="w-4 h-4 mr-2" />
+                  Detect My Location
+                </Button>
+              )}
               <Input
                 placeholder="Search locations..."
                 value={locationSearchTerm}
                 onChange={(e) => setLocationSearchTerm(e.target.value)}
-                className="mb-3 text-sm"
+                className="mb-3 text-sm bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100"
               />
               <div className="space-y-1">
                 {filteredLocations.map((location) => (
                   <Button
                     key={location.name}
                     variant="ghost"
-                    className="w-full justify-start text-sm h-8"
+                    className="w-full justify-start text-sm h-8 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                     onClick={() => handleLocationSelect(location.name)}
                   >
                     {location.name}
                     {location.region && (
-                      <span className="ml-2 text-xs text-gray-500">({location.region})</span>
+                      <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">({location.region})</span>
                     )}
                   </Button>
                 ))}

@@ -505,7 +505,13 @@ export function subscribeToProducts(callback: (products: Product[]) => void): ()
   }, (error) => {
     console.error('Error in subscribeToProducts:', error);
     console.error('Error details:', error.code, error.message);
-    callback([]); // Return empty array on error
+    
+    // If it's a permission error, throw it so the calling code can handle it
+    if (error.code === 'permission-denied') {
+      throw error;
+    }
+    
+    callback([]); // Return empty array on other errors
   });
 }
 

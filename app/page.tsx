@@ -55,6 +55,7 @@ import { MarketplaceNav } from "@/components/marketplace-nav"
 import { MarketplaceBottomNav } from "@/components/marketplace-sidebar"
 import { MarketplaceSidebar } from "@/components/marketplace-sidebar"
 import { ProductCard } from "@/components/product-card"
+import { LocationPopup } from "@/components/location-popup"
 
 // Location data with coordinates (lat, lng)
 const locationData = [
@@ -84,10 +85,17 @@ export default function MarketplacePage() {
 	const [sidebarOpen, setSidebarOpen] = useState(false)
 	const [showPriceFilter, setShowPriceFilter] = useState(false)
 	const [isChatOpen, setIsChatOpen] = useState(false)
+	const [showLocationPopup, setShowLocationPopup] = useState(false)
 
 	// Filter states
 	const [selectedCategory, setSelectedCategory] = useState("All")
-	const [selectedLocation, setSelectedLocation] = useState("All Locations")
+	const [selectedLocation, setSelectedLocation] = useState(() => {
+		// Initialize from localStorage if available, otherwise default to "All Locations"
+		if (typeof window !== 'undefined') {
+			return localStorage.getItem('selectedLocation') || "All Locations"
+		}
+		return "All Locations"
+	})
 	const [searchTerm, setSearchTerm] = useState("")
 	const [priceRange, setPriceRange] = useState([0, 2000])
 	const [sortBy, setSortBy] = useState("recent")
@@ -122,11 +130,57 @@ export default function MarketplacePage() {
 			} else {
 				setUser(null)
 				setUserProfile(null)
+				// Reset location popup flag when user signs out so it shows again on next sign in
+				localStorage.removeItem('hasSeenLocationPopup')
+				// Keep the selected location preference even after sign out
 			}
 			setLoading(false)
 		})
 
 		return () => unsubscribe()
+	}, [])
+
+	// Show location popup after sign in
+	useEffect(() => {
+		// Only show popup if user is logged in and hasn't seen it yet
+		if (user && !loading) {
+			const hasSeenLocationPopup = localStorage.getItem('hasSeenLocationPopup')
+			if (!hasSeenLocationPopup) {
+				// Small delay to ensure the page is fully loaded after sign in
+				const timer = setTimeout(() => {
+					setShowLocationPopup(true)
+				}, 1500)
+				return () => clearTimeout(timer)
+			}
+		}
+	}, [user, loading])
+
+	// Persist selected location to localStorage
+	useEffect(() => {
+		if (typeof window !== 'undefined') {
+			localStorage.setItem('selectedLocation', selectedLocation)
+		}
+	}, [selectedLocation])
+
+	// Add utility function to window for testing (development only)
+	useEffect(() => {
+		if (process.env.NODE_ENV === 'development') {
+			;(window as any).resetLocationPopup = () => {
+				localStorage.removeItem('hasSeenLocationPopup')
+				setShowLocationPopup(true)
+			}
+			;(window as any).simulateSignIn = () => {
+				localStorage.removeItem('hasSeenLocationPopup')
+				// This will trigger the popup after a simulated sign in
+				setTimeout(() => {
+					setShowLocationPopup(true)
+				}, 1000)
+			}
+			;(window as any).resetLocation = () => {
+				localStorage.removeItem('selectedLocation')
+				setSelectedLocation("All Locations")
+			}
+		}
 	}, [])
 
 	// Check mobile screen size
@@ -165,6 +219,10 @@ export default function MarketplacePage() {
 				)
 			} catch (error: unknown) {
 				console.error('Error subscribing to products:', error)
+				// Check if it's a permission error
+				if (error instanceof Error && error.message.includes('permission-denied')) {
+					console.log('Permission denied, falling back to mock products')
+				}
 				// Fallback to mock products with type transformation
 				subscribeMockProducts((mockProducts) => {
 					const transformedProducts = transformMockProducts(mockProducts)
@@ -344,6 +402,18 @@ export default function MarketplacePage() {
 		}
 	}
 
+	const handleLocationSelect = (location: string) => {
+		setSelectedLocation(location)
+		localStorage.setItem('hasSeenLocationPopup', 'true')
+		setShowLocationPopup(false)
+	}
+
+	const handleLocationPopupClose = () => {
+		localStorage.setItem('hasSeenLocationPopup', 'true')
+		setShowLocationPopup(false)
+		// Don't reset the location when popup is closed - keep user's current selection
+	}
+
 	// Reset to first page when filters change
 	useEffect(() => {
 		setCurrentPage(1)
@@ -407,6 +477,7 @@ export default function MarketplacePage() {
 					onCreateListing={handleCreateListing}
 					selectedLocation={selectedLocation}
 					onLocationChange={setSelectedLocation}
+					onLocationPopupOpen={() => setShowLocationPopup(true)}
 					user={user}
 					isMobile={isMobile}
 				/>
@@ -422,7 +493,7 @@ export default function MarketplacePage() {
 							variant="outline"
 							size="sm"
 							onClick={() => setSidebarOpen(true)}
-							className="border-gray-300"
+							className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800"
 						>
 							<Menu className="h-4 w-4 mr-2" />
 							Filters
@@ -437,13 +508,13 @@ export default function MarketplacePage() {
 				{isMobile && (
 					<div className="mb-4">
 						<div className="relative">
-							<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+							<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
 							<Input
 								type="text"
 								placeholder="Search products..."
 								value={searchTerm}
 								onChange={(e) => setSearchTerm(e.target.value)}
-								className="pl-10 border-gray-300"
+								className="pl-10 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
 							/>
 						</div>
 					</div>
@@ -456,7 +527,7 @@ export default function MarketplacePage() {
 							<h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
 								{selectedCategory === "All" ? "All listings" : selectedCategory}
 							</h2>
-							<p className="text-gray-600 text-sm md:text-base">
+							<div className="text-gray-600 text-sm md:text-base">
 								{productsLoading ? (
 									"Loading products..."
 								) : (
@@ -474,15 +545,9 @@ export default function MarketplacePage() {
 										)}
 									</>
 								)}
-							</p>
+							</div>
 						</div>
 						
-						{/* Socket connection status - for debugging (only show in development) */}
-						{process.env.NODE_ENV === 'development' && user && (
-							<div className="text-xs text-gray-500">
-								Socket: {isConnected ? 'Connected' : 'Disconnected'}
-							</div>
-						)}
 						
 						{/* Page indicator */}
 						{totalPages > 1 && !isMobile && (
@@ -611,6 +676,7 @@ export default function MarketplacePage() {
 				onCreateListing={handleCreateListing}
 				selectedLocation={selectedLocation}
 				onLocationChange={setSelectedLocation}
+				onLocationPopupOpen={() => setShowLocationPopup(true)}
 				user={user}
 				isMobile={isMobile}
 			/>
@@ -624,7 +690,7 @@ export default function MarketplacePage() {
 					</SheetHeader>
 					<div className="p-4 space-y-6">
 						<div>
-							<Label htmlFor="price-range" className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-4">
+							<Label htmlFor="price-range" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
 								Price range: ${priceRange[0]} - ${priceRange[1]}
 							</Label>
 							<Slider
@@ -636,7 +702,7 @@ export default function MarketplacePage() {
 								step={10}
 								className="mt-2"
 							/>
-							<div className="flex justify-between text-xs text-gray-500 mt-2">
+							<div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
 								<span>$0</span>
 								<span>$2000</span>
 							</div>
@@ -662,6 +728,14 @@ export default function MarketplacePage() {
 					</div>
 				</SheetContent>
 			</Sheet>
+
+			{/* Location Popup */}
+			<LocationPopup
+				isOpen={showLocationPopup}
+				onClose={handleLocationPopupClose}
+				onLocationSelect={handleLocationSelect}
+				locationData={locationData}
+			/>
 		</div>
 	)
 }
