@@ -20,6 +20,7 @@ interface MarketplaceBottomNavProps {
   selectedLocation?: string
   onLocationChange?: (location: string) => void
   onLocationPopupOpen?: () => void
+  onDetectLocation?: () => void
   user?: any
   isMobile?: boolean
 }
@@ -49,6 +50,7 @@ export function MarketplaceBottomNav({
   selectedLocation = "All Locations",
   onLocationChange = () => {},
   onLocationPopupOpen,
+  onDetectLocation,
   user,
   isMobile = false
 }: MarketplaceBottomNavProps) {

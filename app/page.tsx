@@ -536,12 +536,12 @@ export default function MarketplacePage() {
 										{sortedProducts.length} listing{sortedProducts.length !== 1 ? 's' : ''} found
 										{selectedLocation !== "All Locations" && (
 											<Badge variant="secondary" className="ml-2 bg-blue-100 text-blue-800">
-												📍 {selectedLocation}
+												 📍 {selectedLocation}
 											</Badge>
 										)}
 										{searchTerm && (
 											<Badge variant="secondary" className="ml-2 bg-blue-100 text-blue-800">
-												🔍 &quot;{searchTerm}&quot;
+												 🔍 &quot;{searchTerm}&quot;
 											</Badge>
 										)}
 									</>
@@ -680,6 +680,15 @@ export default function MarketplacePage() {
 				onLocationPopupOpen={() => setShowLocationPopup(true)}
 				user={user}
 				isMobile={isMobile}
+				onDetectLocation={() => {
+					if (navigator.geolocation) {
+						navigator.geolocation.getCurrentPosition((position) => {
+							// You can reverse geocode here, or just log for now:
+							console.log("Detected location:", position.coords)
+							// Example: setSelectedLocation("Lefkosa")
+						})
+					}
+				}}
 			/>
 		)}
 		
