@@ -73,8 +73,7 @@ const locationData = [
 	{ name: "Yeni Iskele", lat: 35.2667, lng: 33.9333, region: "Eastern" },
 ]
 
-// Categories for filtering
-const categories = ["All", "Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"]
+import { MARKETPLACE_CATEGORIES } from "@/lib/constants"
 
 export default function MarketplacePage() {
 	const [user, setUser] = useState<User | null>(null)
@@ -457,7 +456,7 @@ export default function MarketplacePage() {
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-50 dark:bg-black transition-colors">
+        <div className="min-h-screen bg-gray-50 dark:bg-black transition-colors">
 			{/* Navigation */}
 			<MarketplaceNav 
 				user={user}
@@ -473,7 +472,7 @@ export default function MarketplacePage() {
 			{!isMobile && (
 				<MarketplaceBottomNav
 					selectedCategory={selectedCategory}
-					categories={categories}
+                    categories={MARKETPLACE_CATEGORIES}
 					onCategoryChange={setSelectedCategory}
 					onCreateListing={handleCreateListing}
 					selectedLocation={selectedLocation}
@@ -485,7 +484,7 @@ export default function MarketplacePage() {
 			)}
 
 			{/* Main content - full width without sidebar */}
-			<div className="container mx-auto px-4 py-6">
+            <div className="container max-w-7xl mx-auto px-4 py-6">
 				<div className="pb-20"> {/* Added bottom padding for mobile bottom nav */}
 				{/* Mobile Filter Toggle */}
 				{isMobile && (
@@ -500,13 +499,13 @@ export default function MarketplacePage() {
 							Filters
 						</Button>
 						<div className="text-sm text-gray-500">
-							{sortedProducts.length} results
+                            {sortedProducts.length} results
 						</div>
 					</div>
 				)}
 
 				{/* Search bar for mobile */}
-				{isMobile && (
+                {isMobile && (
 					<div className="mb-4">
 						<div className="relative">
 							<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
@@ -522,7 +521,7 @@ export default function MarketplacePage() {
 				)}
 
 				{/* Results header */}
-				<div className="mb-6">
+                <div className="mb-6">
 					<div className="flex items-center justify-between">
 						<div>
 							<h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
@@ -573,7 +572,7 @@ export default function MarketplacePage() {
 						</div>
 					) : paginatedProducts.length > 0 ? (
 						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-							{paginatedProducts.map((product) => (
+                            {paginatedProducts.map((product) => (
 								<ProductCard
 									key={product.id}
 									product={product}

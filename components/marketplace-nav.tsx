@@ -63,8 +63,7 @@ export function MarketplaceNav({
   }
 
   const handleLogoClick = () => {
-    // Refresh the page when logo is clicked
-    window.location.reload()
+    router.push('/')
   }
 
   const getUserInitials = () => {
@@ -78,8 +77,8 @@ export function MarketplaceNav({
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-black/60">
-      <div className="container flex h-14 md:h-16 items-center px-4">
+    <header className="sticky top-0 z-50 w-full border-b border-white dark:border-white bg-white/95 dark:bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-black/60">
+      <div className="container max-w-7xl flex h-14 md:h-16 items-center px-4">
         {/* Mobile Menu Button */}
         {isMobile && (
           <Button
@@ -107,7 +106,7 @@ export function MarketplaceNav({
 
         {/* Desktop Search */}
         {!isMobile && (
-          <div className="flex-1 max-w-md mx-4">
+          <div className="flex-1 max-w-2xl mx-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
@@ -133,7 +132,7 @@ export function MarketplaceNav({
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center space-x-1 md:space-x-2">
+        <div className="flex items-center space-x-2 md:space-x-3 ml-auto whitespace-nowrap">
           {/* Theme Toggle */}
           <Button
             variant="ghost"
@@ -260,7 +259,7 @@ export function MarketplaceNav({
                   Sign In
                 </Button>
               </Link>
-              <Link href="/auth/register">
+              <Link href="/auth/signup">
                 <Button 
                   size="sm" 
                   className="bg-blue-600 hover:bg-blue-700 text-white text-xs md:text-sm h-8 md:h-9 px-2 md:px-4"
@@ -273,31 +272,7 @@ export function MarketplaceNav({
         </div>
       </div>
 
-      {/* Mobile Quick Actions Bar */}
-      {isMobile && user && (
-        <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black px-4 py-2">
-          <div className="flex items-center justify-around">
-            <Link href="/sell">
-              <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2 min-h-[44px] min-w-[44px]">
-                <Plus className="h-4 w-4" />
-                <span className="text-xs">Sell</span>
-              </Button>
-            </Link>
-            <Link href="/messages">
-              <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2 relative min-h-[44px] min-w-[44px]">
-                <MessageCircle className="h-4 w-4" />
-                <span className="text-xs">Messages</span>
-              </Button>
-            </Link>
-            <Link href="/profile">
-              <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 h-auto p-2 min-h-[44px] min-w-[44px]">
-                <User className="h-4 w-4" />
-                <span className="text-xs">Profile</span>
-              </Button>
-            </Link>
-          </div>
-        </div>
-      )}
+      {/* Mobile quick actions are handled by MarketplaceBottomNav; avoid duplication here */}
     </header>
   )
 }

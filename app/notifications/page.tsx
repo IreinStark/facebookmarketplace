@@ -106,7 +106,8 @@ export default function NotificationsPage() {
       // Store unsubscribe function for cleanup
       return unsubscribe;
     } catch (error) {
-      console.error('Error loading notifications:', error);
+      // If index is missing or any Firestore error occurs, log a lean message and fall back
+      console.error('Error loading notifications (falling back to mock):', error);
       // Fallback to mock notifications if Firebase fails
       const mockNotifications: Notification[] = [
         {

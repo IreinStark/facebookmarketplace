@@ -7,6 +7,7 @@ import { auth } from '@/app/firebase'
 import { ChatInterface } from '@/components/chat-interface'
 import { MarketplaceNav } from '@/components/marketplace-nav'
 import { MarketplaceBottomNav } from '@/components/marketplace-sidebar'
+import { MARKETPLACE_CATEGORIES } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
 import { Home } from 'lucide-react'
 import Link from 'next/link'
@@ -69,7 +70,7 @@ export default function MessagesPage() {
         isMobile={isMobile}
       />
       
-      <div className="container mx-auto px-4 py-6">
+      <div className="container max-w-7xl mx-auto px-4 py-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-xl font-bold">Messages</h1>
           <Link href="/">
@@ -98,7 +99,7 @@ export default function MessagesPage() {
       {isMobile && (
         <MarketplaceBottomNav
           selectedCategory="All"
-          categories={["All", "Electronics", "Furniture", "Sports", "Clothing", "Books", "Home & Garden", "Automotive", "Other"]}
+          categories={MARKETPLACE_CATEGORIES}
           onCategoryChange={() => {}}
           onCreateListing={() => router.push('/sell')}
           selectedLocation="All Locations"

@@ -162,9 +162,9 @@ export function MarketplaceBottomNav({
 
   // Desktop horizontal bar below navbar
   return (
-    <div className="w-full bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 sticky top-14 md:top-16 z-40">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
+    <div className="w-full bg-white dark:bg-black border-b border-white dark:border-white sticky top-14 md:top-16 z-40">
+      <div className="container max-w-7xl mx-auto px-4 py-3">
+        <div className="flex items-center justify-between gap-4 flex-wrap md:flex-nowrap">
 
           {/* Categories Dropdown */}
 <div className="flex items-center mx-4">
@@ -211,7 +211,7 @@ export function MarketplaceBottomNav({
             <Button
               variant="outline"
               size="sm"
-              className="h-8 md:h-9 px-2 md:px-3 text-xs md:text-sm border-gray-300 hover:border-gray-400"
+              className="h-9 px-3 text-sm border-gray-300 hover:border-gray-400"
               onClick={() => setShowLocationSearch(!showLocationSearch)}
             >
               <MapPin className="w-3 h-3 md:w-4 md:h-4 mr-1" />
@@ -223,7 +223,7 @@ export function MarketplaceBottomNav({
             <Button
               variant="outline"
               size="sm"
-              className="h-8 md:h-9 px-2 md:px-3 text-xs md:text-sm border-gray-300 hover:border-gray-400"
+              className="h-9 px-3 text-sm border-gray-300 hover:border-gray-400"
               onClick={onDetectLocation}
             >
               Auto-detect
