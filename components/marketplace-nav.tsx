@@ -77,7 +77,7 @@ export function MarketplaceNav({
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white dark:border-white bg-white/95 dark:bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-black/60">
+    <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-black/60">
       <div className="container max-w-7xl flex h-14 md:h-16 items-center px-4">
         {/* Mobile Menu Button */}
         {isMobile && (
@@ -234,14 +234,14 @@ export function MarketplaceNav({
                       <span>Messages</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-gray-200" />
+                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
                   <DropdownMenuItem asChild>
                     <Link href="/profile?tab=settings" className="flex items-center cursor-pointer text-sm md:text-base">
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-gray-200" />
+                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
                   <DropdownMenuItem 
                     className="flex items-center cursor-pointer text-red-600 focus:text-red-600 text-sm md:text-base" 
                     onClick={handleSignOut}

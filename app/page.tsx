@@ -671,7 +671,7 @@ export default function MarketplacePage() {
 		{isMobile && (
 			<MarketplaceBottomNav
 				selectedCategory={selectedCategory}
-				categories={categories}
+				categories={MARKETPLACE_CATEGORIES}
 				onCategoryChange={setSelectedCategory}
 				onCreateListing={handleCreateListing}
 				selectedLocation={selectedLocation}

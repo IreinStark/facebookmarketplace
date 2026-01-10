@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Local Marketplace",
   description: "Connect with your community through local buying and selling",
   generator: "v0.dev",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
 }
 
 export default function RootLayout({

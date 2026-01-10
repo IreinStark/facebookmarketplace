@@ -162,7 +162,7 @@ export function MarketplaceBottomNav({
 
   // Desktop horizontal bar below navbar
   return (
-    <div className="w-full bg-white dark:bg-black border-b border-white dark:border-white sticky top-14 md:top-16 z-40">
+    <div className="w-full bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 sticky top-14 md:top-16 z-40">
       <div className="container max-w-7xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between gap-4 flex-wrap md:flex-nowrap">
 
@@ -173,24 +173,24 @@ export function MarketplaceBottomNav({
       className="flex items-center space-x-2 px-3 md:px-4 py-2 text-sm md:text-base bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[44px] touch-manipulation"
       onClick={() => setDropdownOpen(!dropdownOpen)}
     >
-      <span className="text-gray-700">{selectedCategory === "All" ? "Categories" : selectedCategory}</span>
-      <ChevronDown 
-        className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
+      <span className="text-gray-700 dark:text-gray-300">{selectedCategory === "All" ? "Categories" : selectedCategory}</span>
+      <div className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
           dropdownOpen ? 'rotate-180' : ''
-        }`} 
-      />
+        }`}>
+        <ChevronDown />
+      </div>
     </button>
     
     {dropdownOpen && (
-      <div className="absolute top-full left-0 mt-1 w-full min-w-max bg-white border border-gray-200 rounded-md shadow-lg z-50">
+      <div className="absolute top-full left-0 mt-1 w-full min-w-max bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50">
         <div className="py-1">
           {categories.map((category) => (
             <button
               key={category}
-              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 focus:outline-none focus:bg-gray-100 ${
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 ${
                 selectedCategory === category 
-                  ? 'bg-blue-50 text-blue-700 font-medium' 
-                  : 'text-gray-700'
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-medium' 
+                  : 'text-gray-700 dark:text-gray-300'
               }`}
               onClick={() => {
                 onCategoryChange(category);
