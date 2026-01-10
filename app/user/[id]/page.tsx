@@ -282,60 +282,67 @@ export default function UserProfilePage() {
   const isOwnProfile = currentUser?.uid === userId
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Button variant="ghost" size="sm" onClick={handleGoBack}>
-              <ArrowLeft className="w-5 h-5 mr-1" />
+              <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
             <div>
-              <h1 className="text-lg font-semibold">{profile.displayName}</h1>
-              <p className="text-sm text-gray-500">User profile</p>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">{profile.displayName}</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">User profile</p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           {/* Left column - Profile info and reviews */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="xl:col-span-1 space-y-6">
             {/* Profile card */}
-            <Card>
+            <Card className="bg-white dark:bg-gray-800 shadow-lg">
               <CardContent className="p-6">
                 <div className="text-center mb-6">
-                  <Avatar className="h-24 w-24 mx-auto mb-4">
+                  <Avatar className="h-32 w-32 mx-auto mb-4 ring-4 ring-blue-100 dark:ring-blue-900 shadow-xl">
                     <AvatarImage src={profile.avatar} alt={profile.displayName} />
-                    <AvatarFallback className="text-2xl">
+                    <AvatarFallback className="text-3xl bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
                       {profile.displayName?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   
-                  <div className="flex items-center justify-center space-x-2 mb-2">
-                    <h2 className="text-xl font-semibold">{profile.displayName}</h2>
+                  <div className="flex items-center justify-center space-x-3 mb-4">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{profile.displayName}</h2>
                     {profile.verified && (
-                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                        <Shield className="w-3 h-3 mr-1" />
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        <Shield className="w-4 h-4 mr-1" />
                         Verified
                       </Badge>
                     )}
                   </div>
+                </div>
 
-                  <div className="flex items-center justify-center space-x-1 mb-4">
-                    <StarRating rating={averageRating} readOnly />
-                    <span className="text-sm text-gray-600 ml-2">
+                <div className="space-y-4">
+                  {/* Rating */}
+                  <div className="flex items-center justify-center space-x-2 mb-4">
+                    <StarRating rating={averageRating} readOnly size="w-6 h-6" />
+                    <span className="text-lg font-medium text-gray-700 dark:text-gray-300">
                       {averageRating > 0 ? `${averageRating.toFixed(1)} (${reviews.length} reviews)` : 'No reviews yet'}
                     </span>
                   </div>
 
+                  {/* Bio */}
                   {profile.bio && (
-                    <p className="text-gray-600 text-sm mb-4">{profile.bio}</p>
+                    <div className="text-center">
+                      <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{profile.bio}</p>
+                    </div>
                   )}
 
-                  <div className="space-y-2 text-sm text-gray-500">
+                  {/* Stats */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center text-sm text-gray-500 dark:text-gray-400">
                     {profile.location && (
                       <div className="flex items-center justify-center">
                         <MapPin className="w-4 h-4 mr-1" />
@@ -353,14 +360,15 @@ export default function UserProfilePage() {
                   </div>
                 </div>
 
+                {/* Action buttons */}
                 {!isOwnProfile && currentUser && (
-                  <div className="space-y-2">
+                  <div className="space-y-3 mt-6">
                     <Button 
                       onClick={handleMessageUser}
-                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       <MessageCircle className="w-4 h-4 mr-2" />
-                      Message
+                      Message User
                     </Button>
                     
                     <Button
@@ -378,7 +386,7 @@ export default function UserProfilePage() {
 
             {/* Review form */}
             {showReviewForm && !isOwnProfile && currentUser && (
-              <Card>
+              <Card className="bg-white dark:bg-gray-800 shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-lg">Write a review</CardTitle>
                 </CardHeader>
@@ -402,7 +410,7 @@ export default function UserProfilePage() {
                     />
                   </div>
                   
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-3">
                     <Button
                       onClick={handleSubmitReview}
                       disabled={!rating || !comment.trim() || submittingReview}
@@ -422,32 +430,38 @@ export default function UserProfilePage() {
             )}
 
             {/* Reviews */}
-            <Card>
+            <Card className="bg-white dark:bg-gray-800 shadow-lg">
               <CardHeader>
-                <CardTitle className="text-lg">
-                  Reviews ({reviews.length})
+                <CardTitle className="text-lg flex items-center">
+                  Reviews 
+                  <Badge variant="secondary" className="ml-2 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                    {reviews.length}
+                  </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {reviews.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">No reviews yet</p>
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-4">⭐</div>
+                    <p className="text-gray-500 dark:text-gray-400">No reviews yet</p>
+                  </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
                     {reviews.map((review) => (
-                      <div key={review.id} className="border-b last:border-b-0 pb-4 last:pb-0">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <Avatar className="h-8 w-8">
+                      <div key={review.id} className="border-b border-gray-200 dark:border-gray-700 last:border-b-0 pb-4 last:pb-0">
+                        <div className="flex items-start space-x-3">
+                          <Avatar className="h-10 w-10">
                             <AvatarImage src={review.reviewerAvatar} alt={review.reviewerName} />
-                            <AvatarFallback>
+                            <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
                               {review.reviewerName?.[0]?.toUpperCase() || 'U'}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
-                            <div className="flex items-center space-x-2">
-                              <span className="font-medium text-sm">{review.reviewerName}</span>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-medium text-gray-900 dark:text-white">{review.reviewerName}</span>
                               <StarRating rating={review.rating} readOnly size="w-4 h-4" />
                             </div>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
                               {review.createdAt ? 
                                 formatDistanceToNow(
                                   review.createdAt.toDate ? review.createdAt.toDate() : review.createdAt, 
@@ -456,9 +470,9 @@ export default function UserProfilePage() {
                                 'Recently'
                               }
                             </p>
+                            <p className="text-gray-600 dark:text-gray-400 mt-2">{review.comment}</p>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-700">{review.comment}</p>
                       </div>
                     ))}
                   </div>
@@ -468,11 +482,14 @@ export default function UserProfilePage() {
           </div>
 
           {/* Right column - User's listings */}
-          <div className="lg:col-span-2">
-            <Card>
+          <div className="xl:col-span-3">
+            <Card className="bg-white dark:bg-gray-800 shadow-lg">
               <CardHeader>
-                <CardTitle className="text-lg">
-                  {isOwnProfile ? 'Your listings' : `${profile.displayName}'s listings`} ({products.length})
+                <CardTitle className="text-lg flex items-center">
+                  {isOwnProfile ? 'Your listings' : `${profile.displayName}'s listings`}
+                  <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                    {products.length}
+                  </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -480,12 +497,12 @@ export default function UserProfilePage() {
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">📦</div>
                     <h3 className="text-xl font-semibold mb-2">No listings yet</h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400">
                       {isOwnProfile ? 'Start selling by creating your first listing!' : 'This user hasn\'t listed anything yet.'}
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {products.map((product) => {
                       // Transform Product to match ProductCard expected format
                       const transformedProduct = {
@@ -506,6 +523,9 @@ export default function UserProfilePage() {
                           onMessageClick={() => handleMessageUser()}
                           onDeleteClick={() => console.log('Delete clicked:', product.id)}
                           onUserClick={() => console.log('User clicked:', product.userId)}
+                          isOwner={currentUser?.uid === product.userId}
+                          isLoggedIn={!!currentUser}
+                          userProfile={currentUser}
                           isFavorited={false} // Placeholder, adjust as needed
                           showDeleteButton={currentUser?.uid === product.userId}
                         />

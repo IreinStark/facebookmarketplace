@@ -598,14 +598,35 @@ export interface NotificationData {
 
 export async function createNotification(notificationData: NotificationData): Promise<void> {
   try {
-    await addDoc(collection(db, 'notifications'), {
+    // Validate required fields
+    if (!notificationData.userId || !notificationData.title || !notificationData.message) {
+      throw new Error('Missing required notification fields: userId, title, or message');
+    }
+
+    // Add document with proper error handling
+    const docRef = await addDoc(collection(db, 'notifications'), {
       ...notificationData,
       timestamp: serverTimestamp(),
       read: false,
     });
+
+    console.log('Notification created successfully:', docRef.id);
+    return Promise.resolve();
   } catch (error) {
-    console.error('Error creating notification:', error);
-    throw error;
+    console.error('Error creating notification:', {
+      error,
+      notificationData: {
+        userId: notificationData.userId,
+        title: notificationData.title,
+        type: notificationData.type
+      }
+    });
+    
+    // Re-throw with more descriptive error
+    if (error instanceof Error) {
+      throw new Error(`Failed to create notification: ${error.message}`);
+    }
+    throw new Error('Failed to create notification: Unknown error');
   }
 }
 
@@ -615,18 +636,30 @@ export async function createMessageNotification(
   senderName: string,
   productTitle?: string
 ): Promise<void> {
-  const message = productTitle 
-    ? `${senderName} sent you a message about ${productTitle}`
-    : `${senderName} sent you a message`;
+  try {
+    // Validate inputs
+    if (!recipientId || !senderId || !senderName) {
+      throw new Error('Missing required fields for message notification');
+    }
+
+    const message = productTitle 
+      ? `${senderName} sent you a message about ${productTitle}`
+      : `${senderName} sent you a message`;
     
-  await createNotification({
-    type: 'message',
-    title: 'New Message',
-    message,
-    userId: recipientId,
-    senderId,
-    senderName,
-  });
+    await createNotification({
+      type: 'message',
+      title: 'New Message',
+      message,
+      userId: recipientId,
+      senderId,
+      senderName,
+    });
+
+    console.log('Message notification created successfully');
+  } catch (error) {
+    console.error('Error creating message notification:', { error, recipientId, senderId });
+    throw error;
+  }
 }
 
 export async function createFavoriteNotification(
@@ -635,12 +668,29 @@ export async function createFavoriteNotification(
   productTitle: string,
   productId: string
 ): Promise<void> {
-  await createNotification({
-    type: 'favorite',
-    title: 'New Favorite',
-    message: `${buyerName} favorited your ${productTitle} listing`,
-    userId: sellerId,
-    senderName: buyerName,
-    relatedId: productId,
-  });
+  try {
+    // Validate inputs
+    if (!sellerId || !buyerName || !productTitle || !productId) {
+      throw new Error('Missing required fields for favorite notification');
+    }
+
+    await createNotification({
+      type: 'favorite',
+      title: 'New Favorite',
+      message: `${buyerName} favorited your ${productTitle} listing`,
+      userId: sellerId,
+      senderName: buyerName,
+      relatedId: productId,
+    });
+
+    console.log('Favorite notification created successfully');
+  } catch (error) {
+    console.error('Error creating favorite notification:', { 
+      error, 
+      sellerId, 
+      buyerName, 
+      productId 
+    });
+    throw error;
+  }
 }

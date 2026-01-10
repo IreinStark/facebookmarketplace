@@ -21,7 +21,7 @@ import { MessageCircle, Plus, Filter, Search, Menu, X } from "lucide-react"
 import { useSocket } from "@/hooks/use-socket"
 import { subscribeToProducts as subscribeToRealProducts, deleteProduct } from "@/lib/firebase-utils"
 import { subscribeMockProducts } from "@/lib/mock-data-utils"
-import { getUserProfile, updateUserProfile, getCurrentLocation, type UserProfile } from "@/lib/user-utils"
+import { getUserProfile, updateUserProfile, getCurrentLocation, findClosestLocation, getLocationErrorMessage, type UserProfile } from "@/lib/user-utils"
 
 // Type definitions for component compatibility
 interface ProductCardProduct {
@@ -402,6 +402,33 @@ export default function MarketplacePage() {
 		}
 	}
 
+	const handleLocationDetect = () => {
+		if (!navigator.geolocation) {
+			alert("Geolocation is not supported by this browser.")
+			return
+		}
+
+		navigator.geolocation.getCurrentPosition(
+			(position) => {
+				const { latitude, longitude } = position.coords
+				console.log("Detected location:", { latitude, longitude })
+				
+				const closestLocation = findClosestLocation(latitude, longitude, locationData)
+				setSelectedLocation(closestLocation.name)
+				localStorage.setItem('selectedLocation', closestLocation.name)
+			},
+			(error) => {
+				console.error("Location detection failed:", error)
+				alert(getLocationErrorMessage(error))
+			},
+			{
+				enableHighAccuracy: true,
+				timeout: 10000,
+				maximumAge: 300000 // 5 minutes
+			}
+		)
+	}
+
 	const handleLocationSelect = (location: string) => {
 		setSelectedLocation(location)
 		localStorage.setItem('hasSeenLocationPopup', 'true')
@@ -480,6 +507,7 @@ export default function MarketplacePage() {
 					onLocationPopupOpen={() => setShowLocationPopup(true)}
 					user={user}
 					isMobile={isMobile}
+					onDetectLocation={handleLocationDetect}
 				/>
 			)}
 
@@ -679,15 +707,7 @@ export default function MarketplacePage() {
 				onLocationPopupOpen={() => setShowLocationPopup(true)}
 				user={user}
 				isMobile={isMobile}
-				onDetectLocation={() => {
-					if (navigator.geolocation) {
-						navigator.geolocation.getCurrentPosition((position) => {
-							// You can reverse geocode here, or just log for now:
-							console.log("Detected location:", position.coords)
-							// Example: setSelectedLocation("Lefkosa")
-						})
-					}
-				}}
+				onDetectLocation={handleLocationDetect}
 			/>
 		)}
 		

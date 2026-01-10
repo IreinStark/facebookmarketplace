@@ -137,3 +137,44 @@ export function getCurrentLocation(): Promise<{ latitude: number; longitude: num
     );
   });
 }
+
+/**
+ * Find the closest location from a list of predefined locations
+ */
+export function findClosestLocation(
+  userLat: number, 
+  userLng: number, 
+  locationData: Array<{ name: string; lat: number; lng: number; region: string }>
+): { name: string; lat: number; lng: number; region: string } {
+  let minDistance = Infinity
+  let closestLocation = locationData[0]
+  
+  locationData.forEach(location => {
+    const distance = Math.sqrt(
+      Math.pow(userLat - location.lat, 2) + 
+      Math.pow(userLng - location.lng, 2)
+    )
+    if (distance < minDistance) {
+      minDistance = distance
+      closestLocation = location
+    }
+  })
+  
+  return closestLocation
+}
+
+/**
+ * Get location error message based on error code
+ */
+export function getLocationErrorMessage(error: GeolocationPositionError): string {
+  switch (error.code) {
+    case error.PERMISSION_DENIED:
+      return "Location access denied. Please enable location permissions."
+    case error.POSITION_UNAVAILABLE:
+      return "Location information is unavailable."
+    case error.TIMEOUT:
+      return "Location request timed out."
+    default:
+      return "Unable to retrieve your location."
+  }
+}

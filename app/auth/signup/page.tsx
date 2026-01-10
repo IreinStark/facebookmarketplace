@@ -15,6 +15,7 @@ import { serverTimestamp } from "firebase/firestore";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth"
 import { setDoc, doc } from "firebase/firestore"
 import { auth, db } from "@/app/firebase" // Adjust the path as needed
+import { createNotification } from "@/lib/firebase-utils"
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -64,6 +65,21 @@ export default function SignupPage() {
         createdAt: serverTimestamp()
       })
 
+      // Create welcome notification with proper error handling
+      try {
+        await createNotification({
+          type: 'system',
+          title: 'Welcome to Local Marketplace!',
+          message: `Your account has been created successfully, ${formData.firstName}!`,
+          userId: userCredential.user.uid
+        })
+        console.log('Welcome notification created for signup user');
+      } catch (notificationError) {
+        // Don't fail signup if notification creation fails
+        console.error('Failed to create welcome notification:', notificationError);
+        // Continue with signup flow
+      }
+
       setIsLoading(false)
       router.push("/")
     } catch (err) {
@@ -94,7 +110,6 @@ export default function SignupPage() {
     try {
       const provider = new GoogleAuthProvider()
       const result = await signInWithPopup(auth, provider)
-      // Optionally save new users to Firestore
       if (result && result.user) {
         await setDoc(
           doc(db, "userProfiles", result.user.uid),
@@ -108,15 +123,31 @@ export default function SignupPage() {
           },
           { merge: true }
         )
+        
+        // Create welcome notification with proper error handling
+        try {
+          await createNotification({
+            type: 'system',
+            title: 'Welcome to Local Marketplace!',
+            message: `Your account has been created successfully, ${result.user.displayName || 'User'}!`,
+            userId: result.user.uid
+          })
+          console.log('Welcome notification created for Google signup user');
+        } catch (notificationError) {
+          // Don't fail signup if notification creation fails
+          console.error('Failed to create welcome notification:', notificationError);
+          // Continue with signup flow
+        }
       }
       setIsLoading(false)
       router.push("/")
     } catch (err) {
       setIsLoading(false)
+      console.error('Google signup error:', err)
       if (err instanceof Error) {
-        setError(err.message)
+        setError(`Google sign-up failed: ${err.message}`)
       } else {
-        setError("An unexpected error occurred.")
+        setError("An unexpected error occurred during Google sign-up.")
       }
     }
   }
@@ -250,7 +281,6 @@ export default function SignupPage() {
             >
               Continue with Google
             </Button>
-            {/* You can add Facebook or other OAuth here */}
           </div>
 
           <div className="mt-6 text-center text-sm">

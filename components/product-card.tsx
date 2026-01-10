@@ -249,13 +249,13 @@ export function ProductCard({
   const shouldShowDeleteButton = isOwner || showDeleteButton
 
   return (
-    <Card className="group relative overflow-hidden border-0 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-gray-900/80 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 rounded-2xl">
+    <Card className="group relative overflow-hidden border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md hover:bg-white/90 dark:hover:bg-gray-800/90 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/20 hover:-translate-y-2 rounded-2xl w-full max-w-xs mx-auto sm:max-w-sm md:max-w-md lg:max-w-lg">
       {/* Gradient overlay for premium feel */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/20 via-transparent to-purple-50/20 dark:from-blue-950/10 dark:via-transparent dark:to-purple-950/10 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-purple-50/30 dark:from-blue-950/20 dark:via-transparent dark:to-purple-950/20 pointer-events-none" />
       
       {/* Image Container */}
       <div 
-        className="relative aspect-square cursor-pointer overflow-hidden rounded-t-2xl"
+        className="relative aspect-square cursor-pointer overflow-hidden rounded-t-2xl w-full h-40 sm:h-48 md:h-52 lg:h-56"
         onClick={handleProductClick}
       >
         {/* Loading Skeleton with shimmer effect */}
@@ -447,17 +447,17 @@ export function ProductCard({
       </div>
 
       {/* Content */}
-      <CardContent className="p-4 space-y-4">
+      <CardContent className="p-2 sm:p-3 space-y-1 sm:space-y-2">
         {/* Title and Price */}
         <div 
-          className="cursor-pointer space-y-2" 
+          className="cursor-pointer space-y-1" 
           onClick={handleProductClick}
         >
-          <h3 className="font-bold text-base text-gray-900 dark:text-white line-clamp-2 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
+          <h3 className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white line-clamp-2 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
             {product.title}
           </h3>
           <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
+            <div className="text-base sm:text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
               ${product.price.toLocaleString()}
             </div>
           </div>
@@ -466,11 +466,11 @@ export function ProductCard({
         {/* Location and Time */}
         <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
           <div className="flex items-center gap-1">
-            <MapPin className="w-3 h-3 text-blue-500" />
+            <MapPin className="w-2.5 h-2.5 text-blue-500" />
             <span className="truncate font-medium">{product.location}</span>
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            <Clock className="w-3 h-3" />
+            <Clock className="w-2.5 h-2.5" />
             <span>
               {formatDistanceToNow(getCreatedAtDate(), { addSuffix: true })}
             </span>
@@ -478,23 +478,23 @@ export function ProductCard({
         </div>
 
         {/* Description */}
-        <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
+        <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-1 leading-relaxed">
           {product.description}
         </p>
 
         {/* Seller Info */}
         <div 
-          className="flex items-center gap-3 p-2 -mx-2 cursor-pointer hover:bg-gray-50/80 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200"
+          className="flex items-center gap-2 p-1 -mx-1 cursor-pointer hover:bg-gray-50/80 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200"
           onClick={handleUserClick}
         >
-          <Avatar className="h-8 w-8 ring-2 ring-white dark:ring-gray-800 shadow-sm">
+          <Avatar className="h-5 w-5 sm:h-6 sm:w-6 ring-1 ring-white dark:ring-gray-800 shadow-sm">
             <AvatarImage src={getSellerAvatar()} alt={getSellerName()} />
-            <AvatarFallback className="text-sm bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 text-blue-700 dark:text-blue-200 font-semibold">
+            <AvatarFallback className="text-xs bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 text-blue-700 dark:text-blue-200 font-semibold">
               {getSellerName()[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+            <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
               {getSellerName()}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -524,31 +524,34 @@ export function ProductCard({
         )}
 
         {/* Action Buttons - Always show Message Seller */}
-        <div className="flex gap-2 pt-2">
+        <div className="flex gap-1 sm:gap-2 pt-1 sm:pt-2">
           <Button
             size="sm"
             onClick={handleMessageClick}
-            className="flex-1 h-9 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-500 dark:to-blue-600 dark:hover:from-blue-600 dark:hover:to-blue-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
+            className="flex-1 h-6 sm:h-8 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-500 dark:to-blue-600 dark:hover:from-blue-600 dark:hover:to-blue-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
             disabled={!isLoggedIn}
           >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Message Seller
+            <MessageCircle className="w-2.5 h-2.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="text-xs sm:text-sm">Message</span>
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleFavoriteClick}
-            className={`w-9 h-9 p-0 rounded-xl transition-all duration-300 hover:scale-110 relative ${
-              isFavorited 
-                ? 'text-red-500 hover:text-red-600 bg-red-50/80 dark:bg-red-900/20 hover:bg-red-100/80 dark:hover:bg-red-900/30' 
-                : 'text-gray-400 hover:text-red-500 hover:bg-red-50/80 dark:hover:bg-red-900/20'
-            }`}
-            disabled={!isLoggedIn}
-          >
-            <Heart className={`w-4 h-4 transition-all duration-300 ${
-              isFavorited ? 'fill-current' : ''
-            } ${heartAnimation ? 'animate-bounce scale-125' : ''}`} />
-          </Button>
+          {/* Favorite button - Desktop only */}
+          <div className="hidden sm:block">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleFavoriteClick}
+              className={`w-8 h-8 sm:w-9 sm:h-9 p-0 rounded-xl transition-all duration-300 hover:scale-110 relative ${
+                isFavorited 
+                  ? 'text-red-500 hover:text-red-600 bg-red-50/80 dark:bg-red-900/20 hover:bg-red-100/80 dark:hover:bg-red-900/30' 
+                  : 'text-gray-400 hover:text-red-500 hover:bg-red-50/80 dark:hover:bg-red-900/20'
+              }`}
+              disabled={!isLoggedIn}
+            >
+              <Heart className={`w-4 h-4 transition-all duration-300 ${
+                isFavorited ? 'fill-current scale-110' : 'hover:scale-110'
+              } ${heartAnimation ? 'animate-bounce scale-125' : ''}`} />
+            </Button>
+          </div>
         </div>
       </CardContent>
 

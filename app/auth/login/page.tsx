@@ -3,6 +3,7 @@
 import type React from "react"
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth"
 import { auth } from "@/app/firebase" // Make sure this file exists and is correctly configured
+import { createNotification } from "@/lib/firebase-utils"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -27,8 +28,26 @@ export default function LoginPage() {
     setIsLoading(true)
     setError("")
     try {
-      await signInWithEmailAndPassword(auth, email, password)
+      const result = await signInWithEmailAndPassword(auth, email, password)
       setIsLoading(false)
+      
+      // Create welcome notification with proper error handling
+      if (result.user) {
+        try {
+          await createNotification({
+            type: 'system',
+            title: 'Welcome back!',
+            message: `Welcome to Local Marketplace, ${result.user.email || 'User'}!`,
+            userId: result.user.uid
+          })
+          console.log('Welcome notification created for login user');
+        } catch (notificationError) {
+          // Don't fail login if notification creation fails
+          console.error('Failed to create welcome notification:', notificationError);
+          // Continue with login flow
+        }
+      }
+      
       router.push("/")
     } catch (err) {
       setIsLoading(false);
@@ -50,10 +69,10 @@ export default function LoginPage() {
         } else if (code === "auth/user-disabled") {
           setError("This account has been disabled.");
         } else {
-          setError("Login failed. " + ((err as { message?: string }).message || ""));
+          setError("Login failed. An unknown error occurred.");
         }
       } else {
-        setError("Login failed. An unknown error occurred.");
+        setError("Login failed. " + ((err as { message?: string }).message || ""));
       }
     }
   }
@@ -63,11 +82,35 @@ export default function LoginPage() {
     setError("")
     try {
       const provider = new GoogleAuthProvider()
-      await signInWithPopup(auth, provider)
+      const result = await signInWithPopup(auth, provider)
       localStorage.setItem("isLoggedIn", "true")
+      
+      // Create welcome notification with proper error handling
+      if (result.user) {
+        try {
+          await createNotification({
+            type: 'system',
+            title: 'Welcome back!',
+            message: `Welcome to Local Marketplace, ${result.user.displayName || 'User'}!`,
+            userId: result.user.uid
+          })
+          console.log('Welcome notification created for Google login user');
+        } catch (notificationError) {
+          // Don't fail login if notification creation fails
+          console.error('Failed to create welcome notification:', notificationError);
+          // Continue with login flow
+        }
+      }
+      
       router.push("/")
-    } catch {
-      setError("Google sign-in failed.")
+    } catch (err) {
+      setIsLoading(false)
+      console.error('Google login error:', err)
+      if (err instanceof Error) {
+        setError(`Google sign-in failed: ${err.message}`)
+      } else {
+        setError("Google sign-in failed. Unknown error occurred.")
+      }
     } finally {
       setIsLoading(false)
     }
@@ -147,9 +190,6 @@ export default function LoginPage() {
               disabled={isLoading}
             >
               Continue with Google
-            </Button>
-            <Button variant="outline" className="w-full h-10 sm:h-11" size="lg" disabled>
-              Continue with Facebook
             </Button>
           </div>
 
