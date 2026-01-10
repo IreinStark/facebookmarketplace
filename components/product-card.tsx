@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { toDate } from '@/lib/timestamp-utils'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -217,32 +218,8 @@ export function ProductCard({
 
   // Helper function to convert createdAt to Date object
   const getCreatedAtDate = (): Date => {
-    const { createdAt } = product
-    
-    if (!createdAt) return new Date()
-    
-    // If it's already a Date object
-    if (createdAt instanceof Date) {
-      return createdAt
-    }
-    
-    // If it's a Firebase Timestamp with toDate method
-    if (typeof createdAt === 'object' && typeof createdAt.toDate === 'function') {
-      return createdAt.toDate()
-    }
-    
-    // If it's a string date
-    if (typeof createdAt === 'string') {
-      return new Date(createdAt)
-    }
-    
-    // If it's a number (timestamp)
-    if (typeof createdAt === 'number') {
-      return new Date(createdAt)
-    }
-    
-    // Fallback to current date
-    return new Date()
+    const createdDate = toDate(product.createdAt) || new Date();
+    return createdDate;
   }
 
   // Use isOwner prop instead of showDeleteButton for consistency

@@ -29,6 +29,7 @@ import {
   Home
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { formatTimestamp } from '@/lib/timestamp-utils';
 import { 
   createConversation, 
   getUserConversations, 
@@ -285,7 +286,7 @@ export function ChatInterface({
       let timestamp = 'Unknown time';
       try {
         if (msg.timestamp) {
-          timestamp = format(msg.timestamp.toDate(), 'MMM d, yyyy h:mm a');
+          timestamp = formatTimestamp(msg.timestamp, 'MMM d, yyyy h:mm a');
         }
       } catch (error) {
         console.warn('Error formatting timestamp for export', error);
@@ -414,14 +415,7 @@ export function ChatInterface({
                               <div className="flex items-center space-x-2">
                                 {conversation.lastMessageTime && (
                                   <span className="text-xs text-gray-500 flex-shrink-0">
-                                    {(() => {
-                                      try {
-                                        return format(conversation.lastMessageTime.toDate(), 'MMM d');
-                                      } catch (error) {
-                                        console.warn('Error formatting conversation date:', error);
-                                        return 'Recent';
-                                      }
-                                    })()}
+                                    {formatTimestamp(conversation.lastMessageTime, 'MMM d')}
                                   </span>
                                 )}
                                 {unreadCount > 0 && (
@@ -587,14 +581,7 @@ export function ChatInterface({
                           
                           <div className="flex items-center justify-between mt-1 space-x-2">
                             <span className="text-xs opacity-70 flex-shrink-0">
-                              {message.timestamp ? (() => {
-                                try {
-                                  return format(message.timestamp.toDate(), 'h:mm a');
-                                } catch (error) {
-                                  console.warn('Error formatting message timestamp:', error);
-                                  return '...';
-                                }
-                              })() : '...'}
+                              {formatTimestamp(message.timestamp, 'h:mm a')}
                             </span>
                             {message.senderId === currentUserId && (
                               <span className="text-xs opacity-70 flex-shrink-0">

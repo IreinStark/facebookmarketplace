@@ -1,6 +1,7 @@
 import { User } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { db } from "@/app/firebase";
+import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore'
+import { auth, db } from '@/app/firebase'
+import { toDate } from './timestamp-utils';
 
 export interface UserProfile {
   uid: string;
@@ -55,7 +56,7 @@ export async function getUserProfile(user: User): Promise<UserProfile | null> {
         location: data.location,
         avatar: data.avatar || user.photoURL,
         bio: data.bio,
-        joinedAt: data.joinedAt?.toDate() || new Date(),
+        joinedAt: toDate(data.joinedAt) || new Date(),
         lastSeen: new Date(),
         verified: data.verified || false
       };

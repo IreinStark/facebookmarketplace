@@ -7,6 +7,7 @@ import { Badge } from './ui/badge';
 import { Slider } from './ui/slider';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
+import { formatTimestamp } from '@/lib/timestamp-utils';
 import { 
   MapPin, 
   Navigation, 
@@ -340,22 +341,7 @@ export function PhotoGallery({
                 )}
                 
                 <div className="text-xs text-muted-foreground">
-                  {(() => {
-                    try {
-                      // Handle both Firebase Timestamp and Date objects
-                      if (photo.uploadedAt && typeof photo.uploadedAt.toDate === 'function') {
-                        return new Date(photo.uploadedAt.toDate()).toLocaleDateString();
-                      } else if (photo.uploadedAt instanceof Date) {
-                        return photo.uploadedAt.toLocaleDateString();
-                      } else if (photo.uploadedAt) {
-                        return new Date(photo.uploadedAt as any).toLocaleDateString();
-                      }
-                      return 'Unknown date';
-                    } catch (error) {
-                      console.warn('Error formatting date:', error);
-                      return 'Unknown date';
-                    }
-                  })()}
+                  {formatTimestamp(photo.uploadedAt)}
                 </div>
               </div>
             </CardContent>

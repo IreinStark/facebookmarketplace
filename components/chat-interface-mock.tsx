@@ -21,6 +21,7 @@ import {
   Camera
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { formatTimestamp } from '@/lib/timestamp-utils';
 
 // Mock interfaces matching Firebase types
 interface MockConversation {
@@ -523,7 +524,7 @@ export function ChatInterfaceMock({
                           
                           <div className="flex items-center justify-between mt-1 space-x-2">
                             <span className="text-xs opacity-70 flex-shrink-0">
-                              {format(message.timestamp, 'h:mm a')}
+                              {formatTimestamp(message.timestamp, 'h:mm a')}
                             </span>
                             {message.senderId === currentUserId && (
                               <span className="text-xs opacity-70 flex-shrink-0">✓</span>

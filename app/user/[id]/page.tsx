@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation"
 import { onAuthStateChanged, type User } from "firebase/auth"
 import { doc, getDoc, collection, query, where, orderBy, getDocs, addDoc, serverTimestamp } from "firebase/firestore"
 import { ArrowLeft, MapPin, Clock, Star, MessageCircle, Shield, Calendar, Package } from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
+import { formatDistanceToNow } from 'date-fns'
+import { formatRelativeTime, toDate } from '@/lib/timestamp-utils'
 
 import { auth, db } from "@/app/firebase"
 import { Button } from "@/components/ui/button"
@@ -95,7 +96,7 @@ export default function UserProfilePage() {
           bio: profileSnapData?.bio,
           avatar: profileSnapData?.avatar,
           verified: profileSnapData?.verified || false,
-          joinedAt: profileSnapData?.joinedAt?.toDate() || new Date(),
+          joinedAt: toDate(profileSnapData?.joinedAt) || new Date(),
           location: profileSnapData?.location,
           responseTime: profileSnapData?.responseTime,
           rating: profileSnapData?.rating || 0,
@@ -462,13 +463,7 @@ export default function UserProfilePage() {
                               <StarRating rating={review.rating} readOnly size="w-4 h-4" />
                             </div>
                             <p className="text-sm text-gray-700 dark:text-gray-300">
-                              {review.createdAt ? 
-                                formatDistanceToNow(
-                                  review.createdAt.toDate ? review.createdAt.toDate() : review.createdAt, 
-                                  { addSuffix: true }
-                                ) : 
-                                'Recently'
-                              }
+                              {formatRelativeTime(review.createdAt)}
                             </p>
                             <p className="text-gray-600 dark:text-gray-400 mt-2">{review.comment}</p>
                           </div>

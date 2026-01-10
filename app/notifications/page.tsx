@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Bell, MessageCircle, Heart, Eye, Package, Clock } from 'lucide-react'
 import { format } from 'date-fns'
+import { formatTimestamp } from '@/lib/timestamp-utils'
 
 interface Notification {
   id: string
@@ -353,7 +354,7 @@ export default function NotificationsPage() {
                             <div className="flex items-center space-x-2 mt-2">
                               <Clock className="h-3 w-3 text-gray-400" />
                               <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {format(notification.timestamp, 'MMM d, h:mm a')}
+                                {formatTimestamp(notification.timestamp)}
                               </span>
                               {!notification.read && (
                                 <Badge variant="secondary" className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
