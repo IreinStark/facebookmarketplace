@@ -89,7 +89,7 @@ export function AuthGateOptimized({ children }: { children: React.ReactNode }) {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <div className="absolute inset-0 rounded-full h-12 w-12 border border-blue-200 dark:border-blue-800 animate-pulse mx-auto mb-4"></div>
           </div>
-          <p className="text-gray-600 dark:text-gray-300 text-sm">Checking authentication…</p>
+          <p className="text-gray-600 dark:text-gray-300 text-sm">Loading…</p>
           <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">This should only take a moment</p>
         </div>
       </div>

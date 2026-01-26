@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Bell, MessageCircle, Heart, Eye, Package, Clock } from 'lucide-react'
+import { Bell, MessageCircle, Heart, Eye, Package, Clock, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { formatTimestamp } from '@/lib/timestamp-utils'
 
@@ -234,6 +234,10 @@ export default function NotificationsPage() {
     }
   }
 
+  const handleCancel = () => {
+    router.push('/')
+  }
+
   const getNotificationIcon = (type: Notification['type']) => {
     switch (type) {
       case 'message':
@@ -302,16 +306,27 @@ export default function NotificationsPage() {
                   {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
                 </p>
               </div>
-              {unreadCount > 0 && (
+              <div className="flex items-center space-x-2">
+                {unreadCount > 0 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={markAllAsRead}
+                    className="text-sm"
+                  >
+                    Mark all as read
+                  </Button>
+                )}
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={markAllAsRead}
+                  onClick={handleCancel}
                   className="text-sm"
                 >
-                  Mark all as read
+                  <X className="h-4 w-4 mr-1" />
+                  Cancel
                 </Button>
-              )}
+              </div>
             </div>
           </div>
 
