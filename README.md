@@ -2,6 +2,30 @@
 
 A production-ready, full-stack marketplace application that replicates Facebook Marketplace's core functionality with modern web technologies.
 
+## At a glance
+
+**What it is:** a buy-and-sell marketplace with listings, photo galleries, search and filters, and real-time buyer–seller chat.
+
+**Stack:** Next.js (App Router) · React · TypeScript · Tailwind CSS · shadcn/ui · Firebase (Auth, Firestore, Storage, Cloud Functions) · Cloudinary · Node.js + Socket.io · Playwright · Netlify
+
+**Highlights**
+- **Real-time chat**: a custom Node.js server (`server.js`) running Socket.io next to Next.js.
+- **Photo management**: multi-image uploads through Cloudinary, with Firebase Storage rules.
+- **Security**: Firestore and Storage security rules (`firestore.rules`, `storage.rules`) and Google sign-in through Firebase Auth.
+- **Backend logic**: Firebase Cloud Functions (`functions/`).
+- **Testing**: Playwright end-to-end tests (`tests/`, run with `pnpm test:e2e`).
+- **Documented debugging**: each major fix is written up step by step (for example `PHOTO_UPLOAD_FIX.md` and `LISTINGS_VISIBILITY_COMPLETE_FIX.md`).
+
+**Run locally**
+```bash
+pnpm install
+pnpm dev          # Next.js + Socket.io server
+pnpm test:e2e     # Playwright end-to-end tests
+```
+Firebase and Cloudinary keys are required; see [SETUP.md](./SETUP.md) and [CLOUDINARY_SETUP.md](./CLOUDINARY_SETUP.md).
+
+<!-- Screenshots: add 2–3 images or a GIF here, e.g. ![Home feed](docs/screenshots/home.png) -->
+
 ---
 
 ## 📋 Table of Contents
